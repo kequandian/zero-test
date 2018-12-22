@@ -6,6 +6,7 @@ let convertToTable = require('./convertToTable');
 let printLog = require('./printLog');
 let pdf = require('pdfkit');
 let convertToVTable = require("./convertToVTable");
+let DataUtil = require("./util/DataUtil");
 
 function list (val) {
     return val.split(',');
@@ -93,13 +94,7 @@ if(data != undefined) {
         data = dataTemp;
     } else if(program.exclude != undefined) {
         let filter = program.exclude;
-        for(let i in filter) {
-            for(let item in data) {
-                if(filter[i] == item) {
-                    delete data[item];
-                }
-            }
-        }
+        data = DataUtil.filterJson(data, filter);
     }
     let res;
     if(program.convert != undefined) {

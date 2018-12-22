@@ -60,7 +60,7 @@ let Test = {
                 try {
                     console.log(`login failure, message=${loginRes && JSON.stringify(loginRes)}`);
                 } catch (err) {
-                    console.log(`login failure, message=${loginRes && loginRes}`);
+                    
                 }
                 
                 

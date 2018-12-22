@@ -7,7 +7,8 @@ var Http = require('./util/Http');
 var Test = require('./util/test');
 var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
-var apiMap = require('./api-map.config');
+var apiMap = require('./api.config').map;
+var ignore = require('./api.config').filter;
 
 function map(key, value) {
     let result = new Map();
@@ -61,12 +62,20 @@ if(program.pdf) {
 
 // pretty-json参数列表
 let params = "-c ";
-// if (program.convert) {
-//     params += " --convert";
-// }
+if(ignore && ignore.length > 0) {
+    params += " --exclude=";
+    for(let item in ignore) {
+        if(item > 0) {
+            params += ",";
+        }
+        params += ignore[item];
+    }
+}
 if (program.parent) {
     params += " --parent";
 }
+
+
 
 // api-gen参数列表
 let genParams = "";
@@ -106,6 +115,7 @@ if(program.out || program.report) {
 }
 if (program.out != undefined) {
     // 输出api结果
+    console.log(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}`);
     shell.exec(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}`);
 } else if (program.report != undefined) {
     // 输出并打印日志
