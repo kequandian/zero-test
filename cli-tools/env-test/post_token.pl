@@ -1,10 +1,5 @@
 #!/usr/bin/perl
 
-if ( ! -e 'app.endpoint' ){
-   print "fatal: app.endpoint not exists\n";
-   exit(0);
-}
-
 my $token_flag = shift @ARGV;
 my $method = shift @ARGV;
 my $api = shift @ARGV;

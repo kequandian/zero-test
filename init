@@ -3,15 +3,14 @@
 cmd=$1
 opt=$2
 url=$3
-#swagger="http://120.79.77.207:8080/swagger/app/swagger.json"
 
 if [ "$cmd"x == "install"x ];then
     echo "init..."
-    npm install -g
+    cnpm install -g
     echo "init api-gen..."
-    (cd cli-tools/api-gen && npm install)
+    (cd cli-tools/api-gen && cnpm install)
     echo "init pretty-json..."
-    (cd cli-tools/pretty-json && npm install )
+    (cd cli-tools/pretty-json && cnpm install )
     echo "init zero-json..."
     if [ ! -d "./swagger" ];then
         mkdir swagger
@@ -19,7 +18,7 @@ if [ "$cmd"x == "install"x ];then
     if [ ! -d "./cli-tools/zero-json/swagger" ];then
         mkdir ./cli-tools/zero-json/swagger
     fi
-    (cd cli-tools/zero-json && npm install \
+    (cd cli-tools/zero-json && cnpm install \
     && curl $swagger --out swagger/index.json \
     node index.js swagger format && mv swagger/format.json ../../swagger/swagger.json)
     exit 0
@@ -33,4 +32,4 @@ elif [ "$cmd"x == "get"x -a "$opt"x == "swagger"x ];then
     exit 0
 fi
 
-echo "Usage: ./init <cmd> [install | get swagger <url>]";
+echo "Usage: ./init [install | get swagger <url>]";
