@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+api=$1
+field=$2
+value=$3
+
+if [ ! $api ];then
+   bin=$(basename $0)
+   echo "Usage: $bin <showtables/{table}/{id}> [field] [value]"
+   exit 0
+fi
+
+result=$0
+
+if [ ! $field ];then
+   result=$(./get /debug/$api)
+else
+   result=$(./post /debug/$api "{\"field\":\"$field\",\"value\":\"$value\"}")
+fi
+
+echo -e "$result"
+

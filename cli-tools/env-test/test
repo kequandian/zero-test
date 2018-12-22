@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+## Use to get the API body json
+
+method=$1
+api=$2
+cmd=$3
+body=$4
+
+## method lowercase 
+##method="${method,,}" ## work bash 4.0
+method=$(echo $method | tr '[A-Z]' '[a-z]')
+
+
+## swagger cli path
+dir=$(dirname $0)
+swagger_cli="$dir/swagger-cli"
+
+## show all apis
+if [ "$method"x == "."x ];then
+   $swagger_cli .   
+   exit 0
+fi 
+
+## usage
+if [ ! $api ];then
+ bin=$(basename $0)
+ echo "Usage: $bin <method> <api> [tc|trace|vi|run]"
+ echo "       $bin ."
+ exit 0
+fi
+
+
+## get tc name if starts with POST/GET/PUT/DELETE
+err=''
+api_noquery=$api
+api_noquery=${api_noquery%%\?*}
+## no number for put api
+api_noid=`echo $api_noquery | sed -e 's/[0-9]*$//'`
+if [ ${#api} -ne ${#api_noid} ];then
+  api_noquery="$api_noid{id}"
+fi
+tc=$($swagger_cli $method $api_noquery)
+if [[ $tc == POST* || $tc == PUT* ]];then
+   #tc=${tc##*\s}
+   tc=${tc##*CRUD}  ## cut before CRUD
+   tc=${tc##*[[:space:]]} ## cut before space
+   tc=${tc//[[:space:]]/} ## delete all spaces 
+
+   ## tc file
+   tc="tc/$tc-$method.json"
+   
+   if [ ! -d 'tc' ];then
+       mkdir tc
+   fi
+else 
+   err=1
+fi
+## tc file
+if [ "$cmd"x == "run"x  ];then
+    if [ "$method"x == "post"x ];then
+       #"$dir/post" $api $tc
+       "$dir/post" $api $body
+    elif [ "$method"x == "put"x ];then
+       #"$dir/put" $api $tc
+       "$dir/put" $api $body
+    elif [ "$method"x == "delete"x ];then
+       "$dir/delete" $api
+    elif [ "$method"x == "get"x ];then
+       "$dir/get" $api
+    fi
+    exit 0
+fi
+
+if [ $err ];then
+   exit 0
+fi
+
+
+## format bin
+format_bin="$dir/format"
+
+
+if [ "$method"x == "post"x -o "$method"x == "put"x ];then
+   if [ ! $cmd ];then
+      result=$($swagger_cli $method $api)
+      echo $result
+   elif [ "$cmd"x == "trace"x ];then
+      if [ ! -e $tc ];then
+        result=$($swagger_cli $method $api trace)
+        if [[ $result == \{* ]];then
+           $swagger_cli $method $api $cmd | $format_bin > "$tc"
+        fi
+      fi
+      ## save tc
+      echo $tc > "tc/.tc"
+      cat $tc
+
+   elif [ "$cmd"x == "tc"x ];then
+      if [ ! -e $tc ];then
+         echo "$tc not exists"
+      else
+         echo $tc;
+      fi
+   elif [ "$cmd"x == "vi"x ];then
+      if [ ! -e $tc ];then
+         echo "$tc not exists"
+      else
+         vi $tc;
+      fi
+   fi
+
+elif [ "$method"x == "get"x ];then
+   $swagger_cli $method $api
+fi
+
+

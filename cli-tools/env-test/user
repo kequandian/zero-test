@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+test=$1
+
+if [ $test ] && \
+   [ "add"x = "$test"x -o "upd"x = "$test"x -o \
+     "get"x = "$test"x -o "del"x = "$test"x ]
+then
+    echo
+else
+    bin=$(basename $0)
+    echo "Usage: $bin <add|upd|get|del> [id]"
+    exit 0
+fi
+
+## run
+###### crud post
+if   [ "add"x = "$test"x ];then
+   bin=$(basename $0)
+   data=$(echo $bin | sed -e s/.sh$/.json/)
+   ./post /adm/users $data --log
+
+###### crud put
+elif [ "upd"x = "$test"x ];then
+
+   id=$2
+
+   bin=$(basename $0)
+   if [ ! $id ];then
+      echo "Usage: $bin <id>"
+      exit 0
+   fi
+
+   data=$(echo $bin | sed -e s/.sh$/.json/)
+   ./put /adm/users/$id $data --log
+
+###### crud get
+elif [ "get"x = "$test"x ];then
+   id=$2
+
+   if [ ! $id ];then
+      bin=$(basename $0)
+      echo "Usage: $bin <id>"
+      exit 0
+   fi
+
+   if [ "$id"x = "."x ];then
+     ./get /adm/users --log
+   else
+     ./get /adm/users/$id --log
+   fi
+
+###### crud delete
+elif [ "del"x = "$test"x ];then
+   id=$2
+
+   if [ ! $id ];then
+      bin=$(basename $0)
+      echo "Usage: $bin <id>"
+      exit 0
+   fi
+
+   ./delete /adm/users/$id --log
+
+fi
+

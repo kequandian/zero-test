@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+
+./get /api/testdao/testTimestamps?createTime=2018-09-10%2012:00:00\&createTime=2019-09-10%2012:00:00 --log

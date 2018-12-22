@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+cmd=$1
+opt=$2
+url=$3
+#swagger="http://120.79.77.207:8080/swagger/app/swagger.json"
+
+if [ "$cmd"x == "install"x ];then
+    echo "init..."
+    npm install -g
+    echo "init api-gen..."
+    (cd cli-tools/api-gen && npm install)
+    echo "init pretty-json..."
+    (cd cli-tools/pretty-json && npm install )
+    echo "init zero-json..."
+    if [ ! -d "./swagger" ];then
+        mkdir swagger
+    fi
+    if [ ! -d "./cli-tools/zero-json/swagger" ];then
+        mkdir ./cli-tools/zero-json/swagger
+    fi
+    (cd cli-tools/zero-json && npm install \
+    && curl $swagger --out swagger/index.json \
+    node index.js swagger format && mv swagger/format.json ../../swagger/swagger.json)
+    exit 0
+elif [ "$cmd"x == "get"x -a "$opt"x == "swagger"x ];then
+    if [ ! -d "./swagger" ];then
+        mkdir swagger
+    fi
+    (cd cli-tools/zero-json && \
+    curl $url --out swagger/index.json && \
+    node index.js swagger format && mv swagger/format.json ../../swagger/swagger.json)
+    exit 0
+fi
+
+echo "Usage: ./init <cmd> [install | get swagger <url>]";

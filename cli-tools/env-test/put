@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+api=$1
+data=$2
+log=$3
+
+## cut api
+api=${api#\/api}
+
+if [ ! $api ];then
+ bin=$(basename $0)
+ echo "Usage: $bin <api> <data> [--log]"
+ exit 0
+fi
+
+perl post_token.pl --token PUT $api $data $log
+

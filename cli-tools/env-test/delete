@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+api=$1
+log=$2
+
+## cut /api
+api=${api#\/api}
+
+if [ ! $api ];then
+ bin=$(basename $0)
+ echo "Usage: $bin <api> [--log]"
+ exit 0
+fi
+
+perl post_token.pl --token DELETE $api $log
+

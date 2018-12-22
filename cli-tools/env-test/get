@@ -1,0 +1,34 @@
+#!/usr/bin/env perl 
+
+
+my $api = shift @ARGV;
+my $arg = shift @ARGV;
+
+if( !  $api ){
+    my $bin = `basename $0`;
+    $bin = `trim $bin`;
+    print "Usage: $bin <api> <--log>\n";
+    exit(0);
+}
+
+## cut /api
+#api=${api#\/api}
+$api =~ s/^\/api//;
+
+
+## convert []space with ""
+if($api =~ /\?/){
+   $api=~s/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})/$1-$2-$3%20$4:$5:$6/g;
+}
+if($api=~ /\&/){
+   $api=~ s/\&/\\\&/g;
+}
+
+
+my $dirname = `dirname $0`;
+$dirname =~ s/[\r\t\n]+$//;
+my $get_bin = "$dirname/get_token.pl";
+
+#print "$get_bin --token $api $arg\n";
+print `$get_bin --token $api $arg`;
+

@@ -1,0 +1,11 @@
+#!/use/bin/env bash
+
+param1=$1
+param2=$2
+
+if [ ! $param1 ];then
+ bin=$(basename $0)
+ echo "Usage: $bin <param1> [param2]"
+ exit 0
+fi
+

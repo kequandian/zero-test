@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+user=$1
+passw=$2
+
+if [ ! $passw ];then
+   bin=$(basename $0)
+   echo "Usage: $bin <account> <passw>"
+   exit 0
+fi
+
+result=$(./post /oauth/login "{\"account\":\"$user\",\"password\":\"$passw\"}")
+
+#if [ $result ]; then
+  echo $result
+
+  token=$(./parse_token "$result")
+
+  if [ $token ];then
+    echo ${token} > app.token
+  fi
+
+#fi
+
+
+

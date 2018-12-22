@@ -1,0 +1,89 @@
+#!/usr/bin/perl -w
+## Use to update the API body json file
+
+my $json_string;
+while(<>){
+    my $line = "$_";
+    #$line =~ s/\"/\\\"/g;
+    $json_string = "$json_string$line";
+}
+$json_string =~ s/[\t\r\n\s]//g;
+
+# format string
+$json_string =~ s/[\r\n\t\s]//g;
+$json_string =~ s/\{/\{\n   /g;
+$json_string =~ s/\}/\n\}\n/g;
+$json_string =~ s/\,/\,\n\   /g;
+
+## input tc 
+my $tc_rc = 'tc/.tc';
+
+## get tc file
+my $tc = &get_line($tc_rc);
+
+## save json to tc
+open(TC, '>', $tc) or die $!;
+   print TC $json_string;
+close(TC);
+
+print &get_data($tc);
+
+
+#####################################
+## subroutines
+#####################################
+
+sub get_line {
+   my $in = shift;
+   my $endline;
+
+   my @lines = &get_lines($in);
+   foreach (@lines){
+      if(/^[\t\n\r\s]+$/){
+      }elsif(/^\#/){
+      }else{
+         $endline = $_;
+      }
+   }
+
+   $endline =~ s/[\/\r\n]+$//;
+   return $endline;
+}
+
+sub get_lines {
+   my $in = shift;
+   if( -e $in){
+
+      my @lines;
+      if(-e $in){
+         open my $fh, "<", "$in";
+           @lines = <$fh>;
+         close $fh;
+      }
+      return @lines;
+   }
+}
+
+sub get_data {
+  my $in = shift;
+
+  if( -e $in){
+     my $content;
+     local $/; #Enable 'slurp' mode
+
+     open my $fh, "<", "$in";
+        $content = <$fh>;
+     close $fh;
+
+     #$content =~ s/[\r\n\t]+//;
+
+     return $content;
+  }
+
+  return $in;
+}
+
+
+
+
+

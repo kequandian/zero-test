@@ -1,0 +1,37 @@
+#!/usr/bin/perl -w
+
+my $json_string = shift @ARGV;
+
+if( !$json_string ){
+  while(<>){
+      my $line = "$_";
+      $line =~ s/\"/\\\"/g;
+
+      $json_string = "$json_string$line";
+  }
+
+   $json_string =~ s/[\t\r\n\s]//g;
+   $json_string = "\"$json_string\"";
+
+}else{
+     $json_string =~ s/\"/\\\"/g;
+     $json_string = "\"$json_string\"";
+}
+
+
+## filter timestamp
+##
+
+   my $dir=`dirname $0`;
+   $dir =~ s/[\r\n\t\s]+$//;
+   my $format_bin = "$dir/format"; 
+
+   my $result = `node filter-timestamp.js $json_string`;
+   $result =~ s/[\r\n]+$//;
+   $result =~ s/\"/\\\"/g;
+   $result = "\"$result\"";
+
+   $result = `$dir/format $result`;
+   print $result;
+
+

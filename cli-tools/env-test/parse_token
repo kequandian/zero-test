@@ -1,0 +1,27 @@
+#!/usr/bin/perl -W
+
+my $input = shift @ARGV;
+
+if( !$input){
+   my $bin = `basename $0`;
+   $bin = `trim $bin`;
+   print "Usage: $bin <json>\n";
+   exit(0);
+}
+
+if(!$input){
+   print "no data\n";
+   exit(0);
+}
+
+if($input =~ /\w+/){
+   my $token;
+   $input =~ /accessToken\"\:\"([\w\=\.\-_]+)\"/;
+   $token = $1;
+
+   if($token){
+      print $token;
+      print "\n";
+   }
+}
+

@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+
+my $method = shift @ARGV;
+my $api = shift @ARGV;
+my $cmd = shift @ARGV;
+
+
+my $usage = (!$method) || (!$api && ($method && $method!~/\./) && ($method && $method!~/save/) || ($cmd && $cmd!~/trace/) );
+
+if ($usage){
+   my $bin=`basename $0`;
+   $bin = `trim $bin`;
+   print "Usage: $bin <method> <api> [trace]\n";
+   print "       $bin save\n";
+   print "       $bin .\n";
+   exit(0);
+}
+
+## try to get swagger.json then done
+if($method=~/save/){
+   if(-e 'app/swagger.json'){
+       print "app/swagger.json exists\n";
+   }else{
+       my $endpoint = &get_line('app.endpoint');
+       $endpoint =~ s/\/api$//;
+       my $swagger = "$endpoint/swagger/app/swagger.json";
+
+       # create app dir fist
+       if( ! -d app){
+          mkdir('app');
+       }
+
+       print "curl $swagger -o app/swagger.json\n\n";
+       print `curl $swagger -o app/swagger.json`; 
+       if(-e 'app/swagger.json'){
+           print "\napp/swagger.json\n";
+       }
+   }
+
+   exit(0);
+}
+
+
+# if method=. means no method for swagger_parse.js
+if ($method=~/\./){
+    $method = shift @ARGV;
+}
+
+# input api can ignore /api
+$api =~ s/^\/api//;
+if($api){
+   $api = "/api$api";
+}
+
+
+## get swagger.json from app.swagger
+my $app_swagger = "app.swagger";
+my $swagger_ignores = "swagger.ignores";
+
+if(-e $app_swagger){
+   my $swagger_path = &get_line($app_swagger);
+   my @ignores = &get_lines($swagger_ignores);
+
+   my %hash = {};
+   foreach my $skip (@ignores){
+       if($skip=~/^[\s\t]+$/){
+           #print "empty line\n";
+       }else{
+          # remove newline
+          $skip =~ s/[\r\n\t\s]+//;
+
+          # trim /{id}
+	  $skip =~ s/\/\{id\}$//;
+
+          $hash{$skip} = $skip;
+       }
+   }
+
+   if( -e $swagger_path){
+      $api =~  s/^\///;
+      my $result = `node swagger_parser.js $swagger_path $api $method $cmd`;
+
+
+      my @apis = split(/\n/, $result);
+      foreach my $it (@apis){
+          $it =~ /\s(\S+)\s*/;      
+          my $_api = $1;
+
+	  ## trim /{id}
+	  $_api =~ s/\/\{id\}$//;
+
+          if(exists($hash{$_api})){
+              ##print $it."\n";
+              ## skip ignores
+          }else{
+             print "$it\n";
+          }
+      }
+ 
+   }else{
+      print "$swagger_path not exist\n";
+      exit(0);
+   }
+
+}else{
+   print "$app_swagger not exist\n";
+   exit(0);
+}
+
+
+
+#####################################
+## subroutines
+#####################################
+
+sub get_line {
+   my $in = shift;
+   my $endline;
+
+   my @lines = &get_lines($in);
+   foreach (@lines){
+      if(/^[\t\n\r\s]+$/){
+      }elsif(/^\#/){
+      }else{
+         $endline = $_;
+      }
+   }
+
+   $endline =~ s/[\/\r\n]+$//;
+   return $endline;
+}
+
+sub get_lines {
+   my $in = shift;
+   if( -e $in){
+
+      my @lines;
+      if(-e $in){
+         open my $fh, "<", "$in";
+           @lines = <$fh>;
+         close $fh;
+      }
+      return @lines;
+   }
+}
+
+sub get_data {
+  my $in = shift;
+
+  if( -e $in){
+     my $content;
+     local $/; #Enable 'slurp' mode
+
+     open my $fh, "<", "$in";
+        $content = <$fh>;
+     close $fh;
+
+     $content =~ s/[\r\n\t]+//;
+
+     return $content;
+  }
+
+  return $in;
+}
+
+
+

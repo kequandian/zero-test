@@ -1,0 +1,95 @@
+#!/usr/bin/perl -w
+
+my $filter = shift @ARGV;
+my $json_string = shift @ARGV;
+
+if (! $filter ){
+    my $bin = `basename $0`;
+    $bin =~ s/[\r\n\t]+//;
+    print "Use to filter the CRUD api body by filter file\n";
+    print "located in filters dir.\n";
+    print "\n";
+    print "Usage: $bin <filter> <json-string>\n";
+    print "\n";
+    print " e.g.\n";
+    print "./swagger-cli POST /api/path/to | filter pcd \n";
+    exit(0);
+}
+
+$filter =~ s/\.filter$//;
+$filter =~ s/^filters\///;
+$filter = "filters/$filter.filter.js";
+
+if( ! -e $filter){
+   print "$filter not exist\n";
+   exit(0);
+}
+
+
+## get filter string
+##
+my $filter_string = &get_data($filter);
+$filter_string =~ s/\"/\\\"/g;
+$filter_string =~ s/[\t\r\n\s]//g;
+$filter_string =~ s/\,\}/\}/;
+$filter_string = "\"$filter_string\"";
+
+
+
+if( !$json_string ){
+  while(<>){
+      my $line = "$_";
+      $line =~ s/\"/\\\"/g;
+
+      $json_string = "$json_string$line";
+  }
+
+  $json_string =~ s/[\t\r\n\s]//g;
+  $json_string = "\"$json_string\"";
+
+
+}else{
+     $json_string =~ s/\"/\\\"/g;
+     $json_string = "\"$json_string\"";
+}
+
+
+#########################
+## filter with json file
+my $dir=`dirname $0`;
+$dir =~ s/[\r\n\t\s]+$//;
+my $format_bin = "$dir/format";
+
+
+#print "node filter-with.js $filter_string $json_string";
+print `node filter-with.js $filter_string $json_string | $format_bin`;
+
+
+#&run_application($filter, $json_string);    
+
+#sub run_application {
+#   my ($filter, $json_string) =  @_;
+#
+#   print `node filter-with.js $filter $json_string`;
+#}
+
+
+
+sub get_data {
+  my $in = shift;
+
+  if( -e $in){
+     my $content;
+     local $/; #Enable 'slurp' mode
+
+     open my $fh, "<", "$in";
+        $content = <$fh>;
+     close $fh;
+
+     $content =~ s/[\r\n\t]+//;
+
+     return $content;
+  }
+
+  return $in;
+}

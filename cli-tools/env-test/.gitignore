@@ -1,0 +1,7 @@
+tc/**
+data/
+app/**
+app.endpoint
+app.swagger
+app.token
+swagger.json

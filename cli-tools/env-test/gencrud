@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+name=$1
+api=$2
+
+if [ ! $api ];then
+   bin=$(basename $0)
+   echo "Usage: $bin <test-name> <api>"
+   exit 0
+fi
+
+./gentest crud "crud-$name" $api
+

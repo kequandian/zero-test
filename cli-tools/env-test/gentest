@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+method=$1
+ff=$2
+api=$3
+
+if [ ! $api ];then
+   bin=$(basename $0)
+   echo "Usage: $bin <get|post|put|delete|patch|crud> <test-name> <api>"
+   exit 0
+fi
+
+if [ ! -d 'tc' ];then
+   echo "tc dir not exits"
+   exit 0
+fi
+
+## cut suffix .sh
+ff=$(echo $ff | sed -e 's/\.sh$//')
+
+## cut prefix test-
+ff=$(echo $ff | sed -e 's/^test-//')
+
+ffsh="tc/test-$ff.sh"
+ffdata="tc/test-$ff.json"
+
+## remove first
+#if [ -e $ffsh ];then
+#   rm $ffsh
+#fi 
+
+echo $ffsh
+touch $ffsh
+echo '#!/bin/bash' > $ffsh
+##
+#echo '' >> $ffsh
+#echo 'api=$1' >> $ffsh
+#echo 'if [ ! $api ];then' >> $ffsh
+#echo '   bin=$(basename $0)' >> $ffsh
+#echo '   echo "Usage: $bin <api>"' >> $ffsh
+#echo '   exit 0' >> $ffsh
+#echo 'fi' >> $ffsh
+echo '' >> $ffsh
+###
+
+if [ "get"x = "$method"x -o "delete"x = "$method"x ];then
+   echo 'id=$1' >> $ffsh
+   echo '' >> $ffsh
+   echo 'if [ ! $id ];then' >> $ffsh
+   echo '   bin=$(basename $0)' >> $ffsh
+   echo '   echo "Usage: $bin <id>"' >> $ffsh
+   echo '   exit 0' >> $ffsh
+   echo 'fi' >> $ffsh
+   echo '' >> $ffsh
+   echo 'if [ "$id"x = "."x -o "$id"x = "*"x ];then' >> $ffsh
+   echo "  ./$method $api --log" >> $ffsh
+   echo 'else' >> $ffsh
+   echo "  ./$method $api/\$id --log" >> $ffsh
+   echo 'fi' >> $ffsh
+
+elif [ "post"x = "$method"x -o "put"x = "$method"x -o "patch"x = "$method"x ];then
+   echo 'bin=$(basename $0)' >> $ffsh
+   echo 'data=$(echo $bin | sed -e 's/\.sh$/\.json/')' >> $ffsh
+   echo "./$method $api \$data --log" >> $ffsh
+
+elif [ "crud"x = "$method"x ];then
+   echo 'test=$1' >> $ffsh
+   echo '' >> $ffsh
+   echo 'if [ $test ] && \' >> $ffsh
+   echo '   [ "add"x = "$test"x -o "upd"x = "$test"x -o \' >> $ffsh
+   echo '     "get"x = "$test"x -o "del"x = "$test"x ]' >> $ffsh
+   echo 'then' >> $ffsh
+   echo '    echo' >> $ffsh
+   echo 'else' >> $ffsh
+   echo '    bin=$(basename $0)' >> $ffsh
+   echo '    echo "Usage: $bin <add|upd|get|del> [id]"' >> $ffsh
+   echo '    exit 0' >> $ffsh
+   echo 'fi' >> $ffsh
+   echo '' >> $ffsh
+   echo '## run' >> $ffsh
+	
+   ## crud post
+   echo '###### crud post' >> $ffsh
+   echo 'if   [ "add"x = "$test"x ];then' >> $ffsh
+   echo '   bin=$(basename $0)' >> $ffsh
+   echo '   data=$(echo $bin | sed -e s/.sh$/.json/)' >> $ffsh
+   #echo '  if [ ! -e $data ];then' >>  >> $ffsh
+   #echo '      echo "fetal: $data not exits"' >> $ffsh
+   #echo '  fi' >> $ffsh
+   echo "   ./post $api \$data --log" >> $ffsh
+   echo '' >> $ffsh
+
+   ## crud put
+   echo '###### crud put' >> $ffsh
+   echo 'elif [ "upd"x = "$test"x ];then' >> $ffsh
+   echo '' >> $ffsh
+   echo '   id=$2' >> $ffsh
+   echo '' >> $ffsh
+   echo '   bin=$(basename $0)' >> $ffsh
+   echo '   if [ ! $id ];then' >> $ffsh
+   echo '      echo "Usage: $bin <id>"' >> $ffsh
+   echo '      exit 0' >> $ffsh
+   echo '   fi' >> $ffsh
+   echo '' >> $ffsh
+   echo '   data=$(echo $bin | sed -e s/.sh$/.json/)' >> $ffsh	
+   echo "   ./put $api/\$id \$data --log" >> $ffsh
+   echo '' >> $ffsh
+	
+   ## crud get
+   echo '###### crud get' >> $ffsh
+   echo 'elif [ "get"x = "$test"x ];then' >> $ffsh
+   echo '   id=$2' >> $ffsh
+   echo '' >> $ffsh
+   echo '   if [ ! $id ];then' >> $ffsh
+   echo '      bin=$(basename $0)' >> $ffsh
+   echo '      echo "Usage: $bin <id>"' >> $ffsh
+   echo '      exit 0' >> $ffsh
+   echo '   fi' >> $ffsh
+   echo '' >> $ffsh
+   echo '   if [ "$id"x = "."x ];then' >> $ffsh
+   echo "     ./get $api --log" >> $ffsh
+   echo '   else' >> $ffsh
+   echo "     ./get $api/\$id --log" >> $ffsh
+   echo '   fi' >> $ffsh
+   echo '' >> $ffsh
+	
+   ## crud delete
+   echo '###### crud delete' >> $ffsh
+   echo 'elif [ "del"x = "$test"x ];then' >> $ffsh
+   echo '   id=$2' >> $ffsh
+   echo '' >> $ffsh
+   echo '   if [ ! $id ];then' >> $ffsh
+   echo '      bin=$(basename $0)' >> $ffsh
+   echo '      echo "Usage: $bin <id>"' >> $ffsh
+   echo '      exit 0' >> $ffsh
+   echo '   fi' >> $ffsh
+   echo '' >> $ffsh
+   echo "   ./delete $api/\$id --log" >> $ffsh
+   echo '' >> $ffsh
+	
+   ## end
+   echo 'fi' >> $ffsh
+   echo '' >> $ffsh
+fi
+
+## gen ffdata
+if [ "crud"x  = "$method"x -o \
+     "post"x  = "$method"x -o \
+     "put"x = "$method"x -o \
+     "patch"x = "$method"x ]
+then
+   if [ ! -e $ffdata ];then
+      echo $ffdata
+      touch $ffdata
+   fi
+fi
+
+

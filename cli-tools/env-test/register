@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+user=$1
+passw=$2
+
+if [ ! $passw ];then
+   bin=$(basename $0)
+   echo "Usage: $bin <user> <passw>"
+   exit 0
+fi
+
+result=$(./post /oauth/register "{\"account\":\"$user\",\"password\":\"$passw\"}")
+
+echo $result
+

@@ -1,0 +1,22 @@
+#!/usr/bin/perl 
+
+my $json = shift @ARGV;
+
+if( ! $json ){
+  while(<>){
+      my $line = $_;
+      $json = "$json$line";
+  }
+}
+
+
+my $line = $json;
+
+    ## clean all space and enter
+    $line =~ s/[\r\n\t\s]//g;
+      
+    $line =~ s/\{/\{\n   /g;
+    $line =~ s/\}/\n\}\n/g;
+    $line =~ s/\,/\,\n\   /g;
+
+print $line;
