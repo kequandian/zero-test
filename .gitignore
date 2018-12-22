@@ -8,3 +8,5 @@
 temp/
 logs/
 gen.json
+server.config
+testcase
