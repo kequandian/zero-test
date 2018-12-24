@@ -4,7 +4,6 @@ let program = require('commander');
 let fs = require('fs');
 let convertToTable = require('./convertToTable');
 let printLog = require('./printLog');
-let pdf = require('pdfkit');
 let convertToVTable = require("./convertToVTable");
 let DataUtil = require("./util/DataUtil");
 let shelljs = require("shelljs");
@@ -21,7 +20,7 @@ program
     .option('-f, --file <value>')
     .option('-t, --title <value>')
     .option('-c, --convert')
-    .option('-o, --out <value>', '导出pdf （pending')
+    .option('--pdf <value>', '导出pdf （pending')
     .option('-e, --exclude <items>',"排除指定字段", list)
     .option('-i, --include <items>', "指定只生成部分字段", list)
     .option('-p, --parent', '仅生成主表, 默认生成所有表格')
@@ -44,7 +43,8 @@ let header = "data";
 if(program.title != undefined) {
     flag ++;
     console.log(program.title);
-    printLog(program.title, program.log);
+   // printLog(program.title, program.log);
+   printLog(`### **${program.title}**`, program.log)
 }
 let data;
 if(program.value != undefined) {
@@ -103,26 +103,20 @@ if(data != undefined) {
         data = DataUtil.filterJson(data, filter);
     }
     let res;
+    let md = {};
     if(program.convert != undefined) {
-        res = convertToVTable(header, data, program.parent, program.sub);
+        res = convertToVTable(header, data, program.parent, program.sub, md);
     } else {
         res = convertToTable(header, data, program.parent, program.sub);
     }
     console.log(res);
     // output
-    printLog(res, program.log);
+    printLog(md.data, program.log);
     flag = 1;
 }
 
-if(program.out != undefined) {
-    "".split(".")
-    let text = fs.readFileSync(program.out, "utf-8");
-    console.log(text);
-    let outter = new pdf();
-    outter.pipe(fs.createWriteStream(program.out.split(".")[0] + ".pdf"));
-    outter.text(text, 0, 0);
-    outter.end();
-    flag = 1;
+if(program.pdf != undefined) {
+
 }
 
 if(flag == 0) {

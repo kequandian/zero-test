@@ -40,7 +40,7 @@ let Swagger = {
     getSwagger() {
         if(!this.swagger) {
             try {
-                this.swagger = fs.readFileSync('./swagger/swagger.json', 'utf-8');
+                this.swagger = fs.readFileSync('./pub/swagger.json', 'utf-8');
             } catch(err) {
                 // nothing to do
             } finally {

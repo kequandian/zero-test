@@ -4,12 +4,17 @@ let dateUtil = require("./util/dateUtil");
 
 function printLog(data, log) {
     if(log) {
-        let config = JSON.parse(fs.readFileSync("./log-config.json", "UTF-8"));
-        let basePath = config["basePath"];
+        let config;
+        try {
+            config = JSON.parse(fs.readFileSync("./log-config.json", "UTF-8"));
+        } catch(err) {
+
+        }
+        let basePath = config ? config["basePath"] : "logs";
     
-        if(config["path"] == "default") {
+        if(!config["path"] || config["path"] == "default") {
             let file = basePath + dateUtil.getToday() + '.log';
-            fs.appendFileSync(file, data + "\n", 'UTF-8');
+           fs.appendFileSync(file, data + "\n", "utf-8");
        }
     }
 }

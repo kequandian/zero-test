@@ -9,6 +9,7 @@ var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
 var apiMap = require('./api.config').map;
 var ignore = require('./api.config').filter;
+var Pdf = require('./util/Pdf');
 
 function map(key, value) {
     let result = new Map();
@@ -38,7 +39,7 @@ program
     .option('--swagger', "从swagger中获取字段信息生成请求参数, 默认值")
     .option('--filter <value>', "添加或替换生成参数 {key1:value1,key2:value2}")
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
-    .option('--pdf <value>', "生成pdf,指定需转换的文件位置")
+    .option('--pdf <inputFile> <outputFile>', "生成pdf,指定需转换的文件位置")
     .on('--help', function() {
         console.log(""),
         console.log("Example: GET api/cms/article/categories --out"),
@@ -51,16 +52,19 @@ program
         Test.login(endpoint, account, password);
         shell.exit(0);
     });
+program
+    .command('pdf <inputFile> <outputFile>')
+    .action(function (inputFile, outputFile) {
+        Pdf.export(inputFile, outputFile);
+        return;
+    });
+
 program.parse(process.argv);
 
 if(api && api.substring(0, 3) == "C:/") {
     api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
 }
-if(program.pdf) {
-    shell.exec(`java -jar ./cli-tools/pdf-outter-1.0.jar ${program.pdf}`);
-    console.log("conver pdf success");
-    return;
-}
+
 
 
 // pretty-json参数列表

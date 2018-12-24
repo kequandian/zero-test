@@ -1,4 +1,4 @@
 {
     "path" : "default",
-    "basePath" : "logs/"
+    "basePath" : "pub/logs/"
 }

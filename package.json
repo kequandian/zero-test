@@ -9,7 +9,7 @@
   "dependencies": {
     "cli-table2": "^0.2.0",
     "commander": "^2.19.0",
-    "pdfkit": "^0.8.3",
+    "markdown-pdf": "^9.0.0",
     "shelljs": "^0.8.3"
   },
   "devDependencies": {

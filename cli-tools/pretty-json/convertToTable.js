@@ -9,6 +9,7 @@ function truncated(str, len) {
 }
 
 /**
+ * ###暂时停止维护###
  * json转横向表格
  * @param {string} header 
  * @param {string} json 
