@@ -11,7 +11,6 @@ let Test = {
             //demo: run '{\"url\":\"testbody\"}'
             body = `'${body}'`;
         }
-        console.log(`bash ./test ${method} ${server.host}${api} run ${body}`);
         if (shell.exec(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../temp/response.json)`).code !== 0) {
             console.log('error while exec env-test/test');
             console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > temp/response.json)`);
@@ -37,7 +36,6 @@ let Test = {
             //     shell.exit(1);
             // }
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
-            console.log(`command:  (cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../temp/response.json)`);
             if (shell.exec(`(cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../temp/response.json)`).code !== 0) {
                 console.log('error while exec env-test/test');
                 console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test post ${server.host}${login_api} run ${body} > temp/response.json)`);

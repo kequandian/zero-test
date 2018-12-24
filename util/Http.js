@@ -2,6 +2,7 @@ var shell = require("shelljs");
 var fs = require('fs');
 var server = require('../server.config');
 var Test = require('./Test');
+var Reader = require('./Reader');
 
 /**
  * 发送http请求 (使用env-test工具)
@@ -16,7 +17,8 @@ let Http = {
      */
     getId(api, index) {
         Test.run(api, 'GET');
-        let response = JSON.parse(fs.readFileSync(this.response_file));
+
+        let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
             console.log(`api执行错误:\n${JSON.stringify(response)}`);
             shell.exit(1);
@@ -33,12 +35,11 @@ let Http = {
      * @param {int} index 
      */
     post(api, file) {
-        
-        let body = JSON.parse(fs.readFileSync(file));
+        let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
         Test.run(api, 'post', body);
-        let response = JSON.parse(fs.readFileSync(this.response_file));
+        let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
             console.log(`api执行错误:\n${JSON.stringify(response)}`);
             shell.exit(1);
@@ -50,11 +51,11 @@ let Http = {
      * @param {string} file 
      */
     put(api, file) {
-        let body = JSON.parse(fs.readFileSync(file));
+        let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
         Test.run(api,'put', body);
-        let response = JSON.parse(fs.readFileSync(this.response_file));
+        let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
             console.log(`api执行错误:\n${JSON.stringify(response)}`);
             shell.exit(1);

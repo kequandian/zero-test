@@ -22,7 +22,7 @@ program
     .usage('<method> <api> [options] [value ...]')
     .version('0.1.0')
     .arguments('<method> <api> ')
-    .action(function (cmd, value) {     
+    .action(function (cmd, value) {
         method = cmd;
         api = value;
     })
@@ -53,6 +53,9 @@ program
     });
 program.parse(process.argv);
 
+if(api && api.substring(0, 3) == "C:/") {
+    api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
+}
 if(program.pdf) {
     shell.exec(`java -jar ./cli-tools/pdf-outter-1.0.jar ${program.pdf}`);
     console.log("conver pdf success");
@@ -115,7 +118,6 @@ if(program.out || program.report) {
 }
 if (program.out != undefined) {
     // 输出api结果
-    console.log(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}`);
     shell.exec(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}`);
 } else if (program.report != undefined) {
     // 输出并打印日志

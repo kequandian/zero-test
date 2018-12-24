@@ -39,9 +39,14 @@ let Swagger = {
      */
     getSwagger() {
         if(!this.swagger) {
-            this.swagger = fs.readFileSync('./swagger/swagger.json');
-            this.swagger = JSON.parse(this.swagger);
-        }
+            try {
+                this.swagger = fs.readFileSync('./swagger/swagger.json', 'utf-8');
+            } catch(err) {
+                // nothing to do
+            } finally {
+                this.swagger = undefined ? {} : this.swagger;
+            }
+        } 
         return this.swagger;
     }
 

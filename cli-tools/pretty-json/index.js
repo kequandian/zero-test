@@ -7,6 +7,7 @@ let printLog = require('./printLog');
 let pdf = require('pdfkit');
 let convertToVTable = require("./convertToVTable");
 let DataUtil = require("./util/DataUtil");
+let shelljs = require("shelljs");
 
 function list (val) {
     return val.split(',');
@@ -53,7 +54,12 @@ if(program.value != undefined) {
     if(!json || json == "") {
         console.log(`\nERROR MESSAGE: ${program.file} is empty`);
     }
-    data = JSON.parse(json);
+    try {
+        data = JSON.parse(json);
+    } catch(err) {
+        console.log(json);
+        shelljs.exit(1);
+    }
 
 }
 if(data != undefined) {
