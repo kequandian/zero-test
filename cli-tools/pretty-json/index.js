@@ -63,8 +63,8 @@ if(program.value != undefined) {
 
 }
 if(data != undefined) {
-    if(data.code != undefined && data.code == 200 ||
-        data.status_code != undefined && data.status_code == 0) {
+    if(data.code != undefined && data.code == 200 && data.data instanceof Object ||
+        data.status_code != undefined && data.status_code == 0 && data.data instanceof Object) {
             data = data.data;
     }
     if(program.include != undefined) {

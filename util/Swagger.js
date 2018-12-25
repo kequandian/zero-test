@@ -29,7 +29,7 @@ let Swagger = {
             }
 
         } else {
-            console.log(`${api}不存在或swagger.json需更新, 也可通过--table指定数据库使用`);
+            console.log(`swagger.json中'${api}'不存在, 可通过--table指定数据库生成数据`);
             shell.exit(1);
         }
     },
@@ -40,16 +40,16 @@ let Swagger = {
     getSwagger() {
         if(!this.swagger) {
             try {
-                this.swagger = fs.readFileSync('./pub/swagger.json', 'utf-8');
+                this.swagger = JSON.parse(fs.readFileSync('./pub/swagger.json', 'utf-8'));
             } catch(err) {
                 // nothing to do
+                console.log(`swagger.json is error: ${err.message}`);
             } finally {
-                this.swagger = undefined ? {} : this.swagger;
+                this.swagger = this.swagger == undefined ? {} : this.swagger;
             }
         } 
         return this.swagger;
     }
-
 }
 
 module.exports = Swagger;

@@ -65,8 +65,6 @@ if(api && api.substring(0, 3) == "C:/") {
     api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
 }
 
-
-
 // pretty-json参数列表
 let params = "-c ";
 if(ignore && ignore.length > 0) {
@@ -134,7 +132,6 @@ if (program.out != undefined) {
         }
         Swagger.writeFields(api, method, 'temp/params.json');
         shell.exec(`node ./cli-tools/pretty-json/index.js -f temp/params.json -c -s`);
-        
 }
 
 
