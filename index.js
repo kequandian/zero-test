@@ -36,10 +36,11 @@ program
     .option('--notnull', "默认值, 仅生成notnull字段")
     .option('--all')
     .option('--table, <value>', '指定数据库表生成请求参数')
-    .option('--swagger', "从swagger中获取字段信息生成请求参数, 默认值")
+    .option('--swagger', "从swagger中获取字段信息生成请求参数")
     .option('--filter <value>', "添加或替换生成参数 {key1:value1,key2:value2}")
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
     .option('--pdf <inputFile> <outputFile>', "生成pdf,指定需转换的文件位置")
+    .option('--test <json>')
     .on('--help', function() {
         console.log(""),
         console.log("Example: GET api/cms/article/categories --out"),
@@ -58,6 +59,7 @@ program
         Pdf.export(inputFile, outputFile);
         return;
     });
+
 
 program.parse(process.argv);
 
@@ -79,6 +81,10 @@ if(ignore && ignore.length > 0) {
 if (program.parent) {
     params += " --parent";
 }
+if(method && method.toUpperCase() === 'POST'
+    || method && method.toUpperCase() === 'PUT') {
+        params += " --body=gen.json";
+}
 
 
 
@@ -88,7 +94,10 @@ if(program.all) {
     genParams += " --all";
 }
 if(program.filter) {
-    genParams += ` --filter=${program.filter}`;
+    if(!program.table && !program.swagger) {
+        // 未指定table 与swagger时，仅处理filter
+        genParams = `${program.filter}`;
+    }
 }
 
 let swagger = Swagger.getSwagger();
@@ -101,11 +110,11 @@ if(program.out || program.report) {
         if (method && method.toUpperCase() === 'DELETE') {
             Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
         } else if(method && method.toUpperCase() === 'POST') {
-            Gen.genarator(api, 'POST', program.table, genParams);
+            Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
             Http.post(api, './gen.json');
     
         }  else if(method && method.toUpperCase() === 'PUT') {
-            Gen.genarator(`${api}/{id}`, 'PUT', program.table, genParams);
+            Gen.genarator(`${api}/{id}`, 'PUT', program.table, program.swagger, genParams);
             Http.putAfterGetById(api, './gen.json', program.head, program.tail);
         }
         
@@ -122,6 +131,7 @@ if (program.out != undefined) {
     // 输出api结果
     shell.exec(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}`);
 } else if (program.report != undefined) {
+    
     // 输出并打印日志
     shell.exec(`node ./cli-tools/pretty-json/index.js -f temp/response.json ${params} -t ${method}--${originApi}  --log`);
 } else if(method && api) {

@@ -22,7 +22,7 @@ elif [ "$cmd"x == "get"x -a "$opt"x == "swagger"x ];then
     curl $url --out swagger/index.json && \
     node index.js swagger format && mv swagger/format.json ../../pub/swagger.json)
     exit 0
-elif [ "$cmd"x == "update" ];then
+elif [ "$cmd"x == "update"x ];then
     echo "update api-gen..."
     (cd cli-tools/api-gen && npm install)
     echo "update pretty-json..."
@@ -32,13 +32,25 @@ elif [ "$cmd"x == "update" ];then
     echo "update env-test..."
     npm install -g
     exit 0
-elif [ "$cmd"x == "repair" ];then
+elif [ "$cmd"x == "repair"x ];then
+    if [ ! -f "package-lock.json" ];then
+        rm package-lock.json
+    fi
+    if [ ! -f "./cli-tools/api-gen/package-lock.json" ];then
+        rm ./cli-tools/api-gen/package-lock.json
+    fi
+    if [ ! -f "./cli-tools/pretty-json/package-lock.json" ];then
+        rm ./cli-tools/pretty-json/package-lock.json
+    fi
+    if [ ! -f "./cli-tools/zero-json/package-lock.json" ];then
+        rm ./cli-tools/zero-json/package-lock.json
+    fi
     echo "repair api-gen..."
-    (cd cli-tools/api-gen && npm uninstall api-gen && npm install)
+    (cd cli-tools/api-gen && npm uninstall api-gen -g && npm install)
     echo "repair pretty-json..."
-    (cd cli-tools/pretty-json && npm uninstall pretty-json && npm install )
+    (cd cli-tools/pretty-json && npm uninstall pretty-json -g && npm install )
     echo "repair zero-json..."
-    (cd cli-tools/zero-json && npm uninstall zero-json && npm install)
+    (cd cli-tools/zero-json && npm uninstall zero-json -g && npm install)
     echo "repair env-test..."
     npm unstall env-test -g && npm install -g
     initDir

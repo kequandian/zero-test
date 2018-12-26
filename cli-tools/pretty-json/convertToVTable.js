@@ -17,16 +17,30 @@ let maxTableSize = 400;
  * @param {*} json 
  */
 function convertArrayToTable(header, json, mdLog) {
+    if(json == undefined) {
+        return ;
+    }
     let columnsNum = 1; // 数据列数 + 第一列（作为行号)
     let columnsTitle = [{content:'row', hAlign:'center'}];
     let log = "";
     if(json.length == 0) return;
+
+    // id放第二列
+    let dataRowOneId;
+    if(!(json[0]["id"] instanceof Object)) {
+        columnsTitle.push({content: "id", hAlign: "center"});
+        log += `| row | id |`;
+        hasId = true;
+        dataRowOneId = json[0]["id"];
+        delete json[0]["id"];
+        columnsNum ++;
+    }
     for(let item in json[0]) {
         let jsonString = JSON.stringify(json[0][item]);
         columnsTitle.push({content:item, hAlign:'center'});
-        if(columnsNum == 1) {
-            log += `| row |`;
-        }
+        // if(columnsNum == 1) {
+        //     log += `| row |`;
+        // }
         log += ` ${item} |`
         columnsNum ++;
 
@@ -52,9 +66,24 @@ function convertArrayToTable(header, json, mdLog) {
     for(let index in json) {
         let rowData = [index];
         log += ` ${index} |`
+
+        if(index == 0 && dataRowOneId != undefined) { // put dataRowOne id
+            log += ` ${dataRowOneId} |`;
+            rowData.push(dataRowOneId);
+        }
+        if(index != 0 && !(json[index]["id"] instanceof Object)) {    // put other row id
+            log += ` ${json[index]["id"]} |`;
+            rowData.push(json[index]["id"]);
+            delete json[index]["id"];
+        }
+
         for(let item in json[index]) {
-            log += ` ${json[index][item]} |`
-            rowData.push(StringUtil.wordWrap(json[index][item], maxColumnSize));
+            let itemString = JSON.stringify(json[index][item]);
+            if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
+                itemString = itemString.substring(1, itemString.length - 1);
+            }
+            log += ` ${itemString} |`
+            rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
         }
         log += "\n"
         res.push(rowData);
@@ -62,6 +91,7 @@ function convertArrayToTable(header, json, mdLog) {
     mdLog.data = log;
     return res.toString();
 }
+
 
 /**
  * json转列向表格
@@ -77,7 +107,18 @@ function convertToVTable(header, json, parent, sub, mdLog) {
     let columnsTitle = []; 
     let subLog = "";
     let log = "";
+
+    let dataRowOneId;
+    if(json["id"] != undefined && !(json["id"] instanceof Object)) {
+        columnsTitle.push("id");
+        dataRowOneId = json["id"];
+        delete json["id"];
+        log += '|';
+        columnsNum ++;
+    }
+
     for(let item in json) {
+
         let jsonString = JSON.stringify(json[item]);
         // if(jsonString != undefined && (jsonString[0] == '{' || (jsonString[0] == '[' && jsonString[1] == '{'))) {
         //     // nothing
@@ -111,18 +152,27 @@ function convertToVTable(header, json, parent, sub, mdLog) {
     // JSON转表格形式字符串，仅转2层, 第二层为对象时，数据下挂到另一表格中
     let subTable = "";
     let rowData = [];
+
+    if(dataRowOneId != undefined) {     // set id
+        rowData.push(dataRowOneId);
+        log += ` ${dataRowOneId} |`;
+    }
     if(Array.isArray(json)) {       // 匹配 ：{data: []}
         if(json.length == 0) {
             
         } else {
             let jsonString = JSON.stringify(json);
-            if(JSON.stringify(json[0])[0] == '{') {
+            if(JSON.stringify(json[0])[0] == '{') { // 纯对象数组，只显示子表
+                // let md = {};
+                // subTable += "\n" + convertArrayToTable(`${header}`, json, md);
+                // subLog += md.data == undefined ? "" : md.data + "\n";
+                // let columnValue = jsonString.length > remainLen ? jsonString.substring(0, remainLen) + "..." : jsonString;
+                // rowData.push({colSpan: columnsNum, content:columnValue});
+                // log += ` ${columnValue} |`;
                 let md = {};
-                subTable += "\n" + convertArrayToTable(`${header}`, json, md);
-                subLog += md.data == undefined ? "" : md.data + "\n";
-                let columnValue = jsonString.length > remainLen ? jsonString.substring(0, remainLen) + "..." : jsonString;
-                rowData.push({colSpan: columnsNum, content:columnValue});
-                log += ` ${columnValue} |`;
+                let result = convertArrayToTable(`${header}`, json, md);
+                mdLog.data = md.data;
+                return result;
             }
         }
     } else {
@@ -130,7 +180,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
             let jsonString = JSON.stringify(json[item]);
             if(jsonString != undefined && jsonString[0] == "{") {   // 匹配 ：{data: {key: {}}}
                 let md = {};
-                subTable += "\n" + convertToVTable(`${header}#${item}`, json[item], md);
+                subTable += "\n" + convertToVTable(`${header}#${item}`, json[item], undefined, undefined, md);
                 subLog += md.data == undefined ? "" : md.data + "\n";
                 let columnValue = jsonString.length > remainLen ? jsonString.substring(0, remainLen) + "..." : jsonString;
                 rowData.push(columnValue);
@@ -157,7 +207,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
                 if(typeof json[item] == 'string') {
                     let columnValue = StringUtil.wordWrap(json[item], maxColumnSize);
                     rowData.push(columnValue);
-                    log += ` ${columnValue} |`;
+                    log += ` ${json[item]} |`;
                 }  else {
                     rowData.push(json[item]);
                     log += ` ${json[item]} |`;

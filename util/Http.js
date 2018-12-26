@@ -20,8 +20,8 @@ let Http = {
 
         let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
-            console.log(`api执行错误:\n${JSON.stringify(response)}`);
-            shell.exit(1);
+            // console.log(`${api}执行错误:\n${JSON.stringify(response)}`);
+            return;
         }
         let records = response.data.records;
         index = index == -1 ? records.length - 1 : 0;
@@ -41,8 +41,12 @@ let Http = {
         Test.run(api, 'post', body);
         let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
-            console.log(`api执行错误:\n${JSON.stringify(response)}`);
-            shell.exit(1);
+            // console.log(`${api}执行错误:\n${JSON.stringify(response)}`);
+            if(response.message != undefined) {
+                response.message = response.message.replace(new RegExp("\n",'g'), "");
+                fs.writeFileSync(this.response_file, JSON.stringify(response), "utf-8");
+            }
+            return;
         }
     },
     /**
@@ -57,7 +61,7 @@ let Http = {
         Test.run(api,'put', body);
         let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
-            console.log(`api执行错误:\n${JSON.stringify(response)}`);
+            // console.log(`${api}执行错误:\n${JSON.stringify(response)}`);
             shell.exit(1);
         }
     },
@@ -99,5 +103,4 @@ let Http = {
     }
 
 }
-
 module.exports = Http;

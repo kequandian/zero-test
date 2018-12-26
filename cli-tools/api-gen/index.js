@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-let mysql = require('mysql');  
 let dateUtil = require("./util/dateUtil");
 let fs = require("fs");
 let StringUtil = require("./util/StringUtil");
@@ -65,7 +64,7 @@ if(program.list) {
 } else if(program.file) {
     let result = JSON.parse(fs.readFileSync(program.file));
     console.log(JSON.stringify(genarator.genarateValuesBySwagger(result, program.filter)));
-}else {
+} else {
     program.outputHelp(read);
 }
 

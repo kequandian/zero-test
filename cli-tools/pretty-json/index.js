@@ -25,7 +25,8 @@ program
     .option('-i, --include <items>', "指定只生成部分字段", list)
     .option('-p, --parent', '仅生成主表, 默认生成所有表格')
     .option('-s, --sub', '仅生成子表')
-    .option('--log', '生成日志');
+    .option('--log', '生成日志')
+    .option('--body <file>', "日志中记录POST|PUT api请求body");
 program.on('--help', function() {
     console.log("Example:"),
     console.log('  -i 1,2,3    #input list: [\'1\',\'2\',\'3\']'),
@@ -45,6 +46,10 @@ if(program.title != undefined) {
     console.log(program.title);
    // printLog(program.title, program.log);
    printLog(`### **${program.title}**`, program.log)
+}
+if(program.body != undefined) {
+    let body = fs.readFileSync(program.body, "UTF-8");
+    printLog("```\nBody: " + body + "\n```", program.log);
 }
 let data;
 if(program.value != undefined) {

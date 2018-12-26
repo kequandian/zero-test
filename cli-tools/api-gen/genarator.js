@@ -2,7 +2,7 @@ let mysql = require('mysql');
 let dateUtil = require("./util/dateUtil");
 let fs = require("fs");
 let StringUtil = require("./util/StringUtil");
-
+let shelljs = require("shelljs");
 
 
 
@@ -75,15 +75,18 @@ let genarator = {
         return fieldFilter(request, filter);
     }
 }
-
 function fieldFilter(json, filter) {
+    let filterJson
+    try {
+        filterJson = JSON.parse(filter);
+    } catch(err) {
+        console.log(`${err.message} : ${filter}`);
+        shelljs.exit(1);
+    }
     /** 添加或替换字段 */
-
     if(filter) {
-        let arr = filter.substring(1, filter.length - 1).split(",");
-        for(let item in arr) {
-            let map = arr[item].split(":");
-            json[map[0]] = map[1];
+        for(let item in filterJson) {
+            json[item] = filterJson[item];
         }
     }
     return json;
