@@ -1,6 +1,7 @@
 var shell = require("shelljs");
 var fs = require('fs');
-var server = require('../server.config');
+var server = require('../conf/server.config');
+var fileMap = require('../conf/file_map.config');
 
 /**
  * env-test 脚本调用
@@ -11,9 +12,9 @@ let Test = {
             //demo: run '{\"url\":\"testbody\"}'
             body = `'${body}'`;
         }
-        if (shell.exec(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../temp/response.json)`).code !== 0) {
+        if (shell.exec(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../${fileMap.response})`).code !== 0) {
             console.log('error while exec env-test/test');
-            console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > temp/response.json)`);
+            console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > ${fileMap.response})`);
             shell.exit(1);
         }
     },
@@ -36,12 +37,12 @@ let Test = {
             //     shell.exit(1);
             // }
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
-            if (shell.exec(`(cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../temp/response.json)`).code !== 0) {
+            if (shell.exec(`(cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../${fileMap.response})`).code !== 0) {
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test post ${server.host}${login_api} run ${body} > temp/response.json)`);
+                console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test post ${server.host}${login_api} run ${body} > ${fileMap.response})`);
                 shell.exit(1);
             }
-            let loginRes = fs.readFileSync('./temp/response.json', "UTF-8");
+            let loginRes = fs.readFileSync(`${fileMap.response}`, "UTF-8");
             try {
                 loginRes = JSON.parse(loginRes);
             } catch(err) {

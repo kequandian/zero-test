@@ -1,12 +1,13 @@
 var shell = require("shelljs");
 var Swagger = require('./Swagger');
 var fs = require('fs');
+var fileMap = require('../conf/file_map.config');
 
 /**
  * api-gen 调用
  */
 let Gen = {
-    genFile : "gen.json",
+    genFile : "temp/gen.json",
     /**
      * 生成api请求参数，默认通过swagger.json获取字段信息；
      * 若指定了table,则通过table获取
@@ -16,11 +17,11 @@ let Gen = {
      */
     genarator(api, method, table, swagger, params) {
         if(table) {
-            console.log(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
+            //console.log(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
             shell.exec(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
         } else if(swagger) {
-            Swagger.writeFields("/" + api, method, './temp/params.json');
-            shell.exec(`(cd cli-tools/api-gen && node index.js -f ../../temp/params.json ${params} > ../../${this.genFile})`);
+            Swagger.writeFields("/" + api, method, `${fileMap.params}`);
+            shell.exec(`(cd cli-tools/api-gen && node index.js -f ../../${fileMap.params} ${params} > ../../${this.genFile})`);
         } else {
             // this.writeFilterToJson(params);
             fs.writeFileSync(this.genFile, params, "utf-8");

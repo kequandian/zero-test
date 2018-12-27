@@ -7,8 +7,6 @@
 *.pdf
 temp/
 logs/
-gen.json
 testcase
 package-lock.json
-api.config
 swagger.json

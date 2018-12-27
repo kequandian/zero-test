@@ -26,7 +26,7 @@ program
     .option('-a, --all', '所有字段都生成')
     .option('--list', "show tables")
     .option('-f, --file <value>', "使用指定格式参数生成字段参数(指定json文件路径)")
-    .option('--filter <value>', "添加或替换生成参数 {key1:value1,key2:value2}")
+    .option('--filter <value>')
     .on('--help', function() {
         console.log("Example:"),
         console.log('  -e name,note    #input list: [\'name\',\'note\']')

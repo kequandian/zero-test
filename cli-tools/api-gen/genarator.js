@@ -36,15 +36,6 @@ let genarator = {
                 }
             }
         }
-
-                /** 添加或替换字段 */
-                if(filter) {
-                    let arr = filter.substring(1, filter.length - 1).split(",");
-                    for(let item in arr) {
-                        let map = arr[item].split(":");
-                        request[map[0]] = map[1];
-                    }
-                }
         return fieldFilter(request, filter);
     },
 
@@ -76,11 +67,13 @@ let genarator = {
     }
 }
 function fieldFilter(json, filter) {
+    if(!filter) {
+        return json;
+    }
     let filterJson
     try {
         filterJson = JSON.parse(filter);
     } catch(err) {
-        console.log(`${err.message} : ${filter}`);
         shelljs.exit(1);
     }
     /** 添加或替换字段 */
