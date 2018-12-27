@@ -113,7 +113,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
         columnsTitle.push("id");
         dataRowOneId = json["id"];
         delete json["id"];
-        log += '|';
+        log += '| id |';
         columnsNum ++;
     }
 

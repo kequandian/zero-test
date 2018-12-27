@@ -49,23 +49,24 @@ program
     });
 
 program
-    .command('login <endpoint> <account> <password>')
-    .action(function (endpoint, account, password) {
+    .command('login <endpoint> <account> <password> [report]')
+    .action(function (endpoint, account, password, report) {
         Test.login(endpoint, account, password);
-        shell.exit(0);
+        if(report) {
+            shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} -c -t login--${account}  --log`);
+        }
     });
 program
     .command('pdf <outputFile>')
     .action(function (outputFile) {
         let logConf = Reader.readJson('./log-config.json');
         Pdf.export(`${logConf.dir}${logConf.file}`, outputFile);
-        return;
     });
 
     program
     .command('journal <cmd> [option]')
     .action(function (cmd, ...options) {
-        let logConf = Reader.readJson('./log-config.json');
+        let logConf = Reader.readJson(`${fileMap.logConf}`);
         if(cmd == "ls") {
             shell.exec(`ls ${logConf.dir}`);
         } else if(cmd == "current") {
@@ -80,13 +81,16 @@ program
                 logConf.file = DateUtil.getToday();
             } 
             fs.writeFileSync(`${fileMap.logConf}`, JSON.stringify(logConf), "UTF-8");
-        }else {
+        } else if(cmd == "rewrite") {
+            shell.exec(`true > ${logConf.dir}${logConf.file}`)   
+        }else if(cmd == "help"){
             console.log("Usage:");
             console.log("   journal ls");
             console.log("   journal current");
+            console.log("   journal set <journal-file>");
             console.log("   journal rm <journal-file>");
+            console.log("   journal rewrite");
         }
-        shell.exit(0);
     });
 
 program.parse(process.argv);
