@@ -10,11 +10,13 @@ function printLog(data, log) {
         } catch(err) {
 
         }
-        let basePath = config ? config["basePath"] : "logs";
+        let basePath = config ? config["dir"] : "pub/logs/";
     
-        if(!config["path"] || config["path"] == "default") {
-            let file = basePath + dateUtil.getToday() + '.log';
-           fs.appendFileSync(file, data + "\n", "utf-8");
+        if(!config["file"] || config["file"] == "default") {
+            let file = basePath + dateUtil.getToday();
+            fs.appendFileSync(file, data + "\n", "utf-8");
+       } else {
+            fs.appendFileSync(`${basePath}${config["file"]}`, data + "\n", "utf-8");
        }
     }
 }

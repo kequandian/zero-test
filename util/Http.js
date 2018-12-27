@@ -40,15 +40,7 @@ let Http = {
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
         Test.run(api, 'post', body);
-        let response = Reader.readJson(this.response_file);
-        if (response.code != 200 && response.status_code != 0) {
-            // console.log(`${api}执行错误:\n${JSON.stringify(response)}`);
-            if(response.message != undefined) {
-                response.message = response.message.replace(new RegExp("\n",'g'), "");
-                fs.writeFileSync(this.response_file, JSON.stringify(response), "utf-8");
-            }
-            return;
-        }
+        return this.isSuccess();
     },
     /**
      * Put请求，file为body文件位置
@@ -60,11 +52,7 @@ let Http = {
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
         Test.run(api,'put', body);
-        let response = Reader.readJson(this.response_file);
-        if (response.code != 200 && response.status_code != 0) {
-            // console.log(`${api}执行错误:\n${JSON.stringify(response)}`);
-            shell.exit(1);
-        }
+        return this.isSuccess();
     },
     /**
      * 先调用相应Get api获取指定索引数据id(头或尾)，然后进行PUT操作
@@ -79,9 +67,9 @@ let Http = {
             let index = head == undefined ? -1 : 0;
             api = Http.getId(api, index);
             console.log(`redirect api: PUT ${api}`);
-            Http.put(api, './temp/gen.json');
+            return Http.put(api, './temp/gen.json');
         } else {
-            Http.put(api, './temp/gen.json');
+            return Http.put(api, './temp/gen.json');
         }
     },
     /**
@@ -101,6 +89,19 @@ let Http = {
         } else {
             Test.run(api, `${method}`);
         }
+        return this.isSuccess();
+    },
+
+    isSuccess() {
+        let response = Reader.readJson(this.response_file);
+        if (response.code != 200 && response.status_code != 0) {
+            if(response.message != undefined) {
+                response.message = response.message.replace(new RegExp("\n",'g'), "");
+                fs.writeFileSync(this.response_file, JSON.stringify(response), "utf-8");
+            }
+            return false;
+        }
+        return true;
     }
 
 }
