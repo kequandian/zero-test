@@ -7,7 +7,7 @@ var fileMap = require('../conf/file_map.config');
  * api-gen 调用
  */
 let Gen = {
-    genFile : "temp/gen.json",
+    genFile : fileMap.gen,
     /**
      * 生成api请求参数，默认通过swagger.json获取字段信息；
      * 若指定了table,则通过table获取
@@ -17,7 +17,6 @@ let Gen = {
      */
     genarator(api, method, table, swagger, params) {
         if(table) {
-            //console.log(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
             shell.exec(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
         } else if(swagger) {
             Swagger.writeFields("/" + api, method, `${fileMap.params}`);

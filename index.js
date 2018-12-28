@@ -30,9 +30,9 @@ program
         method = cmd;
         api = value;
     })
-    .option('-o, --out')
-    .option('-r, --report')
-    .option('-p, --parent')
+    .option('--out')
+    .option('--report')
+    .option('--parent')
     .option('--head')
     .option('--tail')
     .option('--notnull', "默认值, 仅生成notnull字段")
@@ -75,7 +75,8 @@ program
         for(let i in read) {
             let exec = `${read[i]} --report`;
             if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
-                console.log(`${exec}`);
+                console.log(read[i]);
+                exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
                 shell.exec(`(${exec} > ${fileMap.testTemp})`);
                 let response = Reader.readJson(`${fileMap.response}`, "UTF-8");
                 if(response.code != 200 && response.status_code != 0) {
@@ -83,7 +84,8 @@ program
                     console.log(fs.readFileSync(`${fileMap.testTemp}`, "UTF-8"));
                     break;
                 }
-            } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#") {
+            } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#" && read[i][1] && read[i][1] != "#") {
+                console.log(read[i]);
                 let start = 1;
                 while(read[i][start] == " ") {
                     start ++;
@@ -176,6 +178,7 @@ if(program.all) {
     genParams += " --all";
 }
 if(program.filter) {
+    
     if(!program.table && !program.swagger) {
         // 未指定table 与swagger时，仅处理filter
         genParams = `${program.filter}`;
@@ -212,10 +215,11 @@ if(program.out || program.report) {
     } 
 }
 
-if (program.out != undefined) {
+if (program.out) {
     // 输出api结果
     shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}`);
-} else if (program.report != undefined) {
+} else if (program.report) {
+    console.log(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     // 输出并打印日志
     shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
 } else if(method && api) {

@@ -1,5 +1,6 @@
 var shelljs = require("shelljs");
 var fs = require("fs");
+var fielMap = require("../conf/file_map.config");
 
 let Reader = {
     readJson(file) {
@@ -8,10 +9,12 @@ let Reader = {
             result = JSON.parse(result);
         } catch(err) {
             if(result == "") {
-                console.log(`\nresponse if empty, please check your request again`);
+                console.log(`\n${file} is empty, please check your request again`);
+                fs.writeFileSync(`${fielMap.response}`, `{"code": 0, "${file} is empty, please check your request again`, "UTF-8");
                 shelljs.exit(1);
             }
             console.log(`read json error!\n${result}`);
+            fs.writeFileSync(`${fielMap.response}`, `{"code": 0, "message": "read json error! ${fs.readFileSync(file, "UTF-8")}"`, "UTF-8");
             shelljs.exit(1);
         }
          return result;

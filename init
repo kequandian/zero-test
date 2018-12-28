@@ -4,8 +4,6 @@ cmd=$1
 opt=$2
 url=$3
 
-#http://120.79.77.207:8080/swagger/app/swagger.json
-
 if [ "$cmd"x == "install"x ];then
     echo "init api-gen..."
     (cd cli-tools/api-gen && npm install)

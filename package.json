@@ -1,6 +1,6 @@
 {
   "name": "env-test",
-  "version": "0.2.0",
+  "version": "0.2.01",
   "description": "env test",
   "main": "index.js",
   "bin": {
