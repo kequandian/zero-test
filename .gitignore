@@ -4,7 +4,6 @@
 /cli-tools/api-gen/node_modules
 /cli-tools/zero-json/node_modules
 /cli-tools/pretty-json/node_modules
-*.pdf
 temp/
 logs/
 testcase

@@ -10,24 +10,38 @@
 Usage: index <method> <api> [options] [value ...]
 
 Options:
-  -V, --version                          output the version number
   -o, --out
-  -r, --report                           输出并记录日志
+  -r, --report
   -p, --parent
   --head
   --tail
-  --notnull                              默认值, 仅生成notnull字段
+  --notnull                                       默认值, 仅生成notnull字段
   --all
-  --table, <value>                       指定数据库表生成请求参数
-  --swagger                              从swagger中获取字段信息生成请求参数, 默认值
-  --filter <value>                       添加或替换生成参数 {key1:value1,key2:value2}
-  --only                                 仅处理当前api，post/put请求后不带回get列表
-  --pdf <inputFile> <outputFile>         生成pdf,指定需转换的文件位置
-  -h, --help                             output usage information
+  --table, <value>                                指定数据库表生成请求参数
+  --swagger                                       从swagger中获取字段信息生成请求参数
+  --filter <value>                                添加或替换生成参数 {key1:value1,key2:value2}
+  --only                                          仅处理当前api，post/put请求后不带回get列表
+  -h, --help                                      output usage information
 
 Commands:
-  login <endpoint> <account> <password>
-  pdf <inputFile> <outputFile>
+  login <endpoint> <account> <password> [report]
+  pdf <outputFile>
+  test <testcase> <journal-file>
+  journal <cmd> [option]
+
+Example: GET api/cms/article/categories --out
+         login api admin 111111
+
+```
+**Journal**
+```
+$ env-test journal help
+Usage:
+   journal ls
+   journal current
+   journal set <journal-file>
+   journal rm <journal-file>
+   journal rewrite
 ```
 
 ## Demo
@@ -131,7 +145,7 @@ $ env-test delete api/cms/article/categories --out --tail
 ```
 ### Report
 ```
-$ node index get api/cms/article/categories --report
+$ env-test get api/cms/article/categories --report
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -153,8 +167,14 @@ $ node index get api/cms/article/categories --report
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 
-$ node index pdf pub/logs/2018-12-25.log demo.pdf
+$ env-test pdf pub/logs/2018-12-25.log demo.pdf
 converting pdf from pub/logs/2018-12-25.log to demo.pdf
 Done
+```
+
+### Testcase
+```
+$ env-test test demo/testcase_demo demo/testcase_demo.pdf
+
 ```
 
