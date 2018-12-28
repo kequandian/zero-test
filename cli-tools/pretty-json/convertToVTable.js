@@ -27,7 +27,7 @@ function convertArrayToTable(header, json, mdLog) {
 
     // id放第二列
     let dataRowOneId;
-    if(!(json[0]["id"] instanceof Object)) {
+    if(json[0]["id"] &&  !(json[0]["id"] instanceof Object)) {
         columnsTitle.push({content: "id", hAlign: "center"});
         log += `| row | id |`;
         hasId = true;
@@ -38,9 +38,9 @@ function convertArrayToTable(header, json, mdLog) {
     for(let item in json[0]) {
         let jsonString = JSON.stringify(json[0][item]);
         columnsTitle.push({content:item, hAlign:'center'});
-        // if(columnsNum == 1) {
-        //     log += `| row |`;
-        // }
+        if(columnsNum == 1) {
+            log += `| row |`;
+        }
         log += ` ${item} |`
         columnsNum ++;
 

@@ -31,7 +31,7 @@ program
         api = value;
     })
     .option('-o, --out')
-    .option('-r, --report', "输出并记录日志")
+    .option('-r, --report')
     .option('-p, --parent')
     .option('--head')
     .option('--tail')
@@ -41,7 +41,6 @@ program
     .option('--swagger', "从swagger中获取字段信息生成请求参数")
     .option('--filter <value>', "添加或替换生成参数 {key1:value1,key2:value2}")
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
-    .option('--test <json>')
     .on('--help', function() {
         console.log(""),
         console.log("Example: GET api/cms/article/categories --out"),
@@ -52,15 +51,64 @@ program
     .command('login <endpoint> <account> <password> [report]')
     .action(function (endpoint, account, password, report) {
         Test.login(endpoint, account, password);
-        if(report) {
+        if(report == "report") {
             shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} -c -t login--${account}  --log`);
         }
+        shell.exit(0);
     });
 program
     .command('pdf <outputFile>')
     .action(function (outputFile) {
-        let logConf = Reader.readJson('./log-config.json');
+        let logConf = Reader.readJson(`${fileMap.logConf}`);
         Pdf.export(`${logConf.dir}${logConf.file}`, outputFile);
+    });
+
+program
+    .command('test <testcase> <journal-file>')
+    .action(function (testcase, journalFile) {
+        console.log("testcase running...");
+        let logConf = Reader.readJson(`${fileMap.logConf}`);
+        let fileData = fs.readFileSync(testcase, "UTF-8");
+        let read = fileData.split("\r\n");
+        fs.writeFileSync(fileMap.response, JSON.stringify({code : 200}, "UTF-8"));
+        let num = 1;
+        for(let i in read) {
+            let exec = `${read[i]} --report`;
+            if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
+                console.log(`${exec}`);
+                shell.exec(`(${exec} > ${fileMap.testTemp})`);
+                let response = Reader.readJson(`${fileMap.response}`, "UTF-8");
+                if(response.code != 200 && response.status_code != 0) {
+                    console.log(`\ntest error !!!`);
+                    console.log(fs.readFileSync(`${fileMap.testTemp}`, "UTF-8"));
+                    break;
+                }
+            } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#") {
+                let start = 1;
+                while(read[i][start] == " ") {
+                    start ++;
+                }
+                let end = read[i].length - 1;
+                while(read[i][end] == " ") {
+                    end --;
+                }
+
+                fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${read[i].substring(start, end + 1)}\n`, "UTF-8", function(err) {
+                    if(err) {
+                        console.log(err.message);
+                        shell.exit(1);
+                    }
+                });
+            }
+        }
+        fileData = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"
+        let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
+        testcaseLog = fileData + testcaseLog;
+
+        fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
+
+        console.log(`export report: ${journalFile}`);
+        Pdf.export(`${logConf.dir}${logConf.file}`, journalFile);
     });
 
     program
@@ -82,7 +130,7 @@ program
             } 
             fs.writeFileSync(`${fileMap.logConf}`, JSON.stringify(logConf), "UTF-8");
         } else if(cmd == "rewrite") {
-            shell.exec(`true > ${logConf.dir}${logConf.file}`)   
+            shell.exec(`true > ${logConf.dir}${logConf.file}`);
         }else if(cmd == "help"){
             console.log("Usage:");
             console.log("   journal ls");
@@ -91,6 +139,7 @@ program
             console.log("   journal rm <journal-file>");
             console.log("   journal rewrite");
         }
+        shell.exit(0);
     });
 
 program.parse(process.argv);
@@ -162,11 +211,11 @@ if(program.out || program.report) {
         } 
     } 
 }
+
 if (program.out != undefined) {
     // 输出api结果
     shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}`);
 } else if (program.report != undefined) {
-    
     // 输出并打印日志
     shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
 } else if(method && api) {
