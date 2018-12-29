@@ -13,6 +13,7 @@ let Test = {
             body = `'${body}'`;
             body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
+        console.log(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../${fileMap.response})`);
         if (shell.exec(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../${fileMap.response})`).code !== 0) {
             console.log('error while exec env-test/test');
             console.log(`command : (cd ./cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > ${fileMap.response})`);

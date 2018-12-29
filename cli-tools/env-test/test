@@ -30,6 +30,7 @@ if [ ! $api ];then
  exit 0
 fi
 
+api=${api//\%26/\&}
 
 ## get tc name if starts with POST/GET/PUT/DELETE
 err=''
