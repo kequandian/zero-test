@@ -18,6 +18,16 @@ let Reader = {
             shelljs.exit(1);
         }
          return result;
+    },
+    parseJson(string) {
+        let result;
+        try {
+            result = JSON.parse(string);
+        } catch(err) {
+            console.log(`read json string error!\n${string}`);
+            shelljs.exit(1);
+        }
+         return result;
     }
 }
 

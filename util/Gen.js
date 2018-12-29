@@ -2,6 +2,8 @@ var shell = require("shelljs");
 var Swagger = require('./Swagger');
 var fs = require('fs');
 var fileMap = require('../conf/file_map.config');
+var Reader = require('./Reader');
+var DateUtil = require('../cli-tools/api-gen/util/dateUtil');
 
 /**
  * api-gen 调用
@@ -23,7 +25,13 @@ let Gen = {
             shell.exec(`(cd cli-tools/api-gen && node index.js -f ../../${fileMap.params} ${params} > ../../${this.genFile})`);
         } else {
             // this.writeFilterToJson(params);
-            fs.writeFileSync(this.genFile, params, "utf-8");
+            params = Reader.parseJson(params);
+            for(let key in params) {
+                if(params[key] == "$CURRENT_DATE") {
+                    params[key] = DateUtil.getNow();
+                }
+            }
+            fs.writeFileSync(this.genFile, JSON.stringify(params), "utf-8");
         }
     },
     writeFilterToJson(filter) {

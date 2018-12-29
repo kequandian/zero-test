@@ -8,7 +8,10 @@ let dateUtil = {
     getRandomDate() {
         return this.getRandomDateByRang(365);
     },
-
+    getNow() {
+        var now = new Date();
+        return this.formate(now);
+    },
     formate(date) {  
         var y = date.getFullYear();  
         var m = date.getMonth() + 1;  
@@ -24,5 +27,4 @@ let dateUtil = {
         return y + '-' + m + '-' + d+' '+h+':'+minute+':'+ second;  
     }
 }
-
 module.exports = dateUtil;

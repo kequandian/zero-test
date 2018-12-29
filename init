@@ -12,7 +12,7 @@ if [ "$cmd"x == "install"x ];then
     echo "init zero-json..."
     (cd cli-tools/zero-json && npm install)
     echo "init env-test..."
-    npm install -g
+    npm install
     initDir
     exit 0
 elif [ "$cmd"x == "get"x -a "$opt"x == "swagger"x ];then
@@ -28,7 +28,7 @@ elif [ "$cmd"x == "update"x ];then
     echo "update zero-json..."
     (cd cli-tools/zero-json && npm install)
     echo "update env-test..."
-    npm install -g
+    npm install
     exit 0
 elif [ "$cmd"x == "repair"x ];then
     if [ ! -f "package-lock.json" ];then
@@ -50,7 +50,7 @@ elif [ "$cmd"x == "repair"x ];then
     echo "repair zero-json..."
     (cd cli-tools/zero-json && npm uninstall zero-json -g && npm install)
     echo "repair env-test..."
-    npm unstall env-test -g && npm install -g
+    npm unstall env-test && npm install
     initDir
     exit 0
 fi

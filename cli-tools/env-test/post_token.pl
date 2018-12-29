@@ -6,6 +6,9 @@ my $api = shift @ARGV;
 my $data = shift @ARGV;
 my $print_log = shift @ARGV;
 
+if ( $data ){
+   $data =~ s/nbsp/ /g;
+}
 if (! $data ){
    $data = "{}";
 }

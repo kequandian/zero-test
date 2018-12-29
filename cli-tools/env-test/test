@@ -6,6 +6,7 @@ api=$2
 cmd=$3
 body=$4
 
+
 ## method lowercase 
 ##method="${method,,}" ## work bash 4.0
 method=$(echo $method | tr '[A-Z]' '[a-z]')

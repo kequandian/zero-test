@@ -70,15 +70,18 @@ function fieldFilter(json, filter) {
     if(!filter) {
         return json;
     }
-    let filterJson
     try {
         filterJson = JSON.parse(filter);
     } catch(err) {
+        console.log(`read filter json error!\n${err.message}`);
         shelljs.exit(1);
     }
     /** 添加或替换字段 */
     if(filter) {
         for(let item in filterJson) {
+            if(filterJson[item] == '$CURRENT_DATE'){
+                filterJson[item] = dateUtil.getNow();
+            }
             json[item] = filterJson[item];
         }
     }

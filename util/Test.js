@@ -11,6 +11,7 @@ let Test = {
         if(body) {
             //demo: run '{\"url\":\"testbody\"}'
             body = `'${body}'`;
+            body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
         if (shell.exec(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ../../${fileMap.response})`).code !== 0) {
             console.log('error while exec env-test/test');
@@ -36,6 +37,7 @@ let Test = {
             //     console.log("login <api|rest|.> <account> <password>");
             //     shell.exit(1);
             // }
+            
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
             if (shell.exec(`(cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../${fileMap.response})`).code !== 0) {
                 console.log('error while exec env-test/test');

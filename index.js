@@ -35,16 +35,18 @@ program
     .option('--parent')
     .option('--head')
     .option('--tail')
-    .option('--notnull', "默认值, 仅生成notnull字段")
+    .option('--notnull', "default option")
     .option('--all')
-    .option('--table, <value>', '指定数据库表生成请求参数')
-    .option('--swagger', "从swagger中获取字段信息生成请求参数")
-    .option('--filter <value>', "添加或替换生成参数 {key1:value1,key2:value2}")
+    .option('--table <value>', '指定数据库表生成请求参数')
+    .option('--swagger', "从swagger中获取api所需字段信息生成请求参数")
+    .option('--filter <value>', "添加或替换生成参数")
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
     .on('--help', function() {
-        console.log(""),
-        console.log("Example: GET api/cms/article/categories --out"),
-        console.log("         login api admin 111111")
+        console.log("Example: login api admin 111111"),
+        console.log("         journal help"),
+        console.log("         get /api/cms/article/categories --out"),
+        console.log(`         post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category`),
+        console.log("         test demo/testcase-demo demo/testcase-demo.pdf")
     });
 
 program
@@ -54,7 +56,7 @@ program
         if(report == "report") {
             shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} -c -t login--${account}  --log`);
         }
-        shell.exit(0);
+        
     });
 program
     .command('pdf <outputFile>')
@@ -65,6 +67,7 @@ program
 
 program
     .command('test <testcase> <journal-file>')
+    .description('多api测试')
     .action(function (testcase, journalFile) {
         console.log("testcase running...");
         let logConf = Reader.readJson(`${fileMap.logConf}`);
@@ -114,7 +117,7 @@ program
     });
 
     program
-    .command('journal <cmd> [option]')
+    .command('journal [cmd] [option]')
     .action(function (cmd, ...options) {
         let logConf = Reader.readJson(`${fileMap.logConf}`);
         if(cmd == "ls") {
@@ -133,7 +136,7 @@ program
             fs.writeFileSync(`${fileMap.logConf}`, JSON.stringify(logConf), "UTF-8");
         } else if(cmd == "rewrite") {
             shell.exec(`true > ${logConf.dir}${logConf.file}`);
-        }else if(cmd == "help"){
+        }else if(!cmd || cmd == "help"){
             console.log("Usage:");
             console.log("   journal ls");
             console.log("   journal current");
@@ -145,7 +148,6 @@ program
     });
 
 program.parse(process.argv);
-
 
 if(api && api.substring(0, 3) == "C:/") {
     api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
