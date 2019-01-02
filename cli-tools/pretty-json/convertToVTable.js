@@ -66,12 +66,12 @@ function convertArrayToTable(header, json, mdLog) {
     for(let index in json) {
         let rowData = [index];
         log += ` ${index} |`
-
         if(index == 0 && dataRowOneId != undefined) { // put dataRowOne id
+            console.log("dataRowOneId: " + dataRowOneId);
             log += ` ${dataRowOneId} |`;
             rowData.push(dataRowOneId);
         }
-        if(index != 0 && !(json[index]["id"] instanceof Object)) {    // put other row id
+        if(index != 0 && json[index]["id"] && !(json[index]["id"] instanceof Object)) {    // put other row id
             log += ` ${json[index]["id"]} |`;
             rowData.push(json[index]["id"]);
             delete json[index]["id"];

@@ -27,7 +27,7 @@ let Gen = {
             params = Reader.parseJson(params);
         } else {
             //this.writeFilterToJson(params);
-            params = JSON.parse(params);
+            params = Reader.parseJson(params);
         }
         //params = Reader.parseJson(params);
         

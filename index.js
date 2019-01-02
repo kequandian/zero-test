@@ -57,7 +57,7 @@ program
         if(report == "report") {
             shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} -c -t login--${account}  --log`);
         }
-        
+        shell.exit(0);
     });
 program
     .command('pdf <outputFile>')
@@ -77,21 +77,25 @@ program
         fs.writeFileSync(fileMap.response, JSON.stringify({code : 200}, "UTF-8"));
         let num = 1;
         for(let i in read) {
-            let exec = `${read[i]} --report`;
-            console.log(exec);
+            console.log(read[i]);
+            let exec = `${read[i]} --report`;   
             exec = Formatter.replaceFilterBlank(exec);
+            // 执行结果记录
             if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
-                console.log(read[i]);
                 exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
-                shell.exec(`(${exec} > ${fileMap.testTemp})`);
+                shell.exec(`${exec} > ${fileMap.testTemp}`);
                 let response = Reader.readJson(`${fileMap.response}`, "UTF-8");
                 if(response.code != 200 && response.status_code != 0) {
-                    console.log(`\ntest error !!!`);
-                    console.log(fs.readFileSync(`${fileMap.testTemp}`, "UTF-8"));
+                    let errorInfo = fs.readFileSync(`${fileMap.testTemp}`, "UTF-8");
+                    console.log(`\n\ntest error !!!`);
+                    console.log(`---------------------------`);
+                    console.log(errorInfo);
+                    console.log(`---------------------------\n`);
+                    //fs.appendFileSync(`${logConf.dir}${logConf.file}`, "```\n" + errorInfo + "\n```", "UTF-8");
                     break;
                 }
+            // 单'#'号注释记录
             } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#" && read[i][1] && read[i][1] != "#") {
-                console.log(read[i]);
                 let start = 1;
                 while(read[i][start] == " ") {
                     start ++;
@@ -101,12 +105,7 @@ program
                     end --;
                 }
 
-                fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${read[i].substring(start, end + 1)}\n`, "UTF-8", function(err) {
-                    if(err) {
-                        console.log(err.message);
-                        shell.exit(1);
-                    }
-                });
+                fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${read[i].substring(start, end + 1)}\n`, "UTF-8");
             }
         }
         fileData = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"

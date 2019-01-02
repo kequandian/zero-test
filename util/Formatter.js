@@ -15,7 +15,7 @@ let Formatter = {
             let filter = help.substring(start, end);
             let others = help.substring(end);
             filter = filter.replace(new RegExp(' ', 'g'), this.blankReplace);
-            str = constant + filter + others;
+            str = constant + " --filter='" + filter + others;
         }
         return str;
     }   

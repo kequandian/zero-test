@@ -1,0 +1,4 @@
+cmd=$1
+if [ "$cmd"x == "token"x ];then
+    cat cli-tools/env-test/app.token
+fi
