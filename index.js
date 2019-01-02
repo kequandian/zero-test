@@ -14,6 +14,7 @@ var Pdf = require('./util/Pdf');
 var DateUtil = require('./cli-tools/pretty-json/util/DateUtil');
 var fileMap = require('./conf/file_map.config');
 var Reader = require('./util/Reader');
+var Formatter = require('./util/Formatter');
 
 function map(key, value) {
     let result = new Map();
@@ -67,7 +68,7 @@ program
 
 program
     .command('test <testcase> <journal-file>')
-    .description('多api测试')
+    .description('多api组合测试')
     .action(function (testcase, journalFile) {
         console.log("testcase running...");
         let logConf = Reader.readJson(`${fileMap.logConf}`);
@@ -77,6 +78,8 @@ program
         let num = 1;
         for(let i in read) {
             let exec = `${read[i]} --report`;
+            console.log(exec);
+            exec = Formatter.replaceFilterBlank(exec);
             if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
                 console.log(read[i]);
                 exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
@@ -110,6 +113,7 @@ program
         let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
         testcaseLog = fileData + testcaseLog;
 
+        testcaseLog = testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');
         fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
 
         console.log(`export report: ${journalFile}`);
