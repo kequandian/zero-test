@@ -55,7 +55,7 @@ let data;
 if(program.value != undefined) {
     data = JSON.parse(program.value);
 } else if (program.file != undefined) {
-    let json = fs.readFileSync(program.file);
+    let json = fs.readFileSync(program.file, "UTF-8");
     if(!json || json == "") {
         console.log(`\nERROR MESSAGE: ${program.file} is empty`);
     }

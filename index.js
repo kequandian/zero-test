@@ -15,6 +15,7 @@ var DateUtil = require('./cli-tools/pretty-json/util/DateUtil');
 var fileMap = require('./conf/file_map.config');
 var Reader = require('./util/Reader');
 var Formatter = require('./util/Formatter');
+var StringUtil = require('./cli-tools/api-gen/util/StringUtil');
 
 function map(key, value) {
     let result = new Map();
@@ -78,7 +79,8 @@ program
         let num = 1;
         for(let i in read) {
             console.log(read[i]);
-            let exec = `${read[i]} --report`;   
+            let exec = `${read[i]} --report`;
+            exec = StringUtil.replacePlaceholder(exec);
             exec = Formatter.replaceFilterBlank(exec);
             // 执行结果记录
             if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
@@ -151,11 +153,11 @@ program
     });
 
 program.parse(process.argv);
-
 if(api && api.substring(0, 3) == "C:/") {
     api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
 }
 
+api = api ? StringUtil.replacePlaceholderByEncode(api) : api;
 // pretty-json参数列表
 let params = "-c ";
 if(ignore && ignore.length > 0) {

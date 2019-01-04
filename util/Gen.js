@@ -4,6 +4,7 @@ var fs = require('fs');
 var fileMap = require('../conf/file_map.config');
 var Reader = require('./Reader');
 var DateUtil = require('../cli-tools/api-gen/util/dateUtil');
+var StringUtil = require('../cli-tools/api-gen/util/StringUtil');
 
 /**
  * api-gen 调用
@@ -20,23 +21,18 @@ let Gen = {
     genarator(api, method, table, swagger, params) {
         if(table) {
             shell.exec(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
-            params = Reader.parseJson(params);
+            params = Reader.parseJson(fs.readFileSync(fileMap.gen, "UTF-8"));
         } else if(swagger) {
             Swagger.writeFields("/" + api, method, `${fileMap.params}`);
             shell.exec(`(cd cli-tools/api-gen && node index.js -f ../../${fileMap.params} ${params} > ../../${this.genFile})`);
-            params = Reader.parseJson(params);
+            params = Reader.parseJson(fs.readFileSync(fileMap.gen, "UTF-8"));
         } else {
             //this.writeFilterToJson(params);
             params = Reader.parseJson(params);
         }
         //params = Reader.parseJson(params);
-        
-        for(let key in params) {
-            if(params[key] == "$CURRENT_DATE") {
-                params[key] = DateUtil.getNow();
-            }
-        }
-        fs.writeFileSync(this.genFile, JSON.stringify(params), "utf-8");
+        params = StringUtil.replacePlaceholder(JSON.stringify(params));
+        fs.writeFileSync(this.genFile, params, "utf-8");
     },
     writeFilterToJson(filter) {
         let arr = filter.substring(1, filter.length - 1).split(",");
@@ -56,12 +52,18 @@ let Gen = {
      * @param {json} json 
      */
     replacePlaceholder(json) {
-        for(let key in json) {
-            if(json[key] instanceof Object) {
-                
+        for(let key in params) {
+            if(params[key] == "$CUR") {
+                params[key] = DateUtil.getNow();
+            } else if(/\$[0-9]+DA/.test(params[key])) {
+                let day = params[key].substring(1, params[key].length - 2);
+                params[key] = DateUtil.getDA(day);
+            } else if(/\$[0-9]+DP/.test(params[key])) {
+                let day = params[key].substring(1, params[key].length - 2);
+                params[key] = DateUtil.getDP(day);
             }
         }
     }
 }
-
 module.exports = Gen;
+

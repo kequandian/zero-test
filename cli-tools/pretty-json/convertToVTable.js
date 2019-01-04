@@ -20,10 +20,23 @@ function convertArrayToTable(header, json, mdLog) {
     if(json == undefined) {
         return ;
     }
+
+    let fields = new Set();
+    for(let i in json) {
+        for(let column in json[i]) {
+            fields.add(column);
+        }
+    }
+
     let columnsNum = 1; // 数据列数 + 第一列（作为行号)
     let columnsTitle = [{content:'row', hAlign:'center'}];
     let log = "";
     if(json.length == 0) return;
+    let hasId = false;
+    if(json[0]["id"] &&  !(json[0]["id"] instanceof Object)) {
+        fields.delete("id");
+        hasId = true;
+    }
 
     // id放第二列
     let dataRowOneId;
@@ -35,8 +48,8 @@ function convertArrayToTable(header, json, mdLog) {
         delete json[0]["id"];
         columnsNum ++;
     }
-    for(let item in json[0]) {
-        let jsonString = JSON.stringify(json[0][item]);
+    for(let item of fields) {
+       // let jsonString = JSON.stringify(json[0][item]);
         columnsTitle.push({content:item, hAlign:'center'});
         if(columnsNum == 1) {
             log += `| row |`;
@@ -54,11 +67,11 @@ function convertArrayToTable(header, json, mdLog) {
         log +="\n|";
     }
 
-    let maxColumnSize = Math.round(maxTableSize / columnsNum) - 3;
+    let maxColumnSize = Math.round(maxTableSize / fields.size + 1) - 3;
     let res = new Table({chars: charConfig, style:{head:[], border:[]}, wordWrap:true});
 
     if(header != undefined) {
-        res.push([{colSpan: columnsNum, content: header, hAlign:'center'}]);
+        res.push([{colSpan: hasId ? fields.size + 2 : fields.size + 1, content: header, hAlign:'center'}]);
         log = `**${header}**\n${log}`;
     }
     res.push(columnsTitle);
@@ -67,7 +80,6 @@ function convertArrayToTable(header, json, mdLog) {
         let rowData = [index];
         log += ` ${index} |`
         if(index == 0 && dataRowOneId != undefined) { // put dataRowOne id
-            console.log("dataRowOneId: " + dataRowOneId);
             log += ` ${dataRowOneId} |`;
             rowData.push(dataRowOneId);
         }
@@ -77,14 +89,23 @@ function convertArrayToTable(header, json, mdLog) {
             delete json[index]["id"];
         }
 
-        for(let item in json[index]) {
-            let itemString = JSON.stringify(json[index][item]);
+        for(let item of fields) {
+            let itemString = json[index][item] ? JSON.stringify(json[index][item]) : " ";
             if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
                 itemString = itemString.substring(1, itemString.length - 1);
             }
             log += ` ${itemString} |`
             rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
         }
+
+        // for(let item in json[index]) {
+        //     let itemString = JSON.stringify(json[index][item]);
+        //     if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
+        //         itemString = itemString.substring(1, itemString.length - 1);
+        //     }
+        //     log += ` ${itemString} |`
+        //     rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
+        // }
         log += "\n"
         res.push(rowData);
     }

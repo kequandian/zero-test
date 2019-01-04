@@ -62,7 +62,7 @@ if(program.list) {
     });
     
 } else if(program.file) {
-    let result = JSON.parse(fs.readFileSync(program.file));
+    let result = JSON.parse(fs.readFileSync(program.file, "UTF-8"));
     console.log(JSON.stringify(genarator.genarateValuesBySwagger(result, program.filter)));
 } else {
     program.outputHelp(read);

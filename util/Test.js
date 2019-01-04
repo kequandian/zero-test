@@ -30,14 +30,6 @@ let Test = {
                 console.log("login <endpoint> <account> <password>");
                 shell.exit(1);
             }
-            // if(api.substring(0, 3) == "api") {
-            //     login_api = loginInfo.api;
-            // } else if(api.substring(0, 4) == "rest") {
-            //     login_api = loginInfo.rest;
-            // } else {
-            //     console.log("login <api|rest|.> <account> <password>");
-            //     shell.exit(1);
-            // }
             
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
             if (shell.exec(`(cd ./cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ../../${fileMap.response})`).code !== 0) {

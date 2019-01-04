@@ -38,7 +38,7 @@ let file = swaggerJsonFile;
 
 var strResult = "";
 
-var result=JSON.parse(fs.readFileSync(file));
+var result=JSON.parse(fs.readFileSync(file, "UTF-8"));
 
 //获取路径下的paths
 let paths = result.paths;
