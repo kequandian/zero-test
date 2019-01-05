@@ -4,6 +4,23 @@ cmd=$1
 opt=$2
 url=$3
 
+function initDir() {
+    echo "init  dir.."
+    if [ ! -d "./cli-tools/zero-json/swagger" ];then
+        mkdir ./cli-tools/zero-json/swagger
+    fi
+    if [ ! -d "./pub" ];then
+        mkdir swagger
+    fi
+    if [ ! -d "./pub/logs" ];then
+        mkdir pub/logs
+    fi
+    if [ ! -d "./temp" ];then
+        mkdir temp
+    fi
+}
+
+
 if [ "$cmd"x == "install"x ];then
     echo "init api-gen..."
     (cd cli-tools/api-gen && npm install)
@@ -55,19 +72,5 @@ elif [ "$cmd"x == "repair"x ];then
     exit 0
 fi
 
-initDir() {
-    echo "init  dir.."
-    if [ ! -d "./cli-tools/zero-json/swagger" ];then
-        mkdir ./cli-tools/zero-json/swagger
-    fi
-    if [ ! -d "./pub" ];then
-        mkdir swagger
-    fi
-    if [ ! -d "./pub/logs" ];then
-        mkdir pub/logs
-    fi
-    if [ ! -d "./temp" ];then
-        mkdir temp
-    fi
-}
+
 echo "Usage: ./init [install | update | repair | get swagger <url>]";

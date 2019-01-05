@@ -1,9 +1,6 @@
-/node_modules
+node_modules/
 /template
 /swagger
-/cli-tools/api-gen/node_modules
-/cli-tools/zero-json/node_modules
-/cli-tools/pretty-json/node_modules
 temp/
 logs/
 testcase
