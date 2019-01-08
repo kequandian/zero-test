@@ -90,7 +90,7 @@ function convertArrayToTable(header, json, mdLog) {
         }
 
         for(let item of fields) {
-            let itemString = json[index][item] ? JSON.stringify(json[index][item]) : " ";
+            let itemString = json[index][item] != undefined ? JSON.stringify(json[index][item]) : " ";
             if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
                 itemString = itemString.substring(1, itemString.length - 1);
             }

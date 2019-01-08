@@ -28,7 +28,7 @@ let Gen = {
             params = Reader.parseJson(fs.readFileSync(fileMap.gen, "UTF-8"));
         } else {
             //this.writeFilterToJson(params);
-            params = Reader.parseJson(params);
+            params = Reader.parseJson(params ? params : "{}");
         }
         //params = Reader.parseJson(params);
         params = StringUtil.replacePlaceholder(JSON.stringify(params));

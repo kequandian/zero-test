@@ -25,6 +25,7 @@ let Reader = {
             result = JSON.parse(string);
         } catch(err) {
             console.log(`read json string error!\n${string}`);
+            console.log(err.stack);
             shelljs.exit(1);
         }
          return result;
