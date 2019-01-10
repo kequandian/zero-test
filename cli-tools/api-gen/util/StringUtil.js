@@ -32,6 +32,7 @@ let StringUtil = {
      * $2DP 表示现在时间2天前 23.59.59
      * $CUR currnet_time
      * @param {string} str 
+     * @param {json} extra 
      */
     replacePlaceholder(str) {
         let index;
@@ -62,9 +63,15 @@ let StringUtil = {
      * $2DP 表示现在时间2天前 23.59.59
      * $CUR currnet_time
      * @param {string} str 
+     * @param {json} extra 
      */
-    replacePlaceholderByEncode(str) {
+    replacePlaceholderByEncode(str, extra) {
         let index;
+        if(extra) {
+            for(let item in extra) {
+                str = str.replace(new RegExp(item, "g"), extra[item]);
+            }
+        }
         str = str.replace(new RegExp(/#CUR/, "g"), DateUtil.getNow().replace(" ", "%20"));
         while((index = str.search(/#[0-9]+DA/)) != -1) {
             let day = str.substring(index + 1, index +2);

@@ -29,7 +29,7 @@ let Swagger = {
             }
 
         } else {
-            console.log(`swagger.json中'${api}'不存在, 可通过--table指定数据库生成数据`);
+            console.log(`获取swagger描述错误: swagger.json中'${api}'不存在`);
             shell.exit(1);
         }
     },

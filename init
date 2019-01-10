@@ -51,13 +51,13 @@ elif [ "$cmd"x == "repair"x ];then
     if [ ! -f "package-lock.json" ];then
         rm package-lock.json
     fi
-    if [ ! -f "./cli-tools/api-gen/package-lock.json" ];then
+    if [ -f "./cli-tools/api-gen/package-lock.json" ];then
         rm ./cli-tools/api-gen/package-lock.json
     fi
-    if [ ! -f "./cli-tools/pretty-json/package-lock.json" ];then
+    if [ -f "./cli-tools/pretty-json/package-lock.json" ];then
         rm ./cli-tools/pretty-json/package-lock.json
     fi
-    if [ ! -f "./cli-tools/zero-json/package-lock.json" ];then
+    if [ -f "./cli-tools/zero-json/package-lock.json" ];then
         rm ./cli-tools/zero-json/package-lock.json
     fi
     echo "repair api-gen..."
@@ -67,7 +67,7 @@ elif [ "$cmd"x == "repair"x ];then
     echo "repair zero-json..."
     (cd cli-tools/zero-json && npm uninstall zero-json -g && npm install)
     echo "repair env-test..."
-    npm unstall env-test && npm install
+    npm uninstall env-test && npm install
     initDir
     exit 0
 fi

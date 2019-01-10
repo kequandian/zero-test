@@ -10,28 +10,32 @@
 Usage: index <method> <api> [options] [value ...]
 
 Options:
-  -o, --out
-  -r, --report
-  -p, --parent
+  --out                                           输出结果
+  --report                                        输出并将结果记录日志
+  --info                                          从swagger中获取api描述
+  --parent                                        仅输出主表
   --head
   --tail
-  --notnull                                       默认值, 仅生成notnull字段
+  --notnull                                       default option
   --all
-  --table, <value>                                指定数据库表生成请求参数
-  --swagger                                       从swagger中获取字段信息生成请求参数
-  --filter <value>                                添加或替换生成参数 {key1:value1,key2:value2}
+  --table <value>                                 指定数据库表生成请求参数
+  --swagger                                       从swagger中获取api所需字段信息生成请求参数
+  --filter <value>                                添加或替换生成参数
   --only                                          仅处理当前api，post/put请求后不带回get列表
+  --save <field>                                  保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值
   -h, --help                                      output usage information
 
 Commands:
   login <endpoint> <account> <password> [report]
-  pdf <outputFile>
-  test <testcase> <journal-file>
-  journal <cmd> [option]
-
-Example: GET api/cms/article/categories --out
-         login api admin 111111
-
+  pdf [options] <outputFile>
+  journal <cms> [option]
+  server <cmd> [options]
+  test [options] <testcase> <journal-file>        多api组合测试
+Example: login api admin 111111
+         journal help
+         get /api/cms/article/categories --out
+         post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category
+         test demo/testcase-demo demo/testcase-demo.pdf
 ```
 **Journal**
 ```
@@ -42,6 +46,32 @@ Usage:
    journal set <journal-file>
    journal rm <journal-file>
    journal rewrite
+```
+**PDF**
+```
+$ node index pdf --help
+Usage: pdf [options] <outputFile>
+
+Options:
+  --target <target_file>  指定需转换成pdf的原文件, 不进行指定则默认转换当前所选日志文件
+  -h, --help              output usage information
+
+Usage:
+   pdf demo/testcase.pdf
+   pdf demo/testcase.pdf --target=pub/logs/testcase
+```
+**testcase**
+```
+Usage: test [options] <testcase> <journal-file>
+
+多api组合测试
+
+Options:
+  -f, --force  执行整个testcase,不被错误返回所打断
+  -h, --help   output usage information
+
+Usage:
+   test demo/testcase demo/testcase.pdf
 ```
 
 ## How to use
@@ -94,7 +124,51 @@ post--api/eav/entities
 | 0   │ 3  │ E1         │           |
 +-----+----+------------+-----------+
 ```
-5. 单post调用并将结果记录日志
+5. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
+```
+$ node index get api/eav/entities --head --save=id --out
+
+get--api/eav/entities
++-----------------+
+|      data       |
++────+────────────+
+| id │ entityName |
++────┼────────────+
+| 3  │ E1         |
++----+------------+
+```
+6. 通过保存值调用api, 并保存字段entityName的值
+```
+$ node index get api/eav/entities/#SAVE_VALUE --save=entityName --out
+
+get--api/eav/entities/3
++-----------------+
+|      data       |
++────+────────────+
+| id │ entityName |
++────┼────────────+
+| 3  │ E1         |
++----+------------+
+```
+7. 通过保存值post数据
+```
+$ node index post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
+
+post--api/eav/entities
++--------------------------+
+|           data           |
++──────+────────+──────────+
+| code │ errors │ message  |
++──────┼────────┼──────────+
+| 4007 │ []     │ 重复键值 |
++------+--------+----------+
+```
+执行的sql为
+```
+==>  Preparing: INSERT INTO t_eav_entity ( entity_name ) VALUES ( ? ) 
+==> Parameters: E1(String)
+```
+8. 单post调用并将结果记录日志
 ```
 $ node index post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
 
@@ -107,7 +181,7 @@ post--api/eav/entities
 | 200  │ 1    │ 操作成功 |
 +------+------+----------+
 ```
-6. 调用GET请求并记录
+9. 调用GET请求并记录
 ```
 $ node index get /api/eav/entities --report
 
@@ -129,7 +203,7 @@ get--api/eav/entities
 | 1   │ 5  │ E2         │           |
 +-----+----+------------+-----------+
 ```
-7. 将日志中记录的内容导出pdf
+10. 将日志中记录的内容导出pdf
 ```
 $ node index pdf demo/testcase.pdf
 converting pdf from pub/logs/testcase to demo/testcase.pdf

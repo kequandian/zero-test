@@ -2,6 +2,7 @@ var shell = require("shelljs");
 var fs = require('fs');
 var server = require('../conf/server.config');
 var fileMap = require('../conf/file_map.config');
+var Reader = require('./Reader');
 
 /**
  * env-test 脚本调用
@@ -38,11 +39,7 @@ let Test = {
                 shell.exit(1);
             }
             let loginRes = fs.readFileSync(`${fileMap.response}`, "UTF-8");
-            try {
-                loginRes = JSON.parse(loginRes);
-            } catch(err) {
-                // do nothing
-            }
+            loginRes = Reader.parseJson(loginRes);
             if(loginRes && (loginRes.status_code == 0 || loginRes.code == 200)) {
                 if(api.substring(0, 4) == "rest") {
                     fs.writeFileSync('./cli-tools/env-test/app.token', `${loginRes.data.access_token}`);
