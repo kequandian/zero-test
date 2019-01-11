@@ -22,7 +22,7 @@ let Swagger = {
                     apiInfo.fields = methodInfo.fields[0];
                 }
                 fs.writeFileSync(file, JSON.stringify(methodInfo.fields));
-                // shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.params} -c -s`);
+                // shell.exec(`node ./cli-tools/pretty-json/index.js -f ${root}/${fileMap.params} -c -s`);
             } else {
                 console.log(`swagger.json error: ${method} ${api}  fields is ${JSON.stringify(apiInfo[method])}`);
                 shell.exit(1);

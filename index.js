@@ -2,26 +2,21 @@
 var shell = require("shelljs");
 var program = require('commander');
 var fs = require('fs');
-var server = require('./conf/server.config');
+var server = require(`${process.cwd()}/conf/server.config`);
 var Http = require('./util/Http');
 var Test = require('./util/test');
 var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
-var apiMap = require('./conf/api.config').map;
-var ignore = require('./conf/api.config').filter;
+var apiMap = require(`${process.cwd()}/conf/api.config`).map;
+var ignore = require(`${process.cwd()}/conf/api.config`).filter;
 var Pdf = require('./util/Pdf');
 var DateUtil = require('./cli-tools/pretty-json/util/DateUtil');
-var fileMap = require('./conf/file_map.config');
+var fileMap = require(`./static/file_map.config`);
 var Reader = require('./util/Reader');
 var Formatter = require('./util/Formatter');
 var StringUtil = require('./cli-tools/api-gen/util/StringUtil');
 var Save = require('./util/Save');
-
-function map(key, value) {
-    let result = new Map();
-    map.put(key, value);
-    return map;
-}
+var root = require('./static/root.config');
 
 let method;
 let api;
@@ -58,11 +53,18 @@ program
     .action(function (endpoint, account, password, report) {
         Test.login(endpoint, account, password);
         if(report == "report") {
-            shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} -c -t login--${account}  --log`);
+            shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} -c -t login--${account}  --log`);
         }
         shell.exit(0);
     });
-
+program
+    .command('swagger <url>')
+    .description('获取swagger.json')
+    .action(function (url) {
+        let curPath = process.cwd();
+        shell.exec(`(cd ${root}/cli-tools/zero-json && curl ${url} --out swagger/index.json && node index.js swagger format && mv swagger/format.json ${curPath}/pub/swagger.json)`);
+       shell.exit(0);
+    });
     
 program
     .command('pdf <outputFile>')
@@ -77,7 +79,7 @@ program
         if(options.target) {
             Pdf.export(options.target, outputFile);
         } else {
-            let logConf = Reader.readJson(`${fileMap.logConf}`);
+            let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
             Pdf.export(`${logConf.dir}${logConf.file}`, outputFile);
         }
 
@@ -95,7 +97,7 @@ program
         console.log("   journal rewrite");
     })
     .action(function (cmd, ...options) {
-        let logConf = Reader.readJson(`${fileMap.logConf}`);
+        let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         if(cmd == "ls") {
             shell.exec(`ls ${logConf.dir}`);
         } else if(cmd == "current") {
@@ -109,7 +111,7 @@ program
             } else {
                 logConf.file = DateUtil.getToday();
             } 
-            fs.writeFileSync(`${fileMap.logConf}`, JSON.stringify(logConf), "UTF-8");
+            fs.writeFileSync(`${root}/${fileMap.logConf}`, JSON.stringify(logConf), "UTF-8");
         } else if(cmd == "rewrite") {
             shell.exec(`true > ${logConf.dir}${logConf.file}`);
         }
@@ -125,9 +127,9 @@ program
         console.log("   server path");
     })
     .action(function (cmd, ...options) {
-        let logConf = Reader.readJson(`${fileMap.logConf}`);
+        let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         if(cmd == "get") {
-            shell.exec(`cat ./conf/server.config`);
+            shell.exec(`cat ${process.cwd()}/conf/server.config`);
         } else if(cmd == "path") {
             console.log("conf/server.config");
         }
@@ -144,10 +146,10 @@ program
     })
     .action(function (testcase, journalFile, options) {
         console.log("testcase running..." + options.force);
-        let logConf = Reader.readJson(`${fileMap.logConf}`);
+        let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         let fileData = fs.readFileSync(testcase, "UTF-8");
         let read = fileData.split("\r\n");
-        fs.writeFileSync(fileMap.response, JSON.stringify({code : 200}, "UTF-8"));
+        fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
         let num = 1;
         for(let i in read) {
             console.log(read[i]);
@@ -157,10 +159,10 @@ program
             // 执行结果记录
             if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
                 exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
-                shell.exec(`${exec} > ${fileMap.testTemp}`);
-                let response = Reader.readJson(`${fileMap.response}`, "UTF-8");
+                shell.exec(`${exec} > ${root}/${fileMap.testTemp}`);
+                let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
                 if(!options.force && response.code != 200 && response.status_code != 0) {
-                    let errorInfo = fs.readFileSync(`${fileMap.testTemp}`, "UTF-8");
+                    let errorInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
                     console.log(`\n\ntest error !!!`);
                     console.log(`---------------------------`);
                     console.log(errorInfo);
@@ -205,10 +207,10 @@ if(api && api.substring(0, 3) == "C:/") {
 }
 
 
-if(!fs.existsSync(`${fileMap.save}`)) {
-    shell.exec(`echo {} > ${fileMap.save}`);
+if(!fs.existsSync(`${root}/${fileMap.save}`)) {
+    shell.exec(`echo {} > ${root}/${fileMap.save}`);
 }
-let replaceValue = Reader.readJson(fileMap.save);
+let replaceValue = Reader.readJson(`${root}/${fileMap.save}`);
 api = api ? StringUtil.replacePlaceholderByEncode(api, replaceValue) : api;
 
 // pretty-json参数列表
@@ -227,7 +229,7 @@ if (program.parent) {
 }
 if(method && method.toUpperCase() === 'POST'
     || method && method.toUpperCase() === 'PUT') {
-        params += ` --body=${fileMap.gen}`;
+        params += ` --body=${root}/${fileMap.gen}`;
 }
 
 
@@ -265,10 +267,10 @@ if(program.out || program.report) {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
         } else if(method && method.toUpperCase() === 'POST') {
             Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
-            isSuccess = Http.post(api, `${fileMap.gen}`);
+            isSuccess = Http.post(api, `${root}/${fileMap.gen}`);
         }  else if(method && method.toUpperCase() === 'PUT') {
             Gen.genarator(`${api}/{id}`, 'PUT', program.table, program.swagger, genParams);
-            isSuccess = Http.putAfterGetById(api, `${fileMap.gen}`, program.head, program.tail);
+            isSuccess = Http.putAfterGetById(api, `${root}/${fileMap.gen}`, program.head, program.tail);
         }
         
         Save.saveValue(program.save);
@@ -285,17 +287,17 @@ if(program.out || program.report) {
 
 if (program.out) {
     // 输出api结果
-    shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}`);
+    shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
 } else if (program.report) {
-    console.log(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+    console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     // 输出并打印日志
-    shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+    shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
 } else if(program.info && method && api) {
     console.log(`output swagger info: ${method} ${api}`);
     api = "/" + api;
     if(method && (method.toUpperCase() == "PUT" || method.toUpperCase() == "DELETE")) {
         api += "/{id}";
     }
-    Swagger.writeFields(api, method, `${fileMap.params}`);
-    shell.exec(`node ./cli-tools/pretty-json/index.js -f ${fileMap.params} -c -s`);
+    Swagger.writeFields(api, method, `${root}/${fileMap.params}`);
+    shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.params} -c -s`);
 }

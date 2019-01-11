@@ -1,17 +1,18 @@
 let fs = require('fs');
-let fileMap = require('../conf/file_map.config');
+let fileMap = require(`../static/file_map.config`);
 let shell = require('shelljs');
 let Reader = require('./Reader');
+let root = require('../static/root.config');
 
 let Save = {
     savaField : "#SAVE_VALUE",
     saveValue(field) {
         if(field) {
-            if(!fs.existsSync(`${fileMap.save}`)) {
-                shell.exec(`echo {} > ${fileMap.save}`);
+            if(!fs.existsSync(`${root}/${fileMap.save}`)) {
+                shell.exec(`echo {} > ${root}/${fileMap.save}`);
             }
-            let api = Reader.readJson(`${fileMap.save}`);
-            let res = Reader.readJson(`${fileMap.response}`);
+            let api = Reader.readJson(`${root}/${fileMap.save}`);
+            let res = Reader.readJson(`${root}/${fileMap.response}`);
             let findField = false;
             for(let item in res) {
                 if(item == field) {
@@ -36,7 +37,7 @@ let Save = {
             if(!findField) {
                 console.log(`警告 : 字段 ${field} 未找到`);
             } else {
-                fs.writeFileSync(`${fileMap.save}`, JSON.stringify(api), 'utf-8');
+                fs.writeFileSync(`${root}/${fileMap.save}`, JSON.stringify(api), 'utf-8');
             } 
         }
     }

@@ -1,16 +1,17 @@
 var shell = require("shelljs");
 var fs = require('fs');
-var server = require('../conf/server.config');
+var server = require(`${process.cwd()}/conf/server.config`);
 var Test = require('./Test');
 var Reader = require('./Reader');
-var fileMap = require('../conf/file_map.config');
+var fileMap = require(`../static/file_map.config`);
+var root = require(`../static/root.config`);
 
 /**
  * 发送http请求 (使用env-test工具)
  */
 let Http = {
     /** api返回信息 */
-    response_file : `${fileMap.response}`,
+    response_file : `${root}/${fileMap.response}`,
     /**
      * 根据列表api返回指定位置id, 只支持-1和0
      * @param {string} api api
@@ -67,9 +68,9 @@ let Http = {
             let index = head == undefined ? -1 : 0;
             api = Http.getId(api, index);
             console.log(`redirect api: PUT ${api}`);
-            return Http.put(api, './temp/gen.json');
+            return Http.put(api, '${root}/temp/gen.json');
         } else {
-            return Http.put(api, './temp/gen.json');
+            return Http.put(api, '${root}/temp/gen.json');
         }
     },
     /**

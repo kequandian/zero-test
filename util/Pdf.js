@@ -1,8 +1,9 @@
 var markdownpdf = require("markdown-pdf")
+var root = require("../static/root.config");
 
 let Pdf = {
     options : {
-        cssPath : "pub/markdown.css",
+        cssPath : `${root}/pub/markdown.css`,
         paperFormat : "A1"
     },
     export(inputFile, outputFile) {

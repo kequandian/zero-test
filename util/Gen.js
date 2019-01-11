@@ -1,16 +1,17 @@
 var shell = require("shelljs");
 var Swagger = require('./Swagger');
 var fs = require('fs');
-var fileMap = require('../conf/file_map.config');
+var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
-var DateUtil = require('../cli-tools/api-gen/util/dateUtil');
-var StringUtil = require('../cli-tools/api-gen/util/StringUtil');
+var DateUtil = require(`../cli-tools/api-gen/util/dateUtil`);
+var StringUtil = require(`../cli-tools/api-gen/util/StringUtil`);
+var root = require('../static/root.config')
 
 /**
  * api-gen 调用
  */
 let Gen = {
-    genFile : fileMap.gen,
+    genFile : `${root}/${fileMap.gen}`,
     /**
      * 生成api请求参数，默认通过swagger.json获取字段信息；
      * 若指定了table,则通过table获取
@@ -20,12 +21,13 @@ let Gen = {
      */
     genarator(api, method, table, swagger, params) {
         if(table) {
-            shell.exec(`(cd cli-tools/api-gen && node index.js -t ${table} ${params} > ../../${this.genFile})`);
-            params = Reader.parseJson(fs.readFileSync(fileMap.gen, "UTF-8"));
+            
+            shell.exec(`(cd ${root}/cli-tools/api-gen && node index.js -t ${table} ${params} > ${this.genFile})`);
+            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
         } else if(swagger) {
-            Swagger.writeFields("/" + api, method, `${fileMap.params}`);
-            shell.exec(`(cd cli-tools/api-gen && node index.js -f ../../${fileMap.params} ${params} > ../../${this.genFile})`);
-            params = Reader.parseJson(fs.readFileSync(fileMap.gen, "UTF-8"));
+            Swagger.writeFields("/" + api, method, `${root}/${fileMap.params}`);
+            shell.exec(`(cd ${root}/cli-tools/api-gen && node index.js -f ${root}/${fileMap.params} ${params} > ${this.genFile})`);
+            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
         } else {
             //this.writeFilterToJson(params);
             params = Reader.parseJson(params ? params : "{}");

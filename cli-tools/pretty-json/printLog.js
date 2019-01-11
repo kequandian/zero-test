@@ -1,12 +1,13 @@
 let fs = require("fs");
 let dateUtil = require("./util/dateUtil");
+let root = require("../../static/root.config")
 
 
 function printLog(data, log) {
     if(log) {
         let config;
         try {
-            config = JSON.parse(fs.readFileSync("./log-config.json", "UTF-8"));
+            config = JSON.parse(fs.readFileSync(`${root}/static/log-config.json`, "UTF-8"));
         } catch(err) {
 
         }
