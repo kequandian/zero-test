@@ -76,11 +76,19 @@ Usage:
 
 ## How to use
 ### Base
-
-1. 修改配置文件
+1. 安装 
+```
+$ ./init install
+```
+2. 配置子工作目录 (可选)
+```
+$ ./init map D:/workspace/hub/map-test/
+map env-test to D:/workspace/hub/map-test/ ...
+done!
+```
+3. 修改配置文件(若使用子工作目录，进行相应切换即可)
 ```
 $ vim conf/server.config
-
 module.exports = {
     host: 'http://127.0.0.1:8080/',
     mysql: {
@@ -89,22 +97,26 @@ module.exports = {
         database : 'env_test',
         user : 'root',
         password : 'root'
-    },
-    login_info: {
-        sys: 'api/sys/oauth/login'
     }
 };
+
+$ vim conf/login.config
+module.exports = {
+    api: 'api/oauth/login',
+    sys: 'api/sys/oauth/login'
+};
+
 ```
-2. 设置日志(设置日志文件，清空文件内容)
+4. 设置日志(设置日志文件，清空文件内容)
 ```
 $ node index journal set testcase
 $ node index journal rewrite
 ```
-3. 登录（api访问请求头需要带上Authorization时可选)
+5. 登录（api访问请求头需要带上Authorization时可选)
 ```
 $ node index login sys admin 111111
 ```
-4. 调用api并输出
+6. 调用api并输出
 ```
 $ node index post /api/eav/entities --filter='{"entityName":"E1"}' --out
 
@@ -124,7 +136,7 @@ post--api/eav/entities
 | 0   │ 3  │ E1         │           |
 +-----+----+------------+-----------+
 ```
-5. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
+7. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
 ```
 $ node index get api/eav/entities --head --save=id --out
 
@@ -137,7 +149,7 @@ get--api/eav/entities
 | 3  │ E1         |
 +----+------------+
 ```
-6. 通过保存值调用api, 并保存字段entityName的值
+8. 通过保存值调用api, 并保存字段entityName的值
 ```
 $ node index get api/eav/entities/#SAVE_VALUE --save=entityName --out
 
@@ -150,7 +162,7 @@ get--api/eav/entities/3
 | 3  │ E1         |
 +----+------------+
 ```
-7. 通过保存值post数据
+9. 通过保存值post数据
 ```
 $ node index post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
 
@@ -168,7 +180,7 @@ post--api/eav/entities
 ==>  Preparing: INSERT INTO t_eav_entity ( entity_name ) VALUES ( ? ) 
 ==> Parameters: E1(String)
 ```
-8. 单post调用并将结果记录日志
+10. 单post调用并将结果记录日志
 ```
 $ node index post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
 
@@ -181,7 +193,7 @@ post--api/eav/entities
 | 200  │ 1    │ 操作成功 |
 +------+------+----------+
 ```
-9. 调用GET请求并记录
+11. 调用GET请求并记录
 ```
 $ node index get /api/eav/entities --report
 
@@ -203,7 +215,7 @@ get--api/eav/entities
 | 1   │ 5  │ E2         │           |
 +-----+----+------------+-----------+
 ```
-10. 将日志中记录的内容导出pdf
+12. 将日志中记录的内容导出pdf
 ```
 $ node index pdf demo/testcase.pdf
 converting pdf from pub/logs/testcase to demo/testcase.pdf

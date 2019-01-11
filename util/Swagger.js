@@ -43,7 +43,7 @@ let Swagger = {
                 this.swagger = JSON.parse(fs.readFileSync('./pub/swagger.json', 'utf-8'));
             } catch(err) {
                 // nothing to do
-                console.log(`swagger.json is error: ${err.message}`);
+                //console.log(`swagger.json is error: ${err.message}`);
             } finally {
                 this.swagger = this.swagger == undefined ? {} : this.swagger;
             }

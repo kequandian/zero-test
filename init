@@ -30,7 +30,7 @@ if [ "$cmd"x == "install"x ];then
     echo "init zero-json..."
     (cd cli-tools/zero-json && npm install)
     echo "init env-test..."
-    npm install
+    npm install -g
     initDir
     exit 0
 elif [ "$cmd"x == "update"x ];then
@@ -43,12 +43,12 @@ elif [ "$cmd"x == "update"x ];then
     echo "update zero-json..."
     (cd cli-tools/zero-json && npm install)
     echo "update env-test..."
-    npm install
+    npm install -g
     exit 0
 elif [ "$cmd"x == "repair"x ];then
     echo "init workspace..."
     node init.js
-    if [ ! -f "package-lock.json" ];then
+    if [ -f "package-lock.json" ];then
         rm package-lock.json
     fi
     if [ -f "./cli-tools/api-gen/package-lock.json" ];then
@@ -67,7 +67,7 @@ elif [ "$cmd"x == "repair"x ];then
     echo "repair zero-json..."
     (cd cli-tools/zero-json && npm uninstall zero-json -g && npm install)
     echo "repair env-test..."
-    npm uninstall env-test && npm install
+    npm uninstall env-test  -g && npm install  -g
     initDir
     exit 0
 elif [ "$cmd"x == "map"x -a "$url"x != ""x ];then

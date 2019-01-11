@@ -235,7 +235,7 @@ if(method && method.toUpperCase() === 'POST'
 
 
 // api-gen参数列表
-let genParams = "";
+let genParams = ` --mysql=${process.cwd()}/${fileMap.server}`;
 if(program.all) {
     genParams += " --all";
 }

@@ -1,11 +1,11 @@
 let mysql = require('mysql');//引入mysql模块
-let databaseConfig = require('../../../conf/server.config')  //引入数据库配置模块中的数据
+//let databaseConfig = require('../../../conf/server.config')  //引入数据库配置模块中的数据
 let shelljs = require('shelljs');
 
 module.exports = {
-    query : function(sql, callback){
+    query : function(databaseConfig, sql, callback){
         try {
-            var connection = mysql.createConnection(databaseConfig.mysql);        
+            var connection = mysql.createConnection(require(databaseConfig).mysql); 
             connection.connect(function(err){
                 if(err){
                     console.log('mysql createConnection err: ' + err.message);

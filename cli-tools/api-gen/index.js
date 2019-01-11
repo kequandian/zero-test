@@ -27,14 +27,19 @@ program
     .option('--list', "show tables")
     .option('-f, --file <value>', "使用指定格式参数生成字段参数(指定json文件路径)")
     .option('--filter <value>')
+    .option('--mysql <file>', "指定mysql配置文件位置,env-test使用")
     .on('--help', function() {
         console.log("Example:"),
         console.log('  -e name,note    #input list: [\'name\',\'note\']')
     });
 
 program.parse(process.argv);
+if(!program.mysql) {
+    console.log("api-gen index.js: --mysql 不能为空");
+    return ;
+}
 if(program.list) {
-    db.query('show tables', function(result, err){
+    db.query(program.mysql, 'show tables', function(result, err){
         let tableList = JSON.stringify(result).replace(new RegExp(',?{"Tables_in_gentest":"', 'gm'), '').replace(new RegExp('"}', 'gm'), ',');
         console.log(tableList);
         tableList = tableList.replace('[', '').replace(']', '');
@@ -46,7 +51,7 @@ if(program.list) {
         console.log(table.toString());
     });
 } else if(program.sql) {
-    db.query(program.sql, function(result, err){
+    db.query(program.mysql, program.sql, function(result, err){
         console.log(result);
     });
 } else if(program.table) {
@@ -57,7 +62,7 @@ if(program.list) {
         extra = [];
     }
     let sql = `DESCRIBE ${program.table}`;
-    db.query(sql, function(result, err){
+    db.query(program.mysql, sql, function(result, err){
         console.log(JSON.stringify(genarator.genarateValuesByTable(result, program.filter, program.all, extra)));
     });
     

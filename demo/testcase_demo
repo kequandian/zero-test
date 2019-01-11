@@ -1,27 +1,19 @@
 
 ## 组合api测试
-node index journal set testcase
-node index journal rewrite
+env-test journal set testcase
+env-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录  
-node index login sys admin 111111 report
+env-test login sys admin 111111 report
+# 创建组织 test
+node index post api/sys/org --filter='{"name":"test","fullName":"test"}' --only
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 
 # 组织A用户登录
-node index login sys user1234 111111 report
+env-test login sys user1234 111111 report
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 
-# 组织A1用户登录
-node index login sys user12341 111111 report
-# 获取组织列表
-node index get api/sys/org
-
-
-# 组织B用户登录
-node index login sys user12345 111111 report
-# 获取组织列表
-node index get api/sys/org
