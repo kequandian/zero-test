@@ -5,6 +5,7 @@ var Test = require('./Test');
 var Reader = require('./Reader');
 var fileMap = require(`../static/file_map.config`);
 var root = require(`../static/root.config`);
+var Url = require(`./Url`);
 
 /**
  * 发送http请求 (使用env-test工具)
@@ -40,7 +41,7 @@ let Http = {
         let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
-        Test.run(api, 'post', body);
+        Test.run(api, 'post', Url.GBKToUnicode(body));
         return this.isSuccess();
     },
     /**
@@ -52,7 +53,7 @@ let Http = {
         let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
-        Test.run(api,'put', body);
+        Test.run(api,'put', Url.GBKToUnicode(body));
         return this.isSuccess();
     },
     /**
