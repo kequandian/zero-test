@@ -2,13 +2,13 @@
 var shell = require("shelljs");
 var program = require('commander');
 var fs = require('fs');
-var server = require(`${process.cwd()}/conf/server.config`);
+var server = require(`${process.cwd()}/test-env/server.config`);
 var Http = require('./util/Http');
 var Test = require('./util/test');
 var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
-var apiMap = require(`${process.cwd()}/conf/api.config`).map;
-var ignore = require(`${process.cwd()}/conf/api.config`).filter;
+var apiMap = require(`${process.cwd()}/test-env/api.config`).map;
+var ignore = require(`${process.cwd()}/test-env/api.config`).filter;
 var Pdf = require('./util/Pdf');
 var DateUtil = require('./cli-tools/pretty-json/util/DateUtil');
 var fileMap = require(`./static/file_map.config`);
@@ -17,7 +17,8 @@ var Formatter = require('./util/Formatter');
 var StringUtil = require('./cli-tools/api-gen/util/StringUtil');
 var Save = require('./util/Save');
 var root = require('./static/root.config');
-
+var Path = require(`./util/Path`);
+Path.save(process.cwd());
 let method;
 let api;
 program
@@ -41,13 +42,52 @@ program
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
     .option('--save <field>', '保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值')
     .on('--help', function() {
-        console.log("Example: login api admin 111111"),
-        console.log("         journal help"),
-        console.log("         get /api/cms/article/categories --out"),
-        console.log(`         post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category`),
-        console.log("         test demo/testcase-demo demo/testcase-demo.pdf")
+        console.log();
+        console.log("Usage:"),
+        console.log("  login api admin 111111");
+        console.log("  journal --help"),
+        console.log("  get /api/cms/article/categories --out"),
+        console.log(`  post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category`),
+        console.log("  test demo/testcase-demo demo/testcase-demo.pdf")
     });
 
+program
+    .command('server <host> <port>')
+    .action(function (host, port) {
+        server.host = `http://${host}:${port}/`;
+        console.log(server.host);
+        server = JSON.stringify(server, null, '\t');
+        server = "module.exports=" + server;
+        fs.writeFileSync(`${process.cwd()}/test-env/server.config`, server, 'UTF-8');
+        
+        shell.exit(0);
+    });
+program
+    .command('mysql <opt> [argv1] [argv2]')
+    .description('mysql <host|database|user> [argv1] [argv2]')
+    .action(function (opt, argv1, argv2) {
+        if(opt == "host") {
+            server.mysql.host = argv1;
+            server.mysql.port = argv2;
+        } else if(opt == "database") {
+            server.mysql.database = argv1;
+        } else if(opt == "user") {
+            server.mysql.user = argv1;
+            server.mysql.password = argv2 == undefined ? "" : argv2;
+        } else {
+            console.log('mysql set <host|database|user> [...argv]');
+            shell.exit(1);
+        }
+        console.log(JSON.stringify(server.mysql, null, '\t'));
+        server = JSON.stringify(server, null, '\t');
+        server = "module.exports=" + server;
+        fs.writeFileSync(`${process.cwd()}/test-env/server.config`, server, 'UTF-8');
+        shell.exit(0);
+    }).on('--help', function() {
+        console.log("Example: mysql set host 127.0.0.1 3306"),
+        console.log("         mysql set database env-test"),
+        console.log("         mysql set user root root")
+    });
 program
     .command('login <endpoint> <account> <password> [report]')
     .action(function (endpoint, account, password, report) {
@@ -62,8 +102,9 @@ program
     .description('获取swagger.json')
     .action(function (url) {
         let curPath = process.cwd();
-        shell.exec(`(cd ${root}/cli-tools/zero-json && curl ${url} --out swagger/index.json && node index.js swagger format && mv swagger/format.json ${curPath}/pub/swagger.json)`);
-       shell.exit(0);
+        shell.cd(`cd ${root}/cli-tools/zero-json`);
+        shell.exec(`(curl ${url} --out swagger/index.json && node index.js swagger format && mv swagger/format.json ${curPath}/test-env/pub/swagger.json)`);
+        shell.exit(0);
     });
     
 program
@@ -73,7 +114,7 @@ program
         console.log('');
         console.log('Usage:');
         console.log("   pdf demo/testcase.pdf");
-        console.log("   pdf demo/testcase.pdf --target=pub/logs/testcase");
+        console.log("   pdf demo/testcase.pdf --target=test-env/pub/logs/testcase");
     })
     .action(function (outputFile, options) {
         if(options.target) {
@@ -129,9 +170,9 @@ program
     .action(function (cmd, ...options) {
         let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         if(cmd == "get") {
-            shell.exec(`cat ${process.cwd()}/conf/server.config`);
+            shell.exec(`cat ${process.cwd()}/test-env/server.config`);
         } else if(cmd == "path") {
-            console.log("conf/server.config");
+            console.log("test-env/server.config");
         }
     });
 
@@ -260,6 +301,7 @@ let originApi = api;
 if(program.out || program.report) {
     if (method && method.toUpperCase() === 'GET') {
         Http.actionAfterGetById(api, 'GET', program.head, program.tail);
+
         Save.saveValue(program.save);
     } else {
         let isSuccess = false;
@@ -274,7 +316,6 @@ if(program.out || program.report) {
         }
         
         Save.saveValue(program.save);
-
         if(isSuccess && !program.only) {
             if(apiMap[originApi]) {
                 Test.run(apiMap[originApi], 'GET');   
@@ -285,7 +326,13 @@ if(program.out || program.report) {
     } 
 }
 
+if(program.head) {
+    originApi = `head:${originApi}`;
+} else if(program.tail) {
+    originApi = `tail:${originApi}`;
+}
 if (program.out) {
+
     // 输出api结果
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
 } else if (program.report) {

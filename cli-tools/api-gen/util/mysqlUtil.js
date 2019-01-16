@@ -1,5 +1,5 @@
 let mysql = require('mysql');//引入mysql模块
-//let databaseConfig = require('../../../conf/server.config')  //引入数据库配置模块中的数据
+//let databaseConfig = require('../../../test-env/server.config')  //引入数据库配置模块中的数据
 let shelljs = require('shelljs');
 
 module.exports = {

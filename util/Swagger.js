@@ -40,7 +40,7 @@ let Swagger = {
     getSwagger() {
         if(!this.swagger) {
             try {
-                this.swagger = JSON.parse(fs.readFileSync('./pub/swagger.json', 'utf-8'));
+                this.swagger = JSON.parse(fs.readFileSync('./test-env/pub/swagger.json', 'utf-8'));
             } catch(err) {
                 // nothing to do
                 //console.log(`swagger.json is error: ${err.message}`);

@@ -11,7 +11,7 @@ function printLog(data, log) {
         } catch(err) {
 
         }
-        let basePath = config ? config["dir"] : "pub/logs/";
+        let basePath = config ? config["dir"] : "env-test/pub/logs/";
     
         if(!config["file"] || config["file"] == "default") {
             let file = basePath + dateUtil.getToday();

@@ -1,11 +1,12 @@
 var shell = require("shelljs");
 var fs = require('fs');
-var server = require(`${process.cwd()}/conf/server.config`);
+var server = require(`${process.cwd()}/test-env/server.config`);
 var Test = require('./Test');
 var Reader = require('./Reader');
 var fileMap = require(`../static/file_map.config`);
 var root = require(`../static/root.config`);
 var Url = require(`./Url`);
+var Path = require(`./Path`);
 
 /**
  * 发送http请求 (使用env-test工具)
@@ -69,9 +70,9 @@ let Http = {
             let index = head == undefined ? -1 : 0;
             api = Http.getId(api, index);
             console.log(`redirect api: PUT ${api}`);
-            return Http.put(api, '${root}/temp/gen.json');
+            return Http.put(api, `${root}/temp/gen.json`);
         } else {
-            return Http.put(api, '${root}/temp/gen.json');
+            return Http.put(api, `${root}/temp/gen.json`);
         }
     },
     /**

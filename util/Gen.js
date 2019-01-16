@@ -5,7 +5,8 @@ var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
 var DateUtil = require(`../cli-tools/api-gen/util/dateUtil`);
 var StringUtil = require(`../cli-tools/api-gen/util/StringUtil`);
-var root = require('../static/root.config')
+var root = require('../static/root.config');
+var Path = require(`./Path`);
 
 /**
  * api-gen 调用
@@ -21,13 +22,17 @@ let Gen = {
      */
     genarator(api, method, table, swagger, params) {
         if(table) {
+            shell.cd(`${root}/cli-tools/api-gen`);
+            shell.exec(`(node index.js -t ${table} ${params} > ${this.genFile})`);
+            Path.cd();
+            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
             
-            shell.exec(`(cd ${root}/cli-tools/api-gen && node index.js -t ${table} ${params} > ${this.genFile})`);
-            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
-        } else if(swagger) {
+        } else if(swagger) { 
             Swagger.writeFields("/" + api, method, `${root}/${fileMap.params}`);
-            shell.exec(`(cd ${root}/cli-tools/api-gen && node index.js -f ${root}/${fileMap.params} ${params} > ${this.genFile})`);
-            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
+            shell.cd(`${root}/cli-tools/api-gen`);
+            shell.exec(`(node index.js -f ${root}/${fileMap.params} ${params} > ${this.genFile})`);
+            Path.cd();
+            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8")); 
         } else {
             //this.writeFilterToJson(params);
             params = Reader.parseJson(params ? params : "{}");

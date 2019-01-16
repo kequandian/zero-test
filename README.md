@@ -49,7 +49,7 @@ Usage:
 ```
 **PDF**
 ```
-$ node index pdf --help
+$ env-test pdf --help
 Usage: pdf [options] <outputFile>
 
 Options:
@@ -58,7 +58,7 @@ Options:
 
 Usage:
    pdf demo/testcase.pdf
-   pdf demo/testcase.pdf --target=pub/logs/testcase
+   pdf demo/testcase.pdf --target=test-env/pub/logs/testcase
 ```
 **testcase**
 ```
@@ -82,13 +82,13 @@ $ ./init install
 ```
 2. 配置子工作目录 (可选)
 ```
-$ ./init map D:/workspace/hub/map-test/
-map env-test to D:/workspace/hub/map-test/ ...
+$ ./init map ‪C:/Users/10238/Desktop/
+map env-test to C:/Users/10238/Desktop/ ...
 done!
 ```
 3. 修改配置文件(若使用子工作目录，进行相应切换即可)
 ```
-$ vim conf/server.config
+$ vim test-env/server.config
 module.exports = {
     host: 'http://127.0.0.1:8080/',
     mysql: {
@@ -100,25 +100,38 @@ module.exports = {
     }
 };
 
-$ vim conf/login.config
-module.exports = {
-    api: 'api/oauth/login',
-    sys: 'api/sys/oauth/login'
-};
+---------------- OR ----------------
+$ env-test server --help
+Usage: server [options] <host> <port>
+
+Options:
+  -h, --help  output usage information
+
+$ env-test mysql --help
+Usage: mysql [options] <opt> [argv1] [argv2]
+
+mysql <host|database|user> [argv1] [argv2]
+
+Options:
+  -h, --help  output usage information
+Example: mysql set host 127.0.0.1 3306
+         mysql set database env-test
+         mysql set user root root
+
 
 ```
 4. 设置日志(设置日志文件，清空文件内容)
 ```
-$ node index journal set testcase
-$ node index journal rewrite
+$ env-test journal set testcase
+$ env-test journal rewrite
 ```
 5. 登录（api访问请求头需要带上Authorization时可选)
 ```
-$ node index login sys admin 111111
+$ env-test login sys admin 111111
 ```
 6. 调用api并输出
 ```
-$ node index post /api/eav/entities --filter='{"entityName":"E1"}' --out
+$ env-test post /api/eav/entities --filter='{"entityName":"E1"}' --out
 
 post--api/eav/entities
 +----------------------------------------------------------+
@@ -138,7 +151,7 @@ post--api/eav/entities
 ```
 7. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
 ```
-$ node index get api/eav/entities --head --save=id --out
+$ env-test get api/eav/entities --head --save=id --out
 
 get--api/eav/entities
 +-----------------+
@@ -151,7 +164,7 @@ get--api/eav/entities
 ```
 8. 通过保存值调用api, 并保存字段entityName的值
 ```
-$ node index get api/eav/entities/#SAVE_VALUE --save=entityName --out
+$ env-test get api/eav/entities/#SAVE_VALUE --save=entityName --out
 
 get--api/eav/entities/3
 +-----------------+
@@ -164,7 +177,7 @@ get--api/eav/entities/3
 ```
 9. 通过保存值post数据
 ```
-$ node index post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
+$ env-test post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
 
 post--api/eav/entities
 +--------------------------+
@@ -182,7 +195,7 @@ post--api/eav/entities
 ```
 10. 单post调用并将结果记录日志
 ```
-$ node index post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
+$ env-test post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
 
 post--api/eav/entities
 +------------------------+
@@ -195,7 +208,7 @@ post--api/eav/entities
 ```
 11. 调用GET请求并记录
 ```
-$ node index get /api/eav/entities --report
+$ env-test get /api/eav/entities --report
 
 get--api/eav/entities
 +----------------------------------------------------------+
@@ -217,7 +230,7 @@ get--api/eav/entities
 ```
 12. 将日志中记录的内容导出pdf
 ```
-$ node index pdf demo/testcase.pdf
+$ env-test pdf demo/testcase.pdf
 converting pdf from pub/logs/testcase to demo/testcase.pdf
 Done
 ```
@@ -227,49 +240,49 @@ Done
 $ cat demo/testcase_demo
 
 ## 组合api测试
-node index journal set testcase
-node index journal rewrite
+env-test journal set testcase
+env-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-node index login sys admin 111111 report
+env-test login sys admin 111111 report
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 
 # 组织A用户登录
-node index login sys user1234 111111 report
+env-test login sys user1234 111111 report
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 
 # 组织A1用户登录
-node index login sys user12341 111111 report
+env-test login sys user12341 111111 report
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 
 # 组织B用户登录
-node index login sys user12345 111111 report
+env-test login sys user12345 111111 report
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
 ```
 2. 执行testcase
 ```
-$ node index test demo/testcase_demo demo/testcase_demo.pdf
+$ env-test test demo/testcase_demo demo/testcase_demo.pdf
 testcase running...
 
 ## 组合api测试
-node index journal set testcase
-node index journal rewrite
+env-test journal set testcase
+env-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-node index login sys admin 111111 report
+env-test login sys admin 111111 report
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  2414  100  2356  100    58   2356     58  0:00:01 --:--:--  0:00:01 77870
 # 获取组织列表
-node index get api/sys/org
+env-test get api/sys/org
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 

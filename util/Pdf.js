@@ -3,7 +3,7 @@ var root = require("../static/root.config");
 
 let Pdf = {
     options : {
-        cssPath : `${root}/pub/markdown.css`,
+        cssPath : `${root}/test-env/pub/markdown.css`,
         paperFormat : "A1"
     },
     export(inputFile, outputFile) {

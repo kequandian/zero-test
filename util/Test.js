@@ -1,10 +1,11 @@
 var shell = require("shelljs");
 var fs = require('fs');
-var server = require(`${process.cwd()}/conf/server.config`);
-var loginInfo = require(`${process.cwd()}/conf/login.config`);
+var server = require(`${process.cwd()}/test-env/server.config`);
+var loginInfo = require(`${process.cwd()}/test-env/login.config`);
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
 var root = require('../static/root.config');
+var Path = require(`./Path`);
 
 /**F
  * env-test 脚本调用
@@ -16,12 +17,16 @@ let Test = {
             body = `'${body}'`;
             body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
-        //console.log(`(cd ./cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response})`);
-        if (shell.exec(`(cd ${root}/cli-tools/env-test && bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response})`).code !== 0) {
+        
+        shell.cd(`${root}/cli-tools/env-test`);
+        if (shell.exec(`bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
-            console.log(`command : (cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response})`);
+            console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response}`);
+            shell.cd(originPath);
+            Path.cd();
             shell.exit(1);
         }
+        Path.cd();
     },
     //$(./post /oauth/login "{\"account\":\"$user\",\"password\":\"$passw\"}")
     login(api, account, password) {
@@ -33,10 +38,11 @@ let Test = {
                 shell.exit(1);
             }
             
+            shell.cd(`${root}/cli-tools/env-test`);
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
-            if (shell.exec(`(cd ${root}/cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response})`).code !== 0) {
+            if (shell.exec(`bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd ${root}//cli-tools/env-test && ls && bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response})`);
+                console.log(`command : (cd ${root}//cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response})`);
                 shell.exit(1);
             }
             let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
@@ -52,14 +58,12 @@ let Test = {
                 try {
                     console.log(`login failure, message=${loginRes && JSON.stringify(loginRes)}`);
                 } catch (err) {
-                    
+                    // nothing to do
                 }
-                
-                
             }
+            Path.cd();
             
         } 
-
     }
 }
 module.exports = Test;
