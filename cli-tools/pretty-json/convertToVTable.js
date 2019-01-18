@@ -7,8 +7,7 @@ let charConfig = require('./table.config');
 function truncated(str, len) {
     return str.substring(0, len) + "..."; 
 }
-// 表格最大宽度
-let maxTableSize = 400;
+
 
 /**
  * json数组对象 -> table
@@ -17,6 +16,9 @@ let maxTableSize = 400;
  * @param {*} json 
  */
 function convertArrayToTable(header, json, mdLog) {
+    let remainLen = 20;    // 单元格数据为对象或数组对象时保留长度
+    // 表格最大宽度
+    let maxTableSize = 400;
     if(json == undefined) {
         return ;
     }
@@ -56,7 +58,6 @@ function convertArrayToTable(header, json, mdLog) {
         }
         log += ` ${item} |`
         columnsNum ++;
-
     }
 
     if(columnsNum > 0) {
@@ -76,6 +77,8 @@ function convertArrayToTable(header, json, mdLog) {
     }
     res.push(columnsTitle);
 
+    let subTable = "";
+    let subLog = "";
     for(let index in json) {
         let rowData = [index];
         log += ` ${index} |`
@@ -91,26 +94,23 @@ function convertArrayToTable(header, json, mdLog) {
 
         for(let item of fields) {
             let itemString = json[index][item] != undefined ? JSON.stringify(json[index][item]) : " ";
-            if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
+            // 含有对象时，将这一层的对象转成表格
+            if(json[index][item] instanceof Object && !Array.isArray(json[index][item])) {
+                let md = {};
+                subTable += "\n" + convertToVTable(`${header}#row_${index}#${item}`, json[index][item], true, false, md);
+                subLog += md.data == undefined ? "" : md.data.substring(0, md.data.length - 4) + "\n";
+                itemString = itemString.substring(0, itemString.length > remainLen ? remainLen : itemString.length);
+            } else if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
                 itemString = itemString.substring(1, itemString.length - 1);
             }
-            log += ` ${itemString} |`
+            log += ` ${itemString} |`;
             rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
         }
-
-        // for(let item in json[index]) {
-        //     let itemString = JSON.stringify(json[index][item]);
-        //     if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
-        //         itemString = itemString.substring(1, itemString.length - 1);
-        //     }
-        //     log += ` ${itemString} |`
-        //     rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
-        // }
-        log += "\n"
+        log += "\n";
         res.push(rowData);
     }
-    mdLog.data = log;
-    return res.toString();
+    mdLog.data = log + subLog;
+    return res.toString() + subTable;
 }
 
 
@@ -123,6 +123,8 @@ function convertArrayToTable(header, json, mdLog) {
  * @param {object} mdLog
  */
 function convertToVTable(header, json, parent, sub, mdLog) {
+    // 表格最大宽度
+    let maxTableSize = 400;
     let remainLen = 20;    // 单元格数据为对象或数组对象时保留长度
     let columnsNum = 0; // 列数
     let columnsTitle = []; 
@@ -183,13 +185,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
             
         } else {
             let jsonString = JSON.stringify(json);
-            if(JSON.stringify(json[0])[0] == '{') { // 纯对象数组，只显示子表
-                // let md = {};
-                // subTable += "\n" + convertArrayToTable(`${header}`, json, md);
-                // subLog += md.data == undefined ? "" : md.data + "\n";
-                // let columnValue = jsonString.length > remainLen ? jsonString.substring(0, remainLen) + "..." : jsonString;
-                // rowData.push({colSpan: columnsNum, content:columnValue});
-                // log += ` ${columnValue} |`;
+            if(JSON.stringify(json[0])[0] == '{') { // 纯对象数组
                 let md = {};
                 let result = convertArrayToTable(`${header}`, json, md);
                 mdLog.data = md.data;
@@ -209,9 +205,6 @@ function convertToVTable(header, json, parent, sub, mdLog) {
 
             } else if(jsonString != undefined && jsonString[0] == "[") {    
                 if(jsonString != undefined && jsonString[1] == '{') {   // 匹配 ：{data: {key: [{}]}}
-                    // for(let i in json[item]) {
-                    //     subTable += "\n" + convertToVTable(undefined, json[item][i]);
-                    // }
                     let md = {};
                     subTable += "\n" + convertArrayToTable(`${header}#${item}`, json[item], md);
                     subLog += md.data == undefined ? "" : md.data + "\n";

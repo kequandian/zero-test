@@ -34,7 +34,8 @@ let Test = {
             let login_api;
             login_api = loginInfo[api];
             if(!login_api) {
-                console.log("login <endpoint> <account> <password>");
+                //console.log("login <endpoint> <account> <password>");
+                console.log(`cannot find endpoint ${api}`);
                 shell.exit(1);
             }
             

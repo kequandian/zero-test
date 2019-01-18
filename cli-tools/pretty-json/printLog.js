@@ -11,8 +11,8 @@ function printLog(data, log) {
         } catch(err) {
 
         }
-        let basePath = config ? config["dir"] : "env-test/pub/logs/";
-    
+        let basePath = config ? config["dir"] : "test-env/pub/logs/";
+
         if(!config["file"] || config["file"] == "default") {
             let file = basePath + dateUtil.getToday();
             fs.appendFileSync(file, data + "\n", "utf-8");
