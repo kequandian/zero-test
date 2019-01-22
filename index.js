@@ -158,24 +158,6 @@ program
         }
         shell.exit(0);
     });
-
-program
-    .command('server <cmd> [options]')
-    .on('--help', function() {
-        console.log("Usage:");
-        console.log('');
-        console.log("   server get");
-        console.log("   server path");
-    })
-    .action(function (cmd, ...options) {
-        let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
-        if(cmd == "get") {
-            shell.exec(`cat ${process.cwd()}/test-env/server.config`);
-        } else if(cmd == "path") {
-            console.log("test-env/server.config");
-        }
-    });
-
 program
     .command('test <testcase> <journal-file>')
     .description('多api组合测试')
@@ -239,10 +221,6 @@ program
 
 program.parse(process.argv);
 
-if(!program.report && !program.info && method && api) {
-    program.out = true;
-}
-
 if(api && api.substring(0, 3) == "C:/") {
     api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
 }
@@ -298,12 +276,15 @@ if(program.filter) {
 
 let swagger = Swagger.getSwagger();
 let originApi = api;
+if(!program.report && !program.info && method && api) {
+    program.out = true;
+}
 if(program.out || program.report) {
     if (method && method.toUpperCase() === 'GET') {
         Http.actionAfterGetById(api, 'GET', program.head, program.tail);
-
         Save.saveValue(program.save);
-    } else {
+    } else if(method && (method.toUpperCase() === 'DELETE' || method.toUpperCase() === 'POST' 
+            || method.toUpperCase() === 'PUT')) {
         let isSuccess = false;
         if (method && method.toUpperCase() === 'DELETE') {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
@@ -323,6 +304,8 @@ if(program.out || program.report) {
                 Test.run(originApi, 'GET');   
             }
         } 
+    } else {
+        shell.exit(0);
     } 
 }
 
@@ -331,11 +314,11 @@ if(program.head) {
 } else if(program.tail) {
     originApi = `tail:${originApi}`;
 }
-if (program.out) {
+if (program.out && execed) {
 
     // 输出api结果
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
-} else if (program.report) {
+} else if (program.report && execed) {
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     // 输出并打印日志
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
