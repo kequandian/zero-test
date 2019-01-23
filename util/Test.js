@@ -36,6 +36,11 @@ let Test = {
             if(!login_api) {
                 //console.log("login <endpoint> <account> <password>");
                 console.log(`cannot find endpoint ${api}`);
+                let loginError = {
+                    code : 404,
+                    message : `cannot find endpoint ${api}`
+                }
+                fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify(loginError), 'UTF-8');
                 shell.exit(1);
             }
             
@@ -63,7 +68,6 @@ let Test = {
                 }
             }
             Path.cd();
-            
         } 
     }
 }

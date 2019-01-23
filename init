@@ -63,6 +63,7 @@ elif [ "$cmd"x == "repair"x ];then
     echo "repair env-test..."
     npm uninstall env-test  -g && npm install  -g
     initDir
+    echo "Done!"
     exit 0
 elif [ "$cmd"x == "map"x -a "$url"x != ""x ];then
     echo "map env-test to $url ..."

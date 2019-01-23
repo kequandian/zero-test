@@ -314,11 +314,11 @@ if(program.head) {
 } else if(program.tail) {
     originApi = `tail:${originApi}`;
 }
-if (program.out && execed) {
+if (program.out) {
 
     // 输出api结果
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
-} else if (program.report && execed) {
+} else if (program.report) {
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     // 输出并打印日志
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
