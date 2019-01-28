@@ -85,7 +85,7 @@ program
         shell.exit(0);
     }).on('--help', function() {
         console.log("Example: mysql set host 127.0.0.1 3306"),
-        console.log("         mysql set database env-test"),
+        console.log("         mysql set database zero-test"),
         console.log("         mysql set user root root")
     });
 program

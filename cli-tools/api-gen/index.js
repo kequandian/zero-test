@@ -27,7 +27,7 @@ program
     .option('--list', "show tables")
     .option('-f, --file <value>', "使用指定格式参数生成字段参数(指定json文件路径)")
     .option('--filter <value>')
-    .option('--mysql <file>', "指定mysql配置文件位置,env-test使用")
+    .option('--mysql <file>', "指定mysql配置文件位置,zero-test使用")
     .on('--help', function() {
         console.log("Example:"),
         console.log('  -e name,note    #input list: [\'name\',\'note\']')

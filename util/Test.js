@@ -7,7 +7,7 @@ var Reader = require('./Reader');
 var root = require('../static/root.config');
 var Path = require(`./Path`);
 
-/**F
+/**
  * env-test 脚本调用
  */
 let Test = {

@@ -9,7 +9,7 @@ var Url = require(`./Url`);
 var Path = require(`./Path`);
 
 /**
- * 发送http请求 (使用env-test工具)
+ * 发送http请求 (使用zero-test工具)
  */
 let Http = {
     /** api返回信息 */

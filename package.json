@@ -1,10 +1,10 @@
 {
-  "name": "env-test",
-  "version": "0.3.1",
-  "description": "env test",
+  "name": "zero-test",
+  "version": "0.4.0",
+  "description": "zero-test",
   "main": "index.js",
   "bin": {
-    "env-test": "./index.js"
+    "zero-test": "./index.js"
   },
   "dependencies": {
     "cli-table2": "^0.2.0",

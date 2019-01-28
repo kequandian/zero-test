@@ -1,7 +1,7 @@
 
-# env-test
+# zero-test
 ## Install
-`git clone https://github.com/kequandian/env-test.git`  
+`git clone https://github.com/kequandian/zero-test.git`  
 `./init install`
 ## Usage
 
@@ -39,7 +39,7 @@ Example: login api admin 111111
 ```
 **Journal**
 ```
-$ env-test journal help
+$ zero-test journal help
 Usage:
    journal ls
    journal current
@@ -49,7 +49,7 @@ Usage:
 ```
 **PDF**
 ```
-$ env-test pdf --help
+$ zero-test pdf --help
 Usage: pdf [options] <outputFile>
 
 Options:
@@ -83,7 +83,7 @@ $ ./init install
 2. 配置子工作目录 (可选)
 ```
 $ ./init map ‪C:/Users/10238/Desktop/
-map env-test to C:/Users/10238/Desktop/ ...
+map zero-test to C:/Users/10238/Desktop/ ...
 done!
 ```
 3. 修改配置文件(若使用子工作目录，进行相应切换即可)
@@ -101,13 +101,13 @@ module.exports = {
 };
 
 ---------------- OR ----------------
-$ env-test server --help
+$ zero-test server --help
 Usage: server [options] <host> <port>
 
 Options:
   -h, --help  output usage information
 
-$ env-test mysql --help
+$ zero-test mysql --help
 Usage: mysql [options] <opt> [argv1] [argv2]
 
 mysql <host|database|user> [argv1] [argv2]
@@ -115,23 +115,23 @@ mysql <host|database|user> [argv1] [argv2]
 Options:
   -h, --help  output usage information
 Example: mysql set host 127.0.0.1 3306
-         mysql set database env-test
+         mysql set database zero-test
          mysql set user root root
 
 
 ```
 4. 设置日志(设置日志文件，清空文件内容)
 ```
-$ env-test journal set testcase
-$ env-test journal rewrite
+$ zero-test journal set testcase
+$ zero-test journal rewrite
 ```
 5. 登录（api访问请求头需要带上Authorization时可选)
 ```
-$ env-test login sys admin 111111
+$ zero-test login sys admin 111111
 ```
 6. 调用api并输出
 ```
-$ env-test post /api/eav/entities --filter='{"entityName":"E1"}' --out
+$ zero-test post /api/eav/entities --filter='{"entityName":"E1"}' --out
 
 post--api/eav/entities
 +----------------------------------------------------------+
@@ -151,7 +151,7 @@ post--api/eav/entities
 ```
 7. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
 ```
-$ env-test get api/eav/entities --head --save=id --out
+$ zero-test get api/eav/entities --head --save=id --out
 
 get--api/eav/entities
 +-----------------+
@@ -164,7 +164,7 @@ get--api/eav/entities
 ```
 8. 通过保存值调用api, 并保存字段entityName的值
 ```
-$ env-test get api/eav/entities/#SAVE_VALUE --save=entityName --out
+$ zero-test get api/eav/entities/#SAVE_VALUE --save=entityName --out
 
 get--api/eav/entities/3
 +-----------------+
@@ -177,7 +177,7 @@ get--api/eav/entities/3
 ```
 9. 通过保存值post数据
 ```
-$ env-test post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
+$ zero-test post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
 
 post--api/eav/entities
 +--------------------------+
@@ -195,7 +195,7 @@ post--api/eav/entities
 ```
 10. 单post调用并将结果记录日志
 ```
-$ env-test post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
+$ zero-test post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
 
 post--api/eav/entities
 +------------------------+
@@ -208,7 +208,7 @@ post--api/eav/entities
 ```
 11. 调用GET请求并记录
 ```
-$ env-test get /api/eav/entities --report
+$ zero-test get /api/eav/entities --report
 
 get--api/eav/entities
 +----------------------------------------------------------+
@@ -230,7 +230,7 @@ get--api/eav/entities
 ```
 12. 将日志中记录的内容导出pdf
 ```
-$ env-test pdf demo/testcase.pdf
+$ zero-test pdf demo/testcase.pdf
 converting pdf from pub/logs/testcase to demo/testcase.pdf
 Done
 ```
@@ -240,49 +240,49 @@ Done
 $ cat demo/testcase_demo
 
 ## 组合api测试
-env-test journal set testcase
-env-test journal rewrite
+zero-test journal set testcase
+zero-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-env-test login sys admin 111111 report
+zero-test login sys admin 111111 report
 # 获取组织列表
-env-test get api/sys/org
+zero-test get api/sys/org
 
 # 组织A用户登录
-env-test login sys user1234 111111 report
+zero-test login sys user1234 111111 report
 # 获取组织列表
-env-test get api/sys/org
+zero-test get api/sys/org
 
 # 组织A1用户登录
-env-test login sys user12341 111111 report
+zero-test login sys user12341 111111 report
 # 获取组织列表
-env-test get api/sys/org
+zero-test get api/sys/org
 
 # 组织B用户登录
-env-test login sys user12345 111111 report
+zero-test login sys user12345 111111 report
 # 获取组织列表
-env-test get api/sys/org
+zero-test get api/sys/org
 ```
 2. 执行testcase
 ```
-$ env-test test demo/testcase_demo demo/testcase_demo.pdf
+$ zero-test test demo/testcase_demo demo/testcase_demo.pdf
 testcase running...
 
 ## 组合api测试
-env-test journal set testcase
-env-test journal rewrite
+zero-test journal set testcase
+zero-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-env-test login sys admin 111111 report
+zero-test login sys admin 111111 report
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  2414  100  2356  100    58   2356     58  0:00:01 --:--:--  0:00:01 77870
 # 获取组织列表
-env-test get api/sys/org
+zero-test get api/sys/org
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 
@@ -297,7 +297,7 @@ Done
 ## Demo
 ### Base
 ```
-$ env-test get api/cms/article/categories --out
+$ zero-test get api/cms/article/categories --out
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -320,7 +320,7 @@ $ env-test get api/cms/article/categories --out
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ env-test post api/cms/article/categories --out --table=article_category
+$ zero-test post api/cms/article/categories --out --table=article_category
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -346,7 +346,7 @@ $ env-test post api/cms/article/categories --out --table=article_category
 
 ```
 ```
-$ env-test put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
+$ zero-test put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -371,7 +371,7 @@ $ env-test put api/cms/article/categories --out --table=article_category --tail 
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ env-test delete api/cms/article/categories --out --tail
+$ zero-test delete api/cms/article/categories --out --tail
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -395,7 +395,7 @@ $ env-test delete api/cms/article/categories --out --tail
 ```
 ### Report
 ```
-$ env-test get api/cms/article/categories --report
+$ zero-test get api/cms/article/categories --report
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -417,14 +417,14 @@ $ env-test get api/cms/article/categories --report
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 
-$ env-test pdf pub/logs/2018-12-25.log demo.pdf
+$ zero-test pdf pub/logs/2018-12-25.log demo.pdf
 converting pdf from pub/logs/2018-12-25.log to demo.pdf
 Done
 ```
 
 ### Testcase
 ```
-$ env-test test demo/testcase_demo demo/testcase_demo.pdf
+$ zero-test test demo/testcase_demo demo/testcase_demo.pdf
 
 ```
 
