@@ -16,6 +16,7 @@ const Url = {
         url = url.replace(/\%3F/g, "?");
         url = url.replace(/\%3D/g, "=");
         url = url.replace(/\%26/g, "&");
+        url = url.replace(/\%25/g, "%");
         return url;
     },
 

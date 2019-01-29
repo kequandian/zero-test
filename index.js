@@ -18,6 +18,7 @@ var StringUtil = require('./cli-tools/api-gen/util/StringUtil');
 var Save = require('./util/Save');
 var root = require('./static/root.config');
 var Path = require(`./util/Path`);
+var Url = require(`./util/Url`);
 Path.save(process.cwd());
 let method;
 let api;
@@ -230,7 +231,6 @@ if(!fs.existsSync(`${root}/${fileMap.save}`)) {
     shell.exec(`echo {} > ${root}/${fileMap.save}`);
 }
 let replaceValue = Reader.readJson(`${root}/${fileMap.save}`);
-api = api ? StringUtil.replacePlaceholderByEncode(api, replaceValue) : api;
 
 // pretty-json参数列表
 let params = "-c ";
@@ -276,6 +276,10 @@ if(program.filter) {
 
 let swagger = Swagger.getSwagger();
 let originApi = api;
+// 替换api中的预设的占位符，且对其进行url编码
+api = api ? StringUtil.replacePlaceholderByEncode(api, replaceValue) : api;
+api = api ? Url.urlEncode(api) : api;
+
 if(!program.report && !program.info && method && api) {
     program.out = true;
 }
