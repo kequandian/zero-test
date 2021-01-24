@@ -55,7 +55,7 @@ program
 program
     .command('server <host> <port>')
     .action(function (host, port) {
-        server.host = `http://${host}:${port}/`;
+        server.host = `http://${host}:${port}`;
         console.log(server.host);
         server = JSON.stringify(server, null, '\t');
         server = "module.exports=" + server;
