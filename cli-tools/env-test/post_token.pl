@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 my $token_flag = shift @ARGV;
 my $method = shift @ARGV;
