@@ -1,13 +1,13 @@
 
 # zero-test
+
 ## Install
 `git clone https://github.com/kequandian/zero-test.git`  
-`./init install`
-## Usage
+`sh ./init install`
 
-`./init get swagger <url>`
+## Usage
 ```
-Usage: index <method> <api> [options] [value ...]
+Usage: zero-test <method> <api> [options] [value ...]
 
 Options:
   --out                                           输出结果
@@ -37,9 +37,15 @@ Example: login api admin 111111
          post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category
          test demo/testcase-demo demo/testcase-demo.pdf
 ```
+
 **Journal**
 ```
-$ zero-test journal help
+$ zero-test journal --help
+Usage: journal [options] <cms> [option]
+
+Options:
+  -h, --help  output usage information
+
 Usage:
    journal ls
    journal current
@@ -47,6 +53,7 @@ Usage:
    journal rm <journal-file>
    journal rewrite
 ```
+
 **PDF**
 ```
 $ zero-test pdf --help
@@ -60,6 +67,7 @@ Usage:
    pdf demo/testcase.pdf
    pdf demo/testcase.pdf --target=test-env/pub/logs/testcase
 ```
+
 **testcase**
 ```
 Usage: test [options] <testcase> <journal-file>
