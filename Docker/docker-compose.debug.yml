@@ -1,0 +1,11 @@
+version: '3.4'
+services:
+  zero-test:
+    image: zero-test
+    build:
+      context: .
+    environment:
+      NODE_ENV: development
+    ports:
+      - 8080:8080
+    command: ["node", "--inspect=0.0.0.0:8080", "index.js"]

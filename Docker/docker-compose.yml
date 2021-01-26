@@ -1,0 +1,12 @@
+version: '3.4'
+services:
+  zero-test:
+    image: zero-test
+    container_name: zero-test
+    build:
+      context: ../.
+      dockerfile: ./Docker/Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8080:8080
