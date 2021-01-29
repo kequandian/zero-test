@@ -1,4 +1,5 @@
 version: '3.4'
+#cli: docker-compose -f docker-compose.debug.yml run --rm zero-test node index.js --help
 services:
   zero-test:
     image: zero-test
@@ -6,6 +7,6 @@ services:
       context: .
     environment:
       NODE_ENV: development
-    ports:
-      - 8080:8080
-    command: ["node", "--inspect=0.0.0.0:8080", "index.js"]
+    volumes: 
+      - ../index.js:/usr/src/app/index.js
+    # command: ["node", "index.js", "--help"]
