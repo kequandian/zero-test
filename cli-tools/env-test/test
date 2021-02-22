@@ -19,15 +19,15 @@ swagger_cli="$dir/swagger-cli"
 ## show all apis
 if [ "$method"x == "."x ];then
    $swagger_cli .   
-   exit 0
-fi 
+   exit
+fi
 
 ## usage
 if [ ! $api ];then
  bin=$(basename $0)
  echo "Usage: $bin <method> <api> [tc|trace|vi|run]"
  echo "       $bin ."
- exit 0
+ exit
 fi
 
 api=${api//\%26/\&}
@@ -70,11 +70,11 @@ if [ "$cmd"x == "run"x  ];then
     elif [ "$method"x == "get"x ];then
        "$dir/get" $api
     fi
-    exit 0
+    exit
 fi
 
 if [ $err ];then
-   exit 0
+   exit
 fi
 
 

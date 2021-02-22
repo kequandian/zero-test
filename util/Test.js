@@ -22,7 +22,7 @@ let Test = {
         if (shell.exec(`bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
             console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`);
-            shell.cd(originPath);
+            // shell.cd(originPath);
             Path.cd();
             shell.exit(1);
         }

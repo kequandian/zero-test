@@ -8,5 +8,8 @@ services:
       dockerfile: ./Docker/Dockerfile
     environment:
       NODE_ENV: production
-    ports:
-      - 8080:8080
+    # volumes:
+      # ./test-env/server.config:/usr/src/app/test-env/server.config
+    command: 
+      - "--help"
+      

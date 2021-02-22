@@ -1,7 +1,7 @@
 let Table = require("cli-table2");
 let program = require('commander');
 let fs = require('fs');
-let StringUtil = require('./util/StringUtil');
+let StringUtil = require('./util/stringUtil');
 let charConfig = require('./table.config');
 
 function truncated(str, len) {

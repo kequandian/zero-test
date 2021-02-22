@@ -21,3 +21,7 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
+**/node_modules
+**/Docker
+**/Demo
+**/temp

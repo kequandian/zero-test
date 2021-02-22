@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 let dateUtil = require("./util/dateUtil");
 let fs = require("fs");
-let StringUtil = require("./util/StringUtil");
+let StringUtil = require("./util/stringUtil");
 let genarator = require("./genarator");
 let program = require('commander');
 let db = require("./util/mysqlUtil");
