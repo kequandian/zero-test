@@ -5,7 +5,7 @@ let fs = require('fs');
 let convertToTable = require('./convertToTable');
 let printLog = require('./printLog');
 let convertToVTable = require("./convertToVTable");
-let DataUtil = require("./util/DataUtil");
+let DataUtil = require("./util/dataUtil");
 let shelljs = require("shelljs");
 
 function list (val) {

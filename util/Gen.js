@@ -4,7 +4,7 @@ var fs = require('fs');
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
 var DateUtil = require(`../cli-tools/api-gen/util/dateUtil`);
-var StringUtil = require(`../cli-tools/api-gen/util/StringUtil`);
+var StringUtil = require(`../cli-tools/api-gen/util/stringUtil`);
 var root = require('../static/root.config');
 var Path = require(`./Path`);
 

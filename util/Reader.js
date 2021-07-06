@@ -11,7 +11,7 @@ let Reader = {
         } catch(err) {
             if(result == "") {
                 console.log(`\n${file} is empty, please check your request again`);
-                fs.writeFileSync(`${root}/${fielMap.response}`, `{"code": 0, "${file} is empty, please check your request again`, "UTF-8");
+                fs.writeFileSync(`${root}/${fielMap.response}`, `{"code": 0, "message": "${file} is empty, please check your request again"}`, "UTF-8");
                 shelljs.exit(1);
             }
             console.log(`read json error!\n${result}`);

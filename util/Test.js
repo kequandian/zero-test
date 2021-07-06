@@ -19,10 +19,10 @@ let Test = {
         }
         
         shell.cd(`${root}/cli-tools/env-test`);
-        if (shell.exec(`bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+        if (shell.exec(`bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
-            console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.host}${api} run ${body} > ${root}/${fileMap.response}`);
-            shell.cd(originPath);
+            console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`);
+            // shell.cd(originPath);
             Path.cd();
             shell.exit(1);
         }
@@ -46,9 +46,9 @@ let Test = {
             
             shell.cd(`${root}/cli-tools/env-test`);
             body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
-            if (shell.exec(`bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+            if (shell.exec(`bash ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd ${root}//cli-tools/env-test && bash ./test post ${server.host}${login_api} run ${body} > ${root}/${fileMap.response})`);
+                console.log(`command : (cd ${root}//cli-tools/env-test && bash ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response})`);
                 shell.exit(1);
             }
             let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");

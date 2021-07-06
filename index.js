@@ -4,21 +4,22 @@ var program = require('commander');
 var fs = require('fs');
 var server = require(`${process.cwd()}/test-env/server.config`);
 var Http = require('./util/Http');
-var Test = require('./util/test');
+var Test = require('./util/Test');
 var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
 var apiMap = require(`${process.cwd()}/test-env/api.config`).map;
 var ignore = require(`${process.cwd()}/test-env/api.config`).filter;
 var Pdf = require('./util/Pdf');
-var DateUtil = require('./cli-tools/pretty-json/util/DateUtil');
+var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
 var fileMap = require(`./static/file_map.config`);
 var Reader = require('./util/Reader');
 var Formatter = require('./util/Formatter');
-var StringUtil = require('./cli-tools/api-gen/util/StringUtil');
+var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
 var Save = require('./util/Save');
 var root = require('./static/root.config');
 var Path = require(`./util/Path`);
 var Url = require(`./util/Url`);
+const { exit } = require("process");
 Path.save(process.cwd());
 let method;
 let api;
@@ -55,8 +56,8 @@ program
 program
     .command('server <host> <port>')
     .action(function (host, port) {
-        server.host = `http://${host}:${port}/`;
-        console.log(server.host);
+        server.endpoint = `http://${host}:${port}`;
+        console.log(server.endpoint);
         server = JSON.stringify(server, null, '\t');
         server = "module.exports=" + server;
         fs.writeFileSync(`${process.cwd()}/test-env/server.config`, server, 'UTF-8');
@@ -222,10 +223,14 @@ program
 
 program.parse(process.argv);
 
-if(api && api.substring(0, 3) == "C:/") {
-    api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 4 : 0);
+if(api){
+    // ensure api start with slash/, just like /api
+    if(api.substring(0, 3) == "C:/") {
+       api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 3 : 0);
+    }else if( !(api.substring(0, 1) == "/") ) {
+        api = "/" + api;
+    }
 }
-
 
 if(!fs.existsSync(`${root}/${fileMap.save}`)) {
     shell.exec(`echo {} > ${root}/${fileMap.save}`);
@@ -307,7 +312,7 @@ if(program.out || program.report) {
             } else {
                 Test.run(originApi, 'GET');   
             }
-        } 
+        }
     } else {
         shell.exit(0);
     } 

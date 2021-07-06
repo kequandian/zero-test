@@ -4,7 +4,12 @@
   "description": "zero-test",
   "main": "index.js",
   "bin": {
-    "zero-test": "./index.js"
+    "zero-test": "./index.js",
+    "get": "./cli-tools/env-test/get",
+    "post": "./cli-tools/env-test/post",
+    "swagger-cli": "./cli-tools/env-test/swagger-cli",
+    "get_token.pl": "./cli-tools/env-test/get_token.pl",
+    "post_token.pl": "./cli-tools/env-test/post_token.pl"
   },
   "dependencies": {
     "cli-table2": "^0.2.0",

@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  zero-test:
+    image: zero-test
+    container_name: zero-test
+    build:
+      context: ../.
+      dockerfile: ./Docker/Dockerfile
+    environment:
+      NODE_ENV: production
+    # volumes:
+      # ./test-env/server.config:/usr/src/app/test-env/server.config
+    command: 
+      - "--help"
+      

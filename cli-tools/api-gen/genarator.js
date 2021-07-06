@@ -1,7 +1,7 @@
 let mysql = require('mysql');  
 let dateUtil = require("./util/dateUtil");
 let fs = require("fs");
-let StringUtil = require("./util/StringUtil");
+let StringUtil = require("./util/stringUtil");
 let shelljs = require("shelljs");
 
 

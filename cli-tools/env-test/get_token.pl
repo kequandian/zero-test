@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 my $token_tag = shift @ARGV;
 my $api = shift @ARGV;
@@ -49,7 +49,6 @@ if($token_flag){
    my $in_t = 'app.token';
    $token = &get_data($in_t);
 }
-
 
 if($print_log){
    if($token_flag){
