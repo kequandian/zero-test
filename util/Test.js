@@ -1,10 +1,10 @@
 var shell = require("shelljs");
 var fs = require('fs');
-var server = require(`${process.cwd()}/test-env/server.config`);
-var loginInfo = require(`${process.cwd()}/test-env/login.config`);
+var server = require(`../test-env/server.config`);
+var loginInfo = require(`../test-env/login.config`);
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
-var root = require('../static/root.config');
+//var root = require('../static/root.config');
 var Path = require(`./Path`);
 
 /**
@@ -18,16 +18,21 @@ let Test = {
             body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
         
-        shell.cd(`${root}/cli-tools/env-test`);
-        if (shell.exec(`bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+        //shell.cd(`${root}/cli-tools/env-test`);
+        shell.cd(`./cli-tools/env-test`);
+        console.log(`${process.cwd()}`);
+
+        //if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+        if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ./${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
-            console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`);
+            //console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`);
             // shell.cd(originPath);
             Path.cd();
             shell.exit(1);
         }
         Path.cd();
     },
+
     //$(./post /oauth/login "{\"account\":\"$user\",\"password\":\"$passw\"}")
     login(api, account, password) {
         if(loginInfo) {
@@ -40,24 +45,33 @@ let Test = {
                     code : 404,
                     message : `cannot find endpoint ${api}`
                 }
-                fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify(loginError), 'UTF-8');
+                //fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify(loginError), 'UTF-8');
+                fs.writeFileSync(`./${fileMap.response}`, JSON.stringify(loginError), 'UTF-8');
                 shell.exit(1);
             }
-            
-            shell.cd(`${root}/cli-tools/env-test`);
-            body = `'{"account":"${account}","username":"${account}","password":"${password}"}'`;
-            if (shell.exec(`bash ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+
+            //shell.cd(`${root}/cli-tools/env-test`);
+            shell.cd(`./cli-tools/env-test`);
+            body = `'{"account":"${account}","password":"${password}"}'`;
+            console.log("sh ./test post", `${server.endpoint}${login_api}`, "run", `${body}`)
+
+
+            //if (shell.exec(`sh ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+            if (shell.exec(`sh ./test post ${server.endpoint}${login_api} run ${body} > ./${fileMap.response}`).code !== 0) {                
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd ${root}//cli-tools/env-test && bash ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response})`);
+                console.log(`command : (cd .//cli-tools/env-test && sh ./test post ${server.endpoint}${login_api} run ${body} > ./${fileMap.response})`);
                 shell.exit(1);
             }
-            let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
+            //let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
+            let loginRes = fs.readFileSync(`./${fileMap.response}`, "UTF-8");
             loginRes = Reader.parseJson(loginRes);
             if(loginRes && (loginRes.status_code == 0 || loginRes.code == 200)) {
                 if(api.substring(0, 4) == "rest") {
-                    fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.access_token}`);
+                    //fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.access_token}`);
+                    fs.writeFileSync(`./cli-tools/env-test/app.token`, `${loginRes.data.access_token}`);
                 } else  {
-                    fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.accessToken}`);
+                    //fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.accessToken}`);
+                    fs.writeFileSync(`./cli-tools/env-test/app.token`, `${loginRes.data.accessToken}`);
                 }
                 
             } else {

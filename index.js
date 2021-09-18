@@ -2,23 +2,25 @@
 var shell = require("shelljs");
 var program = require('commander');
 var fs = require('fs');
-var server = require(`${process.cwd()}/test-env/server.config`);
 var Http = require('./util/Http');
 var Test = require('./util/Test');
 var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
-var apiMap = require(`${process.cwd()}/test-env/api.config`).map;
-var ignore = require(`${process.cwd()}/test-env/api.config`).filter;
 var Pdf = require('./util/Pdf');
-var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
-var fileMap = require(`./static/file_map.config`);
 var Reader = require('./util/Reader');
 var Formatter = require('./util/Formatter');
-var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
 var Save = require('./util/Save');
-var root = require('./static/root.config');
 var Path = require(`./util/Path`);
 var Url = require(`./util/Url`);
+var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
+var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
+var fileMap = require(`./static/file_map.config`);
+var root = require('./static/root.config');
+var server = require(`./test-env/server.config`);
+var apiMap = require(`./test-env/api.config`).map;
+//var ignore = require(`${process.cwd()}/test-env/api.config`).filter;
+var ignore = require(`./test-env/api.config`).filter;
+
 const { exit } = require("process");
 Path.save(process.cwd());
 let method;
@@ -94,6 +96,7 @@ program
     .command('login <endpoint> <account> <password> [report]')
     .action(function (endpoint, account, password, report) {
         Test.login(endpoint, account, password);
+
         if(report == "report") {
             shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} -c -t login--${account}  --log`);
         }

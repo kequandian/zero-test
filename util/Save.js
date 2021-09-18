@@ -2,7 +2,7 @@ let fs = require('fs');
 let fileMap = require(`../static/file_map.config`);
 let shell = require('shelljs');
 let Reader = require('./Reader');
-let root = require('../static/root.config');
+//let root = require('../static/root.config');
 
 let Save = {
     savaField : "#SAVE_VALUE",
