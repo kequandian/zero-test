@@ -14,7 +14,8 @@
   "dependencies": {
     "cli-table2": "^0.2.0",
     "commander": "^2.19.0",
-    "markdown-pdf": "^9.0.0",
+    "mdpdf": "^2.1.2",
+    "path": "^0.12.7",
     "shelljs": "^0.8.3"
   },
   "devDependencies": {

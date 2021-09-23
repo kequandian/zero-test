@@ -1,13 +1,18 @@
-var markdownpdf = require("markdown-pdf")
-var fs = require("fs")
- 
-// fs.createReadStream("/path/to/document.md")
-//   .pipe(markdownpdf())
-//   .pipe(fs.createWriteStream("/path/to/document.pdf"))
- 
-var inputPath = `${process.cwd()}/unittest/markdown/testcase.md`
-var outputPath= `${process.cwd()}/unittest/markdown/testcase.pdf`
+const mdpdf = require('mdpdf');
+const path = require('path');
 
-markdownpdf().from(inputPath).to(outputPath, function () {
-  console.log("Done")
-})
+let options = {
+  source: path.join(__dirname, 'markdown/testcase.md'),
+  destination: path.join(__dirname, 'output.pdf'),
+  styles: path.join(__dirname, 'markdown/markdown.css'),
+  pdf: {
+      format: 'A4',
+      orientation: 'portrait'
+  }
+};
+
+mdpdf.convert(options).then((pdfPath) => {
+  console.log('PDF Path:', pdfPath);
+}).catch((err) => {
+  console.error(err);
+});

@@ -7,3 +7,7 @@ testcase
 package-lock.json
 swagger.json
 /phantomjs-2.1.1-linux-x86_64.tar.bz2
+*.pdf
+_temp.html
+yarn-error.log
+*.png
