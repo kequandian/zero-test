@@ -9,7 +9,7 @@ function printLog(data, log) {
         let config;
         try {
             config = JSON.parse(fs.readFileSync(`${root}/static/log-config.json`, "UTF-8"));
-            console.log('printLog:config=', config)
+            //console.log('printLog:config=', config)
         } catch(err) {
             config.log('printLog:err=', err)
         }
