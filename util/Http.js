@@ -1,12 +1,15 @@
 var shell = require("shelljs");
+var path = require("path");
 var fs = require('fs');
-var server = require(`${process.cwd()}/test-env/server.config`);
+var server = require(`../test-env/server.config`);
+var fileMap = require(`../static/file_map.config`);
 var Test = require('./Test');
 var Reader = require('./Reader');
-var fileMap = require(`../static/file_map.config`);
-var root = require(`../static/root.config`);
 var Url = require(`./Url`);
-var Path = require(`./Path`);
+//var Path = require(`./Path`);
+//var root = require(`../static/root.config`);
+
+var root = path.dirname(__dirname)
 
 /**
  * 发送http请求 (使用zero-test工具)

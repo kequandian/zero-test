@@ -10,19 +10,17 @@ var Pdf = require('./util/Pdf');
 var Reader = require('./util/Reader');
 var Formatter = require('./util/Formatter');
 var Save = require('./util/Save');
-var Path = require(`./util/Path`);
 var Url = require(`./util/Url`);
 var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
 var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
 var fileMap = require(`./static/file_map.config`);
-var root = require('./static/root.config');
 var server = require(`./test-env/server.config`);
 var apiMap = require(`./test-env/api.config`).map;
-//var ignore = require(`${process.cwd()}/test-env/api.config`).filter;
 var ignore = require(`./test-env/api.config`).filter;
+var root = __dirname;
+
 
 const { exit } = require("process");
-Path.save(process.cwd());
 let method;
 let api;
 program

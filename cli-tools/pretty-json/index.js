@@ -1,12 +1,13 @@
 #!/usr/bin/env node
+let shelljs = require("shelljs");
+let fs = require('fs');
+let path = require('path');
 let Table = require("cli-table2");
 let program = require('commander');
-let fs = require('fs');
 let convertToTable = require('./convertToTable');
 let printLog = require('./printLog');
 let convertToVTable = require("./convertToVTable");
 let DataUtil = require("./util/dataUtil");
-let shelljs = require("shelljs");
 
 function list (val) {
     return val.split(',');

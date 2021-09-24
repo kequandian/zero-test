@@ -1,12 +1,14 @@
 var shell = require("shelljs");
-var Swagger = require('./Swagger');
 var fs = require('fs');
+var path = require('path')
+var Swagger = require('./Swagger');
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
 var DateUtil = require(`../cli-tools/api-gen/util/dateUtil`);
 var StringUtil = require(`../cli-tools/api-gen/util/stringUtil`);
-var root = require('../static/root.config');
-var Path = require(`./Path`);
+//var root = require('../static/root.config');
+//var Path = require(`./Path`);
+var root = path.dirname(__dirname)
 
 /**
  * api-gen 调用

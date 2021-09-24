@@ -1,11 +1,13 @@
 var shell = require("shelljs");
 var fs = require('fs');
+var path = require('path')
 var server = require(`../test-env/server.config`);
 var loginInfo = require(`../test-env/login.config`);
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
 //var root = require('../static/root.config');
-var Path = require(`./Path`);
+//var Path = require(`./Path`);
+var root = path.dirname(__dirname)
 
 /**
  * env-test 脚本调用
@@ -18,19 +20,15 @@ let Test = {
             body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
         
-        //shell.cd(`${root}/cli-tools/env-test`);
         shell.cd(`./cli-tools/env-test`);
-        console.log(`${process.cwd()}`);
-
-        //if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
-        if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ./${fileMap.response}`).code !== 0) {
+        if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
-            //console.log(`command : cd ${root}/cli-tools/env-test && ls && bash ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`);
-            // shell.cd(originPath);
-            Path.cd();
+            shell.cd(__dirname);
             shell.exit(1);
         }
-        Path.cd();
+
+        // root path
+        shell.cd(path.dirname(__dirname));
     },
 
     //$(./post /oauth/login "{\"account\":\"$user\",\"password\":\"$passw\"}")
