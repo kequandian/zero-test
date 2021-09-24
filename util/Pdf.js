@@ -1,35 +1,36 @@
+//const { fstat } = require('fs');
 const mdpdf = require('mdpdf');
+const fs = require('fs');
 const path = require('path');
 
-// let options = {
-//   source: path.join(__dirname, 'markdown/testcase.md'),
-//   destination: path.join(__dirname, 'output.pdf'),
-//   styles: path.join(__dirname, 'markdown/markdown.css'),
-//   pdf: {
-//       format: 'A4',
-//       orientation: 'portrait'
-//   }
-// };
+let options = {
+  source: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.md'),
+  destination: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.pdf'),
+  styles: path.join(path.dirname(__dirname), 'test-env', 'pub', 'markdown.css'),
+  pdf: {
+      format: 'A1',
+      orientation: 'portrait'
+  }
+};
 
 let Pdf = {
-    options : {
-        //source: path.join(__dirname, 'markdown/testcase.md'),
-        destination: path.join(__dirname, 'default.pdf'),
-        styles: path.join(path.dirname(__dirname), 'test-env/pub/markdown.css'),
-        pdf: {
-            format: 'A4',
-            orientation: 'portrait'
-        }
-    },
+    options : options,
 
     export(inputFile, outputFile) {
         options.source = inputFile
-
-        if (outputFile==undefined || outputFile == "") {
+        if (outputFile==undefined || outputFile  == '') {
             options.destination = path.join(path.dirname(inputFile), path.basename(inputFile)+".pdf")
+        }else{
+            if(!fs.existsSync(path.dirname(outputFile))){
+                // the same path as source
+               options.destination = path.join(path.dirname(inputFile), outputFile)
+            }else{
+               options.destination =path.resolve(outputFile)
+            }
         }
 
-        console.log(`converting pdf from ${inputFile} to ${outputFile}`);
+        // start convert to pdf
+        console.log(`converting pdf from ${options.source} to ${options.destination}`);
         mdpdf.convert(options).then((pdfPath) => {
             console.log('PDF Path:', pdfPath);
         }).catch((err) => {

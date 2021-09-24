@@ -2,6 +2,7 @@
 var shell = require("shelljs");
 var program = require('commander');
 var fs = require('fs');
+var path = require(`path`)
 var Http = require('./util/Http');
 var Test = require('./util/Test');
 var Swagger = require('./util/Swagger');
@@ -120,11 +121,15 @@ program
         console.log("   pdf demo/testcase.pdf --target=test-env/pub/logs/testcase");
     })
     .action(function (outputFile, options) {
-        if(options.target) {
-            Pdf.export(options.target, outputFile);
+        let source = options.target
+        if(source) {
+            //console.log('source=',source, 'outputFile=',outputFile)
+            Pdf.export(source, outputFile);
         } else {
             let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
-            Pdf.export(`${logConf.dir}${logConf.file}`, outputFile);
+            let source = path.join(logConf.dir, logConf.file)
+            console.log('source=',source, 'outputFile=',outputFile)
+            Pdf.export(source, outputFile);
         }
 
     });
