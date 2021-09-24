@@ -5,8 +5,6 @@ var server = require(`../test-env/server.config`);
 var loginInfo = require(`../test-env/login.config`);
 var fileMap = require(`../static/file_map.config`);
 var Reader = require('./Reader');
-//var root = require('../static/root.config');
-//var Path = require(`./Path`);
 var root = path.dirname(__dirname)
 
 /**

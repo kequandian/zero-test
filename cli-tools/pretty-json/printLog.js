@@ -1,7 +1,6 @@
 let fs = require("fs");
 let path = require('path')
 let dateUtil = require("./util/dateUtil");
-//let root = require("../../static/root.config")
 var root = path.dirname(path.dirname(__dirname))
 
 function printLog(data, log) {

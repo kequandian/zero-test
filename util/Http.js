@@ -6,9 +6,6 @@ var fileMap = require(`../static/file_map.config`);
 var Test = require('./Test');
 var Reader = require('./Reader');
 var Url = require(`./Url`);
-//var Path = require(`./Path`);
-//var root = require(`../static/root.config`);
-
 var root = path.dirname(__dirname)
 
 /**

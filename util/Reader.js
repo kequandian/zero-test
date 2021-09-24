@@ -1,7 +1,8 @@
 var shelljs = require("shelljs");
 var fs = require("fs");
+var path = require("path");
 var fielMap = require(`../static/file_map.config`);
-var root =require('../static/root.config');
+var root = path.dirname(__dirname)
 
 let Reader = {
     readJson(file) {

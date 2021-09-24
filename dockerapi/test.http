@@ -1,5 +1,12 @@
+## https://docs.docker.com/engine/api/v1.24/
+
+@endpoint=http://192.168.3.204:2375
+
+### List images
+GET {{endpoint}}/images/json
+
 ### List containers
-GET /containers/json
+GET {{endpoint}}/containers/json
 
-
-GET /v1.24/containers/json?all=1&before=8dfafdbc3a40&size=1 HTTP/1.1
+### List containers with conditions
+GET {{endpoint}}/v1.24/containers/json?all=1&before=8dfafdbc3a40&size=1 HTTP/1.1

@@ -1,8 +1,9 @@
 let fs = require('fs');
+let path = require('path')
 let fileMap = require(`../static/file_map.config`);
 let shell = require('shelljs');
 let Reader = require('./Reader');
-//let root = require('../static/root.config');
+var root = path.dirname(__dirname)
 
 let Save = {
     savaField : "#SAVE_VALUE",
