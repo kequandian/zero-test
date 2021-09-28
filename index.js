@@ -294,8 +294,14 @@ if(!program.report && !program.info && method && api) {
 }
 if(program.out || program.report) {
     if (method && method.toUpperCase() === 'GET') {
-        Http.actionAfterGetById(api, 'GET', program.head, program.tail);
-        Save.saveValue(program.save);
+        if(program.head && program.tail){
+            console.log('Options: both --head --tail confict !')
+            shell.exit(0)
+        }
+        if(program.head || program.tail){
+           Http.actionAfterGetById(api, 'GET', program.head, program.tail);
+           Save.saveValue(program.save);
+        }
     } else if(method && (method.toUpperCase() === 'DELETE' || method.toUpperCase() === 'POST' 
             || method.toUpperCase() === 'PUT')) {
         let isSuccess = false;

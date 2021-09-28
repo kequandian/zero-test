@@ -85,7 +85,8 @@ let Http = {
      */
     actionAfterGetById(api, method, head, tail) {
         if (head || tail) {
-            let index = head == undefined ? -1 : 0;
+            // head for index=0 and tail for -1
+            let index = head ? 0 : tail ? -1 : 0
             api = Http.getId(api, index);
             console.log(`redirect api: ${method} ${api}`);
             Test.run(api, `${method}`);
