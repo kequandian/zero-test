@@ -15,8 +15,8 @@ function initDir() {
 
 
 if [ "$cmd"x == "install"x ];then
-    echo "init workspace..."
-    node init.js
+    #echo "init workspace..."
+    #node init.js
     echo "init api-gen..."
     (cd cli-tools/api-gen && npm install)
     echo "init pretty-json..."
@@ -24,7 +24,8 @@ if [ "$cmd"x == "install"x ];then
     echo "init zero-json..."
     (cd cli-tools/zero-json && npm install)
     echo "init zero-test..."
-    npm install -g
+    npm install -g yarn
+    yarn install
     initDir
     exit 0
 elif [ "$cmd"x == "update"x ];then
