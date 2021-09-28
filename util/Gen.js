@@ -24,7 +24,6 @@ let Gen = {
         if(table) {
             shell.cd(`${root}/cli-tools/api-gen`);
             shell.exec(`(node index.js -t ${table} ${params} > ${this.genFile})`);
-            Path.cd();
             params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
             
         } else if(swagger) { 
@@ -35,7 +34,7 @@ let Gen = {
             params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8")); 
         } else {
             //this.writeFilterToJson(params);
-            params = Reader.parseJson(params ? params : "{}");
+            params = Reader.parseJson(params ? params : "{}")
         }
         //params = Reader.parseJson(params);
         params = StringUtil.replacePlaceholder(JSON.stringify(params));

@@ -263,7 +263,6 @@ if(method && method.toUpperCase() === 'POST'
 }
 
 
-
 // api-gen参数列表
 let genParams = ` --mysql=${process.cwd()}/${fileMap.server}`;
 if(program.all) {
@@ -277,7 +276,6 @@ if(program.filter) {
     }
     if(!program.table && !program.swagger) {
         // 未指定table 与swagger时，仅处理filter
-
         genParams = `${program.filter}`;
     } else {
         program.filter = program.filter.replace(new RegExp('"', 'g'), '\\"');
@@ -304,13 +302,16 @@ if(program.out || program.report) {
         if (method && method.toUpperCase() === 'DELETE') {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
         } else if(method && method.toUpperCase() === 'POST') {
+            if(!program.table && !program.swagger){
+                console.log('either --table or --swagger should be provided !')
+                shell.exit(0);
+            }
             Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
             isSuccess = Http.post(api, `${root}/${fileMap.gen}`);
         }  else if(method && method.toUpperCase() === 'PUT') {
             Gen.genarator(`${api}/{id}`, 'PUT', program.table, program.swagger, genParams);
             isSuccess = Http.putAfterGetById(api, `${root}/${fileMap.gen}`, program.head, program.tail);
         }
-        
         Save.saveValue(program.save);
         if(isSuccess && !program.only) {
             if(apiMap[originApi]) {
@@ -330,7 +331,6 @@ if(program.head) {
     originApi = `tail:${originApi}`;
 }
 if (program.out) {
-
     // 输出api结果
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
 } else if (program.report) {
