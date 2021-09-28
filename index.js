@@ -328,7 +328,7 @@ if(program.out || program.report) {
         }
     } else {
         shell.exit(0);
-    } 
+    }
 }
 
 if(program.head) {

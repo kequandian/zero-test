@@ -49,13 +49,16 @@ let Test = {
             //shell.cd(`${root}/cli-tools/env-test`);
             shell.cd(`./cli-tools/env-test`);
             body = `'{"account":"${account}","password":"${password}"}'`;
-            console.log("sh ./test post", `${server.endpoint}${login_api}`, "run", `${body}`)
 
-
-            //if (shell.exec(`sh ./test post ${server.endpoint}${login_api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
-            if (shell.exec(`sh ./test post ${server.endpoint}${login_api} run ${body} > ./${fileMap.response}`).code !== 0) {                
+            let endpoint=`${server.endpoint}`.replace(/\/$/, "")
+            let loginAPI = `${login_api}`.replace(/^\//, "")
+            var url = `${endpoint}/${loginAPI}`
+            
+            console.log("sh ./test post", `${url}`, "run", `${body}`)
+            //if (shell.exec(`sh ./test post ${url} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+            if (shell.exec(`sh ./test post ${url} run ${body} > ./${fileMap.response}`).code !== 0) {                
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd .//cli-tools/env-test && sh ./test post ${server.endpoint}${login_api} run ${body} > ./${fileMap.response})`);
+                console.log(`command : (cd .//cli-tools/env-test && sh ./test post ${url} run ${body} > ./${fileMap.response})`);
                 shell.exit(1);
             }
             //let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
@@ -77,7 +80,7 @@ let Test = {
                     // nothing to do
                 }
             }
-            Path.cd();
+            shell.cd(path.dirname(__dirname))
         } 
     }
 }
