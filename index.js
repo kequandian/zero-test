@@ -238,11 +238,12 @@ if(api){
         api = "/" + api;
     }
 }
-
+//console.log('api=',api)
 if(!fs.existsSync(`${root}/${fileMap.save}`)) {
     shell.exec(`echo {} > ${root}/${fileMap.save}`);
 }
 let replaceValue = Reader.readJson(`${root}/${fileMap.save}`);
+//console.log('replaceValue=',replaceValue)
 
 // pretty-json参数列表
 let params = "-c ";
@@ -262,7 +263,6 @@ if(method && method.toUpperCase() === 'POST'
     || method && method.toUpperCase() === 'PUT') {
         params += ` --body=${root}/${fileMap.gen}`;
 }
-
 
 // api-gen参数列表
 let genParams = ` --mysql=${process.cwd()}/${fileMap.server}`;
@@ -300,6 +300,7 @@ if(program.out || program.report) {
             shell.exit(0)
         }
         if(program.head || program.tail){
+           console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
            Http.actionAfterGetById(api, 'GET', program.head, program.tail);
            Save.saveValue(program.save);
         }
@@ -339,6 +340,7 @@ if(program.head) {
 }
 if (program.out) {
     // 输出api结果
+    console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
 } else if (program.report) {
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
