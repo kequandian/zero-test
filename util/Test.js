@@ -54,23 +54,24 @@ let Test = {
             let loginAPI = `${login_api}`.replace(/^\//, "")
             var url = `${endpoint}/${loginAPI}`
             
-            console.log("sh ./test post", `${url}`, "run", `${body}`)
-            //if (shell.exec(`sh ./test post ${url} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
-            if (shell.exec(`sh ./test post ${url} run ${body} > ./${fileMap.response}`).code !== 0) {                
+            //console.log("sh ./test post", `${url}`, "run", `${body}`, `${root}/${fileMap.response}`)
+            if (shell.exec(`sh ./test post ${url} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+            //if (shell.exec(`sh ./test post ${url} run ${body} > ./${fileMap.response}`).code !== 0) {                
                 console.log('error while exec env-test/test');
-                console.log(`command : (cd .//cli-tools/env-test && sh ./test post ${url} run ${body} > ./${fileMap.response})`);
+                console.log(`command : (cd .//cli-tools/env-test && sh ./test post ${url} run ${body} > ${root}/${fileMap.response})`);
                 shell.exit(1);
             }
-            //let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
-            let loginRes = fs.readFileSync(`./${fileMap.response}`, "UTF-8");
+
+            let loginRes = fs.readFileSync(`${root}/${fileMap.response}`, "UTF-8");
             loginRes = Reader.parseJson(loginRes);
+            //console.log('loginRes=', loginRes)
             if(loginRes && (loginRes.status_code == 0 || loginRes.code == 200)) {
                 if(api.substring(0, 4) == "rest") {
                     //fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.access_token}`);
-                    fs.writeFileSync(`./cli-tools/env-test/app.token`, `${loginRes.data.access_token}`);
+                    fs.writeFileSync(`./app.token`, `${loginRes.data.access_token}`);
                 } else  {
                     //fs.writeFileSync(`${root}/cli-tools/env-test/app.token`, `${loginRes.data.accessToken}`);
-                    fs.writeFileSync(`./cli-tools/env-test/app.token`, `${loginRes.data.accessToken}`);
+                    fs.writeFileSync(`./app.token`, `${loginRes.data.accessToken}`);
                 }
                 
             } else {

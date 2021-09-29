@@ -94,6 +94,7 @@ program
 program
     .command('login <endpoint> <account> <password> [report]')
     .action(function (endpoint, account, password, report) {
+        //console.log('Test.login: ', endpoint, account, password)
         Test.login(endpoint, account, password);
 
         if(report == "report") {
