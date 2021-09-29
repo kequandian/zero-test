@@ -17,8 +17,8 @@ let Test = {
             body = `'${body}'`;
             body = body.replace(new RegExp(" ", "g"), "nbsp");
         }
-        
-        shell.cd(`./cli-tools/env-test`);
+        shell.cd(`${root}/cli-tools/env-test`);
+        console.log(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`)
         if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
             shell.cd(__dirname);
@@ -47,7 +47,7 @@ let Test = {
             }
 
             //shell.cd(`${root}/cli-tools/env-test`);
-            shell.cd(`./cli-tools/env-test`);
+            shell.cd(`${root}/cli-tools/env-test`);
             body = `'{"account":"${account}","password":"${password}"}'`;
 
             let endpoint=`${server.endpoint}`.replace(/\/$/, "")

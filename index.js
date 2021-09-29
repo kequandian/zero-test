@@ -299,9 +299,12 @@ if(program.out || program.report) {
             console.log('Options: both --head --tail confict !')
             shell.exit(0)
         }
-        console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
+        //console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
         Http.actionAfterGetById(api, 'GET', program.head, program.tail);
         Save.saveValue(program.save);
+        // if(program.head || program.tail ){
+        //     shell.exit()
+        // }
     } else if(method && (method.toUpperCase() === 'DELETE' || method.toUpperCase() === 'POST' 
             || method.toUpperCase() === 'PUT')) {
         let isSuccess = false;
