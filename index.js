@@ -299,21 +299,19 @@ if(program.out || program.report) {
             console.log('Options: both --head --tail confict !')
             shell.exit(0)
         }
-        if(program.head || program.tail){
-           console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
-           Http.actionAfterGetById(api, 'GET', program.head, program.tail);
-           Save.saveValue(program.save);
-        }
+        console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
+        Http.actionAfterGetById(api, 'GET', program.head, program.tail);
+        Save.saveValue(program.save);
     } else if(method && (method.toUpperCase() === 'DELETE' || method.toUpperCase() === 'POST' 
             || method.toUpperCase() === 'PUT')) {
         let isSuccess = false;
         if (method && method.toUpperCase() === 'DELETE') {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
         } else if(method && method.toUpperCase() === 'POST') {
-            if(!program.table && !program.swagger){
-                console.log('either --table or --swagger should be provided !')
-                shell.exit(0);
-            }
+            //if(!program.table && !program.swagger){
+            //    console.log('either --table or --swagger should be provided !')
+            //    shell.exit(0);
+            //}
             Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
             isSuccess = Http.post(api, `${root}/${fileMap.gen}`);
         }  else if(method && method.toUpperCase() === 'PUT') {
@@ -338,6 +336,7 @@ if(program.head) {
 } else if(program.tail) {
     originApi = `tail:${originApi}`;
 }
+
 if (program.out) {
     // 输出api结果
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
