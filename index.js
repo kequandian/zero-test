@@ -45,13 +45,17 @@ program
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
     .option('--save <field>', '保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值')
     .on('--help', function() {
-        console.log();
-        console.log("Usage:"),
-        console.log("  login api admin 111111");
-        console.log("  journal --help"),
-        console.log("  get /api/cms/article/categories --out"),
-        console.log(`  post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category`),
-        console.log("  test demo/testcase-demo demo/testcase-demo.pdf")
+        console.log()
+        console.log("Usage:")
+        console.log("  login api admin 111111")
+        console.log("  mysql --help")
+        console.log("  server --help")
+        console.log("  swagger --help")
+        console.log("  pdf --help")
+        console.log("  journal --help")
+        console.log("  get /api/cms/article/categories --out");
+        console.log(`  post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category`)
+        console.log("  test public/testcase/demo.tc output/demo.pdf")
     });
 
 program
@@ -169,7 +173,7 @@ program
     });
 program
     .command('test <testcase> <journal-file>')
-    .description('多api组合测试')
+    .description('测试报告-多api组合测试')
     .option('-f, --force', '执行整个testcase,不被错误返回所打断')
     .on('--help', function() {
         console.log('');
@@ -177,22 +181,31 @@ program
         console.log('   test demo/testcase demo/testcase.pdf');
     })
     .action(function (testcase, journalFile, options) {
-        console.log("testcase running..." + options.force);
+        console.log("testcase running... force all testcases=", options.force===undefined?false:true);
         let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         let fileData = fs.readFileSync(testcase, "UTF-8");
-        let read = fileData.split("\r\n");
+        fileData = fileData.replace("\r\n", "\n");
+        let read = fileData.split("\n");
         fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
         let num = 1;
+
+        // read testcase for lines
         for(let i in read) {
-            console.log(read[i]);
-            let exec = `${read[i]} --report`;
+            let line = read[i]
+            
+            let exec = (line==null || line == '' || line.startsWith("#"))? line : `node ./index.js ${line} --report`;
+            //替换json对象中的占位符, 只支持个位天数 -9 ~ 9
             exec = StringUtil.replacePlaceholder(exec);
+            //--filter='{}' 格式中的空格转换成其他字符
             exec = Formatter.replaceFilterBlank(exec);
+
             // 执行结果记录
-            if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] != "#") {
+            if(line.replace(new RegExp(" ", "g"), "").length > 0 && line[0] != "#") {
                 exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
                 shell.exec(`${exec} > ${root}/${fileMap.testTemp}`);
                 let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
+
+                // 错误中止
                 if(!options.force && response.code != 200 && response.status_code != 0) {
                     let errorInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
                     console.log(`\n\ntest error !!!`);
@@ -202,6 +215,7 @@ program
                     //fs.appendFileSync(`${logConf.dir}${logConf.file}`, "```\n" + errorInfo + "\n```", "UTF-8");
                     break;
                 }
+
             // 单'#'号注释记录
             } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#" && read[i][1] && read[i][1] != "#") {
                 let start = 1;
@@ -216,6 +230,7 @@ program
                 fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${read[i].substring(start, end + 1)}\n`, "UTF-8");
             }
         }
+
         fileData = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"
         let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
         testcaseLog = fileData + testcaseLog;
@@ -228,9 +243,14 @@ program
     });
 
 
-program.parse(process.argv);
+///  main
 
+program.parse(process.argv);
+// console.log('processing ', process.argv)
+
+// fix api
 if(api){
+    //console.log('api=',api)
     // ensure api start with slash/, just like /api
     if(api.substring(0, 3) == "C:/") {
        api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 3 : 0);
@@ -238,12 +258,15 @@ if(api){
         api = "/" + api;
     }
 }
-//console.log('api=',api)
+
 if(!fs.existsSync(`${root}/${fileMap.save}`)) {
     shell.exec(`echo {} > ${root}/${fileMap.save}`);
 }
 let replaceValue = Reader.readJson(`${root}/${fileMap.save}`);
 //console.log('replaceValue=',replaceValue)
+
+
+/// build params string
 
 // pretty-json参数列表
 let params = "-c ";
@@ -264,7 +287,8 @@ if(method && method.toUpperCase() === 'POST'
         params += ` --body=${root}/${fileMap.gen}`;
 }
 
-// api-gen参数列表
+
+// api-gen 参数列表 : genParams
 let genParams = ` --mysql=${process.cwd()}/${fileMap.server}`;
 if(program.all) {
     genParams += " --all";
@@ -276,16 +300,21 @@ if(program.filter) {
         }
     }
     if(!program.table && !program.swagger) {
-        // 未指定table 与swagger时，仅处理filter
+        // 未指定table与swagger时，仅处理filter
         genParams = `${program.filter}`;
     } else {
         program.filter = program.filter.replace(new RegExp('"', 'g'), '\\"');
         genParams += ` --filter=${program.filter}`;
     }
 }
+// end genParams
 
-let swagger = Swagger.getSwagger();
+// swagger 
+//let swagger = Swagger.getSwagger();
+
+// 
 let originApi = api;
+
 // 替换api中的预设的占位符，且对其进行url编码
 api = api ? StringUtil.replacePlaceholderByEncode(api, replaceValue) : api;
 api = api ? Url.urlEncode(api) : api;
@@ -340,14 +369,15 @@ if(program.head) {
     originApi = `tail:${originApi}`;
 }
 
-if (program.out) {
+if (program.out || program.report) {
     // 输出api结果
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
-} else if (program.report) {
-    console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
-    // 输出并打印日志
-    shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+// } else if (program.report) {
+//     // 输出并打印日志
+//     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+//     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+
 } else if(program.info && method && api) {
     console.log(`output swagger info: ${method} ${api}`);
     api = "/" + api;
