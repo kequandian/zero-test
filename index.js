@@ -47,7 +47,7 @@ program
     .on('--help', function() {
         console.log()
         console.log("Usage:")
-        console.log("  login api admin 111111")
+        console.log("  login api admin 111111 report")
         console.log("  mysql --help")
         console.log("  server --help")
         console.log("  swagger --help")

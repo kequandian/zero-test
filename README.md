@@ -250,53 +250,50 @@ Done
 $ cat demo/testcase_demo
 
 ## 组合api测试
-zero-test journal set testcase
-zero-test journal rewrite
+journal set testcase
+journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-zero-test login sys admin 111111 report
+login sys admin 111111
 # 获取组织列表
-zero-test get api/sys/org
+get api/sys/org
 
 # 组织A用户登录
-zero-test login sys user1234 111111 report
+login sys user1234 111111
 # 获取组织列表
-zero-test get api/sys/org
+get api/sys/org
 
 # 组织A1用户登录
-zero-test login sys user12341 111111 report
+login sys user12341 111111
 # 获取组织列表
-zero-test get api/sys/org
+get api/sys/org
 
 # 组织B用户登录
-zero-test login sys user12345 111111 report
+login api user12345 111111
 # 获取组织列表
-zero-test get api/sys/org
+get api/sys/org
 ```
+
 2. 执行testcase
 ```
-$ zero-test test demo/testcase_demo demo/testcase_demo.pdf
+$ ./index.js test public/testcase/demo.tc output/demo.pdf
 testcase running...
 
 ## 组合api测试
-zero-test journal set testcase
-zero-test journal rewrite
 # set journal testcase
 # journal rewrite
 
 # 管理员登录
-zero-test login sys admin 111111 report
+login api admin 111111 report
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  2414  100  2356  100    58   2356     58  0:00:01 --:--:--  0:00:01 77870
 # 获取组织列表
-zero-test get api/sys/org
+get api/sys/org
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-
-......(在此省略中间输出,不做全部显示)
 
 export report: demo/testcase_demo.pdf
 converting pdf from public/logs/testcase to demo/testcase_demo.pdf
@@ -307,7 +304,7 @@ Done
 ## Demo
 ### Base
 ```
-$ zero-test get api/cms/article/categories --out
+$ ./index.js get api/cms/article/categories --out
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -330,7 +327,7 @@ $ zero-test get api/cms/article/categories --out
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ zero-test post api/cms/article/categories --out --table=article_category
+$ ./index.js post api/cms/article/categories --out --table=article_category
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -356,7 +353,7 @@ $ zero-test post api/cms/article/categories --out --table=article_category
 
 ```
 ```
-$ zero-test put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
+$ ./index.js put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -381,7 +378,7 @@ $ zero-test put api/cms/article/categories --out --table=article_category --tail
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ zero-test delete api/cms/article/categories --out --tail
+$ ./index.js delete api/cms/article/categories --out --tail
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -405,7 +402,7 @@ $ zero-test delete api/cms/article/categories --out --tail
 ```
 ### Report
 ```
-$ zero-test get api/cms/article/categories --report
+$ ./index.js get api/cms/article/categories --report
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -427,14 +424,14 @@ $ zero-test get api/cms/article/categories --report
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 
-$ zero-test pdf public/logs/2018-12-25.log demo.pdf
+$ ./index.js pdf public/logs/2018-12-25.log demo.pdf
 converting pdf from public/logs/2018-12-25.log to demo.pdf
 Done
 ```
 
 ### Testcase
 ```
-$ zero-test test demo/testcase_demo demo/testcase_demo.pdf
+$ ./index.js test public/testcase/demo.tc output/demo.pdf
 
 ```
 
