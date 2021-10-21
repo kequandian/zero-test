@@ -65,7 +65,7 @@ Options:
 
 Usage:
    pdf demo/testcase.pdf
-   pdf demo/testcase.pdf --target=test-env/pub/logs/testcase
+   pdf demo/testcase.pdf --target=public/logs/testcase
 ```
 
 **testcase**
@@ -96,7 +96,7 @@ done!
 ```
 3. 修改配置文件(若使用子工作目录，进行相应切换即可)
 ```
-$ vim test-env/server.config
+$ vim config/server.config
 module.exports = {
     host: 'http://127.0.0.1:8080/',
     mysql: {
@@ -239,7 +239,7 @@ get--api/eav/entities
 12. 将日志中记录的内容导出pdf
 ```
 $ zero-test pdf demo/testcase.pdf
-converting pdf from pub/logs/testcase to demo/testcase.pdf
+converting pdf from public/logs/testcase to demo/testcase.pdf
 Done
 ```
 ### Testcase
@@ -297,7 +297,7 @@ zero-test get api/sys/org
 ......(在此省略中间输出,不做全部显示)
 
 export report: demo/testcase_demo.pdf
-converting pdf from pub/logs/testcase to demo/testcase_demo.pdf
+converting pdf from public/logs/testcase to demo/testcase_demo.pdf
 Done
 ```
 
@@ -425,8 +425,8 @@ $ zero-test get api/cms/article/categories --report
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 
-$ zero-test pdf pub/logs/2018-12-25.log demo.pdf
-converting pdf from pub/logs/2018-12-25.log to demo.pdf
+$ zero-test pdf public/logs/2018-12-25.log demo.pdf
+converting pdf from public/logs/2018-12-25.log to demo.pdf
 Done
 ```
 

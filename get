@@ -2,5 +2,5 @@ cmd=$1
 if [ "$cmd"x == "token"x ];then
     cat cli-tools/env-test/app.token
 elif [ "$cmd"x == "server"x ];then
-    cat $PWD/test-env/server.config
+    cat $PWD/config/server.config
 fi

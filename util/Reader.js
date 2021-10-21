@@ -1,7 +1,7 @@
 var shelljs = require("shelljs");
 var fs = require("fs");
 var path = require("path");
-var fielMap = require(`../test-env/file_map.config`);
+var fielMap = require(`../config/file_map.config`);
 var root = path.dirname(__dirname)
 
 let Reader = {

@@ -1,6 +1,6 @@
 let fs = require('fs');
 let path = require('path')
-let fileMap = require(`../test-env/file_map.config`);
+let fileMap = require(`../config/file_map.config`);
 let shell = require('shelljs');
 let Reader = require('./Reader');
 var root = path.dirname(__dirname)

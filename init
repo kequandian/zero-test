@@ -5,8 +5,8 @@ url=$2
 
 function initDir() {
     echo "init  dir.."
-    if [ ! -d "./test-env/pub/logs" ];then
-        mkdir -p test-env/pub/logs
+    if [ ! -d "./public/logs" ];then
+        mkdir -p public/logs
     fi
     if [ ! -d "./temp" ];then
         mkdir temp
@@ -69,8 +69,8 @@ elif [ "$cmd"x == "repair"x ];then
 elif [ "$cmd"x == "map"x -a "$url"x != ""x ];then
     echo "map zero-test to $url ..."
     cp -r test-env/ $url/
-    if [ ! -d "$url/test-env/pub/logs" ];then
-        mkdir -p "$url/test-env/pub/logs"
+    if [ ! -d "$url/public/logs" ];then
+        mkdir -p "$url/public/logs"
     fi
     echo "done!"
     exit 0

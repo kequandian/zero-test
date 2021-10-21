@@ -6,7 +6,7 @@ const path = require('path');
 let options = {
   source: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.md'),
   destination: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.pdf'),
-  styles: path.join(path.dirname(__dirname), 'test-env', 'pub', 'markdown.css'),
+  styles: path.join(path.dirname(__dirname), 'public', 'css', 'markdown.css'),
   pdf: {
       format: 'A1',
       orientation: 'portrait'

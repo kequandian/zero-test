@@ -9,7 +9,7 @@ services:
     environment:
       NODE_ENV: production
     # volumes:
-      # ./test-env/server.config:/usr/src/app/test-env/server.config
+      # ./config/server.config:/usr/src/app/config/server.config
     command: 
       - "--help"
       

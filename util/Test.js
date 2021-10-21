@@ -1,9 +1,9 @@
 var shell = require("shelljs");
 var fs = require('fs');
 var path = require('path')
-var server = require(`../test-env/server.config`);
+var server = require(`../config/server.config`);
 // var loginInfo = require(`../test-env/login.config`);
-var fileMap = require(`../test-env/file_map.config`);
+var fileMap = require(`../config/file_map.config`);
 var Reader = require('./Reader');
 var root = path.dirname(__dirname)
 

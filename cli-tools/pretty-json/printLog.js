@@ -7,13 +7,13 @@ function printLog(data, log) {
     if(log) {
         let config;
         try {
-            config = JSON.parse(fs.readFileSync(`${root}/test-env/log-config.json`, "UTF-8"));
+            config = JSON.parse(fs.readFileSync(`${root}/config/log-config.json`, "UTF-8"));
             //console.log('printLog:config=', config)
         } catch(err) {
             config.log('printLog:err=', err)
         }
 
-        let basePath = config ? config["dir"] : "test-env/pub/logs/";
+        let basePath = config ? config["dir"] : "public/logs/";
         //console.log('basePath=', basePath)
 
         if(!config["file"] || config["file"] == "default") {

@@ -14,10 +14,10 @@ var Save = require('./util/Save');
 var Url = require(`./util/Url`);
 var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
 var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
-var fileMap = require(`./test-env/file_map.config`);
-var server = require(`./test-env/server.config`);
-var apiMap = require(`./test-env/api.config`).map;
-var ignore = require(`./test-env/api.config`).filter;
+var fileMap = require(`./config/file_map.config`);
+var server = require(`./config/server.config`);
+var apiMap = require(`./config/api.config`).map;
+var ignore = require(`./config/api.config`).filter;
 var root = __dirname;
 
 
@@ -61,7 +61,7 @@ program
         console.log(server.endpoint);
         server = JSON.stringify(server, null, '\t');
         server = "module.exports=" + server;
-        fs.writeFileSync(`${process.cwd()}/test-env/server.config`, server, 'UTF-8');
+        fs.writeFileSync(`${process.cwd()}/config/server.config`, server, 'UTF-8');
         
         shell.exit(0);
     });
@@ -84,7 +84,7 @@ program
         console.log(JSON.stringify(server.mysql, null, '\t'));
         server = JSON.stringify(server, null, '\t');
         server = "module.exports=" + server;
-        fs.writeFileSync(`${process.cwd()}/test-env/server.config`, server, 'UTF-8');
+        fs.writeFileSync(`${process.cwd()}/config/server.config`, server, 'UTF-8');
         shell.exit(0);
     }).on('--help', function() {
         console.log("Example: mysql set host 127.0.0.1 3306"),
@@ -119,7 +119,7 @@ program
         console.log('');
         console.log('Usage:');
         console.log("   pdf demo/testcase.pdf");
-        console.log("   pdf demo/testcase.pdf --target=test-env/pub/logs/testcase");
+        console.log("   pdf demo/testcase.pdf --target=public/logs/testcase");
     })
     .action(function (outputFile, options) {
         let source = options.target
