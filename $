@@ -1,3 +1,0 @@
-sh ./test post http://192.168.3.239:8000api/oauth/login run '{"account":"admin","password":"111111"}'
-error while exec env-test/test
-command : (cd .//cli-tools/env-test && sh ./test post http://192.168.3.239:8000api/oauth/login run '{"account":"admin","password":"111111"}' > ./temp/response.json)

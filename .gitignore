@@ -9,3 +9,4 @@ swagger.json
 _temp.html
 yarn-error.log
 *.png
+output/

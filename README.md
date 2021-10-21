@@ -26,22 +26,24 @@ Options:
   -h, --help                                      output usage information
 
 Commands:
-  login <endpoint> <account> <password> [report]
-  pdf [options] <outputFile>
-  journal <cms> [option]
-  server <cmd> [options]
-  test [options] <testcase> <journal-file>        多api组合测试
+  login <endpoint> <account> <password> [report]  登录系统保存登录信息
+  server <cmd> [options]                          服务器设置
+  journal <cmd> [option]                          日志设置
+  pdf [options] <outputFile>                      输出日志为PDF
+  test [options] <testcase> <journal-file>        直接测试并输出测试报告
 Example: login api admin 111111
+         server  help
          journal help
+         pdf output/demo.pdf
          get api/cms/article/categories --out
          post api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category
-         test demo/testcase-demo demo/testcase-demo.pdf
+         test public/testcase/demo.tc output/demo.pdf
 ```
 
 **Journal**
 ```
 $ zero-test journal --help
-Usage: journal [options] <cms> [option]
+Usage: journal [options] <cmd> [option]
 
 Options:
   -h, --help  output usage information
@@ -64,8 +66,8 @@ Options:
   -h, --help              output usage information
 
 Usage:
-   pdf demo/testcase.pdf
-   pdf demo/testcase.pdf --target=public/logs/testcase
+   pdf output/testcase.pdf
+   pdf output/testcase.pdf --target=public/logs/testcase
 ```
 
 **testcase**

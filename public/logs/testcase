@@ -1,3 +1,65 @@
+# Testcase
+```
+## 组合api测试
+zero-test journal set testcase
+zero-test journal rewrite
+# set journal testcase
+# journal rewrite
+
+# 管理员登录
+zero-test login sys admin 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织A用户登录
+zero-test login sys user1234 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织A1用户登录
+zero-test login sys user12341 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织B用户登录
+zero-test login sys user12345 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+## 组合api测试
+zero-test journal set testcase
+zero-test journal rewrite
+# set journal testcase
+# journal rewrite
+
+# 管理员登录
+zero-test login sys admin 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织A用户登录
+zero-test login sys user1234 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织A1用户登录
+zero-test login sys user12341 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+# 组织B用户登录
+zero-test login sys user12345 111111 report
+# 获取组织列表
+zero-test get /api/sys/org
+
+```
+---
+# Start
 ## 组合api测试
 zero-test journal set testcase
 
