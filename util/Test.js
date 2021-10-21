@@ -2,8 +2,8 @@ var shell = require("shelljs");
 var fs = require('fs');
 var path = require('path')
 var server = require(`../test-env/server.config`);
-var loginInfo = require(`../test-env/login.config`);
-var fileMap = require(`../static/file_map.config`);
+// var loginInfo = require(`../test-env/login.config`);
+var fileMap = require(`../test-env/file_map.config`);
 var Reader = require('./Reader');
 var root = path.dirname(__dirname)
 
@@ -31,9 +31,9 @@ let Test = {
 
     //$(./post /oauth/login "{\"account\":\"$user\",\"password\":\"$passw\"}")
     login(api, account, password) {
-        if(loginInfo) {
+        if(server) {
             let login_api;
-            login_api = loginInfo[api];
+            login_api = server[api];
             if(!login_api) {
                 //console.log("login <endpoint> <account> <password>");
                 console.log(`cannot find endpoint ${api}`);

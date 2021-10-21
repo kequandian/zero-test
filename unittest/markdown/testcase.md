@@ -14,7 +14,7 @@ zero-test get /api/sys/org
 
 # 组织A用户登录
 zero-test login sys user1234 111111 report
-# 获取组织列表
+# 获取组织列表test-env
 zero-test get /api/sys/org
 
 # 组织A1用户登录

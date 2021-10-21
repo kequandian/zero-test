@@ -33,8 +33,8 @@ Commands:
   test [options] <testcase> <journal-file>        多api组合测试
 Example: login api admin 111111
          journal help
-         get /api/cms/article/categories --out
-         post /api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category
+         get api/cms/article/categories --out
+         post api/cms/article/categories --filter='{"key":"value","array":[1,2,3],"items":{"key":"value"}}' --out --table=article_category
          test demo/testcase-demo demo/testcase-demo.pdf
 ```
 
@@ -139,9 +139,9 @@ $ zero-test login sys admin 111111
 ```
 6. 调用api并输出
 ```
-$ zero-test post /api/eav/entities --filter='{"entityName":"E1"}' --out
+$ zero-test post api/eav/entities --filter='{"entityName":"E1"}' --out
 
-post--/api/eav/entities
+post--api/eav/entities
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -157,11 +157,11 @@ post--/api/eav/entities
 | 0   │ 3  │ E1         │           |
 +-----+----+------------+-----------+
 ```
-7. 获取列表api第一条数据id并查询其详情(即相当于调用get /api/eav/entities/3), 并将返回字段id的值保存
+7. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
 ```
-$ zero-test get /api/eav/entities --head --save=id --out
+$ zero-test get api/eav/entities --head --save=id --out
 
-get--/api/eav/entities
+get--api/eav/entities
 +-----------------+
 |      data       |
 +────+────────────+
@@ -174,7 +174,7 @@ get--/api/eav/entities
 ```
 $ zero-test get api/eav/entities/#SAVE_VALUE --save=entityName --out
 
-get--/api/eav/entities/3
+get--api/eav/entities/3
 +-----------------+
 |      data       |
 +────+────────────+
@@ -185,9 +185,9 @@ get--/api/eav/entities/3
 ```
 9. 通过保存值post数据
 ```
-$ zero-test post /api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
+$ zero-test post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
 
-post--/api/eav/entities
+post--api/eav/entities
 +--------------------------+
 |           data           |
 +──────+────────+──────────+
@@ -203,9 +203,9 @@ post--/api/eav/entities
 ```
 10. 单post调用并将结果记录日志
 ```
-$ zero-test post /api/eav/entities --filter='{"entityName":"E2"}' --only --report
+$ zero-test post api/eav/entities --filter='{"entityName":"E2"}' --only --report
 
-post--/api/eav/entities
+post--api/eav/entities
 +------------------------+
 |          data          |
 +──────+──────+──────────+
@@ -216,9 +216,9 @@ post--/api/eav/entities
 ```
 11. 调用GET请求并记录
 ```
-$ zero-test get /api/eav/entities --report
+$ zero-test get api/eav/entities --report
 
-get--/api/eav/entities
+get--api/eav/entities
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -256,22 +256,22 @@ zero-test journal rewrite
 # 管理员登录
 zero-test login sys admin 111111 report
 # 获取组织列表
-zero-test get /api/sys/org
+zero-test get api/sys/org
 
 # 组织A用户登录
 zero-test login sys user1234 111111 report
 # 获取组织列表
-zero-test get /api/sys/org
+zero-test get api/sys/org
 
 # 组织A1用户登录
 zero-test login sys user12341 111111 report
 # 获取组织列表
-zero-test get /api/sys/org
+zero-test get api/sys/org
 
 # 组织B用户登录
 zero-test login sys user12345 111111 report
 # 获取组织列表
-zero-test get /api/sys/org
+zero-test get api/sys/org
 ```
 2. 执行testcase
 ```
@@ -290,7 +290,7 @@ zero-test login sys admin 111111 report
                                  Dload  Upload   Total   Spent    Left  Speed
 100  2414  100  2356  100    58   2356     58  0:00:01 --:--:--  0:00:01 77870
 # 获取组织列表
-zero-test get /api/sys/org
+zero-test get api/sys/org
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 
@@ -305,7 +305,7 @@ Done
 ## Demo
 ### Base
 ```
-$ zero-test get /api/cms/article/categories --out
+$ zero-test get api/cms/article/categories --out
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -328,7 +328,7 @@ $ zero-test get /api/cms/article/categories --out
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ zero-test post /api/cms/article/categories --out --table=article_category
+$ zero-test post api/cms/article/categories --out --table=article_category
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -354,7 +354,7 @@ $ zero-test post /api/cms/article/categories --out --table=article_category
 
 ```
 ```
-$ zero-test put /api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
+$ zero-test put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -379,7 +379,7 @@ $ zero-test put /api/cms/article/categories --out --table=article_category --tai
 +-----+------------+-----------+----+---------+--------+
 ```
 ```
-$ zero-test delete /api/cms/article/categories --out --tail
+$ zero-test delete api/cms/article/categories --out --tail
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
@@ -403,7 +403,7 @@ $ zero-test delete /api/cms/article/categories --out --tail
 ```
 ### Report
 ```
-$ zero-test get /api/cms/article/categories --report
+$ zero-test get api/cms/article/categories --report
 +----------------------------------------------------------+
 |                           data                           |
 +─────────+───────+─────────────────────────+──────+───────+
