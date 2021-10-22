@@ -21,3 +21,11 @@ get /api/sys/org
 login sys user12345 111111 report
 # 获取组织列表
 get /api/sys/org
+
+
+### GET {{endpoint}}/api/sys/org
+Content-Type: application/json
+
+{
+    
+}
