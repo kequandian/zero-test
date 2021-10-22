@@ -3,7 +3,7 @@ const mdpdf = require('mdpdf');
 const fs = require('fs');
 const path = require('path');
 
-let options = {
+var options = {
   source: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.md'),
   destination: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.pdf'),
   styles: path.join(path.dirname(__dirname), 'public', 'css', 'markdown.css'),

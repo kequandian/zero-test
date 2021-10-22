@@ -9,9 +9,9 @@ var Swagger = require('./util/Swagger');
 var Gen = require('./util/Gen');
 var Pdf = require('./util/Pdf');
 var Reader = require('./util/Reader');
-var Formatter = require('./util/Formatter');
 var Save = require('./util/Save');
 var Url = require(`./util/Url`);
+let Testcase = require(`./util/Testcase`);
 var DateUtil = require('./cli-tools/pretty-json/util/dateUtil');
 var StringUtil = require('./cli-tools/api-gen/util/stringUtil');
 var fileMap = require(`./config/file_map.config`);
@@ -178,68 +178,11 @@ program
     .on('--help', function() {
         console.log('');
         console.log('Usage:');
-        console.log('   test demo/testcase demo/testcase.pdf');
+        console.log('   test Wdemo/testcase demo/testcase.pdf');
     })
     .action(function (testcase, journalFile, options) {
-        console.log("testcase running... force all testcases=", options.force===undefined?false:true);
-        let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
-        let fileData = fs.readFileSync(testcase, "UTF-8");
-        fileData = fileData.replace("\r\n", "\n");
-        let read = fileData.split("\n");
-        fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
-        let num = 1;
-
-        // read testcase for lines
-        for(let i in read) {
-            let line = read[i]
-            
-            let exec = (line==null || line == '' || line.startsWith("#"))? line : `node ./index.js ${line} --report`;
-            //替换json对象中的占位符, 只支持个位天数 -9 ~ 9
-            exec = StringUtil.replacePlaceholder(exec);
-            //--filter='{}' 格式中的空格转换成其他字符
-            exec = Formatter.replaceFilterBlank(exec);
-
-            // 执行结果记录
-            if(line.replace(new RegExp(" ", "g"), "").length > 0 && line[0] != "#") {
-                exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
-                shell.exec(`${exec} > ${root}/${fileMap.testTemp}`);
-                let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
-
-                // 错误中止
-                if(!options.force && response.code != 200 && response.status_code != 0) {
-                    let errorInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
-                    console.log(`\n\ntest error !!!`);
-                    console.log(`---------------------------`);
-                    console.log(errorInfo);
-                    console.log(`---------------------------\n`);
-                    //fs.appendFileSync(`${logConf.dir}${logConf.file}`, "```\n" + errorInfo + "\n```", "UTF-8");
-                    break;
-                }
-
-            // 单'#'号注释记录
-            } else if(read[i].replace(new RegExp(" ", "g"), "").length > 0 && read[i][0] == "#" && read[i][1] && read[i][1] != "#") {
-                let start = 1;
-                while(read[i][start] == " ") {
-                    start ++;
-                }
-                let end = read[i].length - 1;
-                while(read[i][end] == " ") {
-                    end --;
-                }
-
-                fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${read[i].substring(start, end + 1)}\n`, "UTF-8");
-            }
-        }
-
-        fileData = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"
-        let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
-        testcaseLog = fileData + testcaseLog;
-
-        testcaseLog = testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');
-        fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
-
-        console.log(`export report: ${journalFile}`);
-        Pdf.export(`${logConf.dir}${logConf.file}`, journalFile);
+        console.log("testcase running...");
+        Testcase.run(testcase, journalFile, options.force==undefined?false:options.force)
     });
 
 

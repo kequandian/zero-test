@@ -23,7 +23,8 @@ login sys user12345 111111 report
 get /api/sys/org
 
 
-### GET {{endpoint}}/api/sys/org
+### TEST
+GET {{endpoint}}/api/sys/org
 Content-Type: application/json
 
 {

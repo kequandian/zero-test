@@ -1,7 +1,7 @@
 const Parser = {
 
-    TESTS = {},      // 保存测试用例
-    VARS = {},       //变量
+    TESTS: {},      // 保存测试用例
+    VARS: {},       //变量
 
     //TESTS_SORT = [],  // 排序
 
