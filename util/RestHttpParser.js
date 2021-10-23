@@ -1,43 +1,56 @@
+// obj = {
+//     name:"John",
+//     sayHi: ()=>{
+//         console.log("Hi " + name);
+//     }
+
+// }
+// obj.sayHi();
+
 const Parser = {
 
     TESTS: {},      // 保存测试用例
-    VARS: {},       //变量
 
-    //TESTS_SORT = [],  // 排序
+    
+    // temp var
+    tVARS: {},       // 用于记录.http变量
 
-    readFileContent(filePath){
-
+    forEachTest(){
+        for(t in this.TESTS){
+            
+        }
     },
 
     // vscoe rest client plugin .http 
     // parse each test case to curl 
     parseHttpContent(fileContent){
         lines = fileContent.split("\n")
-
         for(let i in lines) {
             let line = lines[i]==undefined? '' : lines[i].trim()
+            console.log(i, " ", line)
 
             if (line.startsWith("@")){
-                parseVariable(line)
+                this.parseVariable(line)
             }else if(line.startsWith("### ")){
-                parseTestTitle(line)
+                this.parseTestTitle(line)
                 // for sort
                 //TESTS_SORT.push(line)
             }else if(line.startsWith("#") || line.startsWith("//")){
                 // skip comment
             }else if(line.startsWith("GET ") || line.startsWith("POST ") || line.startsWith("PUT ")||line.startsWith("DELETE ")){
-                parseHttpRequest(line)
+                this.parseHttpRequest(line)
             }else if(line.startsWith("{")){
-                parseBodyBegin(line)
+                this.parseBodyBegin(line)
                 // until empty line
             }else if(line.startsWith("&") || line.startsWith("?")){
-                parseQueryParam(line)
+                this.parseQueryParam(line)
             }else if(line == '') {
-                parseEmptyLine(line)
+                this.parseEmptyLine(line)
             }else{
-                parseAnyline(line)
+                this.parseAnyline(line)
             }
         }
+        return this.TESTS
     },
 
     getTestCurl(title){
@@ -49,41 +62,41 @@ const Parser = {
 
     // 获取当前测试
     currentTest(){
-        return this.TESTS['current']
+        return this.TESTS['current']==undefined?{} : this.TESTS['current']
     },
     isCurrentTestGet(){
-        return this.TESTS['current']['method'] == 'GET'
+        return this.currentTest()['method'] == 'GET'
     },
     isCurrentTestPost(){
-        return this.TESTS['current']['method'] == 'POST'
+        return this.currentTest()['method'] == 'POST'
     },
     isCurrentTestPut(){
-        return this.TESTS['current']['method'] == 'PUT'
+        return this.currentTest()['method'] == 'PUT'
     },
     isTestClosed(){
-        return this.TESTS['current']['status'] == 'closed'
+        return this.currentTest()['status'] == 'closed'
     },
     closeTest(){
-        this.TESTS['current']['status'] = 'closed'
+        this.currentTest()['status'] = 'closed'
     },
     isTestExpectingHeader(){
-        return this.TESTS['current']['status'] == 'header_expecting'   // meet empty line
+        return this.currentTest()['status'] == 'header_expecting'   // meet empty line
     },
     // body area
     isTestExpectingBody(){
-        return this.TESTS['current']['status'] == 'body_expecting'   // meet empty line
+        return this.currentTest()['status'] == 'body_expecting'   // meet empty line
     },
     expectBody(){
-        this.TESTS['current']['status'] = 'body_expecting'
+        this.currentTest()['status'] = 'body_expecting'
     },
     isTestRequestingBody(){
-        return this.TESTS['current']['status'] == 'body_requesting'
+        return this.currentTest()['status'] == 'body_requesting'
     },
     requestBody(){
-        this.TESTS['current']['status'] = 'body_requesting'
+        this.currentTest()['status'] = 'body_requesting'
     },
     collectBodyLine(json_line){
-        this.TESTS['current']['body'] += json_line
+        this.currentTest()['body'] += json_line
     },
 
     // handle @ variables
@@ -92,7 +105,7 @@ const Parser = {
         let key = ss[0].replace('@','').trim()
         let value = ss[1].trim()
 
-        VARS[key]=value
+        this.tVARS[key]=value
     }, 
 
     parseTestTitle(line){
@@ -103,7 +116,7 @@ const Parser = {
         this.TESTS[key]['key'] = key
 
         // set current key 
-        this.TESTS['current']=TESTS[key]
+        this.TESTS['current']= this.TESTS[key]
     },
 
     // handle http request
@@ -113,7 +126,7 @@ const Parser = {
         request = request.substring(0, request.lastIndexOf(" HTTP"))
         // removed HTTP
 
-        let CURRENT_TEST = currentTest()
+        let CURRENT_TEST = this.currentTest()
         if(request.startsWith("GET ")){
             CURRENT_TEST['method'] = 'GET'
         }else if(request.startsWith("POST ")){
@@ -126,15 +139,15 @@ const Parser = {
 
         //handle {{}} VARS
         let VAR=request.substring(request.indexOf("{{")+"{{".length, request.indexOf("}}"))
-        let value = VARS[VAR]
+        let value = this.tVARS[VAR]
         request = request.replace("{{"+VAR+"}}", value)
         CURRENT_TEST['request']=request
     },
 
     // handle body begin "{""
     parseBodyBegin(line){
-        beginBody()
-        collectBodyLine(line)
+        this.requestBody()
+        this.collectBodyLine(line)
     }, 
 
     parseHttpHeader(line){
@@ -147,10 +160,10 @@ const Parser = {
 
     // 遇空行结束
     parseEmptyLine(line){
-        if(isCurrentTestGet()){
+        if(this.isCurrentTestGet()){
             // close Test
             this.closeTest()
-        }else if(isCurrentTestPost() || isCurrentTestPut()){
+        }else if(this.isCurrentTestPost() || this.isCurrentTestPut()){
             if(this.isTestExpectingHeader()){
                 // again empty line, close the test
                this.expectBody()
@@ -164,7 +177,7 @@ const Parser = {
 
     // not empty
     parseAnyline(line){
-        if(isTestExpectingHeader()){
+        if(this.isTestExpectingHeader()){
             // TODO, temp skip header
         }else if(this.isTestExpectingBody()){
             // collect body lines

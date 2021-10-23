@@ -19,12 +19,13 @@ let Testcase = {
         fileData = fileData.replace("\r\n", "\n");
         fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
 
+        let httpTests = {}
         // handle vsocde rest client .http file
         if(testcase.endsWith(".http")){
-            let result = RestHttpParser.parseHttpContent(fileData)
-            //TODO, 
+            httpTests = RestHttpParser.parseHttpContent(fileData)
         }
-
+        console.log('Tests=', httpTests)
+        return 
 
         // read testcase for lines
         let read = fileData.split("\n");
