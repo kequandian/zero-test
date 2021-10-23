@@ -175,6 +175,7 @@ program
     .command('test <testcase> <journal-file>')
     .description('测试报告-多api组合测试')
     .option('-f, --force', '执行整个testcase,不被错误返回所打断')
+    .option('-r, --recreate', '测试前清空日志文件')
     .on('--help', function() {
         console.log('');
         console.log('Usage:');
@@ -182,7 +183,7 @@ program
     })
     .action(function (testcase, journalFile, options) {
         console.log("testcase running...");
-        Testcase.run(testcase, journalFile, options.force==undefined?false:options.force)
+        Testcase.run(testcase, journalFile, options.force==undefined?false:options.force, options.recreate==undefined?false:options.recreate)
     });
 
 

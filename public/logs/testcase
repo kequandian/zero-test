@@ -1,5 +1,1109 @@
 # Testcase
 ```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
+@endpoint=http://192.168.3.204
+
+## 组合api测试
+# set journal testcase
+# journal rewrite
+
+### 管理员登录
+POST {{endpoint}}//api/oauth/login
+Content-Type: application/json
+
+{
+    "password": "111111",
+    "account": "admin"
+}
+
+
+### 获取组织列表
+GET {{endpoint}}/api/sys/org
+
+```
+---
+# Start
+# Testcase
+```
 ## 组合api测试
 zero-test journal set testcase
 zero-test journal rewrite
@@ -272,3 +1376,304 @@ Body: {"page_title":"1"}
 ## 1、set journal testcase
 ## 2、journal rewrite
 ## 3、管理员登录
+## 1、set journal testcase
+## 2、journal rewrite
+## 1、set journal testcase
+## 2、journal rewrite
+## 1、# 组合api测试
+## 2、set journal testcase
+## 3、journal rewrite
+## 4、管理员登录
+## 1、# 组合api测试
+## 2、set journal testcase
+## 3、journal rewrite
+## 4、## 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
+## 1、## 组合api测试
+## 2、# set journal testcase
+## 3、# journal rewrite
+## 4、### 管理员登录
+## 5、### 获取组织列表
