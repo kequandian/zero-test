@@ -37,7 +37,8 @@ let Gen = {
             genData = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8")); 
         } else {
             //this.writeFilterToJson(params);
-            genData = Reader.parseJson(params ? params : "{}")
+            let json=params ? params : "{}"
+            genData = Reader.parseJson(json)
         }
         //params = Reader.parseJson(params);
         genData = StringUtil.replacePlaceholder(JSON.stringify(genData));

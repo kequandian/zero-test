@@ -1,16 +1,28 @@
 #!/usr/bin/env bash
-
 api=$1
 data=$2
-log=$3
 
 ## cut api
 api=${api#\/api}
-
 if [ ! $api ];then
- bin=$(basename $0)
- echo "Usage: $bin <api> <data> [--log]"
- exit 0
+    bin=$(basename $0)
+    echo "Usage: $bin <api> <data> [--log] [--token] <token>"
+    exit 0
 fi
-perl post_token.pl --token POST $api $data $log
 
+dirname=$(dirname $0)
+post_bin=$dirname/post_token.pl
+
+## no --token in @ARGV, add into
+unset token_flag
+for arg in $@;do
+   if [ $arg = '--token' ];then
+      token_flag=1
+   fi
+done
+if [ ! $token_flag ];then
+   token='--token'
+fi
+
+echo $post_bin POST $@ $token
+$post_bin POST $@ $token

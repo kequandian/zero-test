@@ -1,18 +1,18 @@
 #!/usr/bin/env perl
 my $token_opt = '--token';
 my $log_opt = '--log';
-my $token_flag, $log_flag;
+my $token_flag, $print_log;
 my $api, $token;
 
 foreach my $arg (@ARGV) {
    if($arg eq $token_opt){
-      $token_flag=1
+      $token_flag=1;
    }elsif($arg eq $log_opt){
-      $log_flag=1
+      $print_log=1;
    }elsif($token_flag && !$token){
-      $token=$arg
+      $token=$arg;
    }else{
-      $api=$arg
+      $api=$arg;
    }
 }
 # print "api=$api, token=$token, token_flag=$token_flag, log_flag=$log_flag\n";

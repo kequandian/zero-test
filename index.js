@@ -235,7 +235,8 @@ if(method && method.toUpperCase() === 'POST'
 
 
 // api-gen 参数列表 : genParams
-let genParams = ` --mysql=${process.cwd()}/${fileMap.server}`;
+// --mysql=zero-test/config/server.config
+let genParams = program.table ? ` --mysql=${process.cwd()}/${fileMap.server}` : '';
 if(program.all) {
     genParams += " --all";
 }
@@ -286,12 +287,13 @@ if(program.out || program.report) {
         if (method && method.toUpperCase() === 'DELETE') {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
         } else if(method && method.toUpperCase() === 'POST') {
-            //if(!program.table && !program.swagger){
-            //    console.log('either --table or --swagger should be provided !')
-            //    shell.exit(0);
-            //}
+            if(program.table && program.swagger){
+                console.log('Options both --table and --swagger confict !')
+                shell.exit(0);
+            }
             Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
-            isSuccess = Http.post(api, `${root}/${fileMap.gen}`);
+            isSuccess = Http.post(api, `${root}/${fileMap.gen}`, program.token);
+            
         }  else if(method && method.toUpperCase() === 'PUT') {
             Gen.genarator(`${api}/{id}`, 'PUT', program.table, program.swagger, genParams);
             isSuccess = Http.putAfterGetById(api, `${root}/${fileMap.gen}`, program.head, program.tail);

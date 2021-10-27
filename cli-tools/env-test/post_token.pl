@@ -1,30 +1,38 @@
 #!/usr/bin/env perl
+my $token_opt = '--token';
+my $log_opt = '--log';
+my $token_flag,$token,$print_log;
+my $method, $api, $data;
 
-my $token_flag = shift @ARGV;
-my $method = shift @ARGV;
-my $api = shift @ARGV;
-my $data = shift @ARGV;
-my $print_log = shift @ARGV;
-
+foreach my $arg (@ARGV) {
+   if($arg eq $token_opt){
+      $token_flag=1;
+   }elsif($arg eq $log_opt){
+      $print_log=1;
+   }elsif($token_flag && !$token){
+      $token=$arg;
+   }elsif(!$method){
+      $method=$arg;
+   }elsif(!$api){
+      $api=$arg;
+   }elsif(!$data){
+      $data=$arg;
+   }
+}
 if ( $data ){
    $data =~ s/nbsp/ /g;
 }
 if (! $data ){
    $data = "{}";
 }
-
-if($token_tag eq '--token'){
-  $token_flag = 1;
-}
-
+# print "method=$method, api=$api, data=$data, token=$token, token_flag=$token_flag, log_flag=$log_flag\n";
 if(!($method eq 'POST' || $method eq 'PUT' 
                    || $method eq 'DELETE' || $method eq 'PATCH')  
  ){
    print "Usage: \n";
-   print "  $0 <token_tag> <method> <api> <data> [--log]\n";
+   print "  $0 <token_tag> <method> <api> <data> [--token] <token> [--log]\n";
    print "    Options:\n";  
-   print "       token_tag : --token,--no-token\n";
-   print "       method    : [POST, PUT, DELETE, PATCH]\n";  
+   print "       method   -- [POST, PUT, DELETE, PATCH]\n";  
    exit(0);
 }
 
@@ -37,14 +45,16 @@ if( $data ){
       $data =~ s/[\r\n\t]//g;
 
       if( ! $data ){
-          print "Usage: $0 --token <POST|PUT|DELETE|PATCH> <api> <data>\n";
-	  exit(0);
+         print "Usage: $0 <POST|PUT|DELETE|PATCH> <api> <data> --token\n";
+	      exit(0);
       }
-
       #print $data;
    }
    $data = '\''.$data.'\'';
 }
+$data=~s/\s+/ /g;
+#print "$data\n";
+#my $result= `echo $data | iconv -t "UTF-8"`;
 
 
 if($api =~ /^http/){
@@ -60,22 +70,15 @@ if($api =~ /^http/){
          $endpoint = $_;
       }
    }
-
    #my $endpoint = &get_data($in);
    $endpoint =~ s/[\/\r\n]+$//;
    $api = $endpoint.$api;
 }
 
-my $token;
-if($token_flag){
+if(!$token){
    my $in_t = 'app.token';
    $token = &get_data($in_t);
 }
-
-
-$data=~s/\s+/ /g;
-#print "$data\n";
-#my $result= `echo $data | iconv -t "UTF-8"`;
 
 ## pring log
 if($token_flag){
@@ -91,9 +94,12 @@ if($token_flag){
 }
 
 
+
+##########################
+## function
+#########################
 sub get_lines {
    my $in = shift;
-
    my @lines;
    if(-e $in){
       open my $fh, "<", "$in";
@@ -103,23 +109,17 @@ sub get_lines {
    return @lines;
 }
 
-
 sub get_data {
   my $in = shift;
-
   if( -e $in){
      my $content;
      local $/; #Enable 'slurp' mode
-
      open my $fh, "<", "$in";
         $content = <$fh>;
      close $fh;
-
      $content =~ s/[\r\n\t]+//;
-
      return $content;
   }
-
   return $in;
 }
 

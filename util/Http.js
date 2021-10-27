@@ -38,11 +38,11 @@ let Http = {
      * @param {string} api 
      * @param {int} index 
      */
-    post(api, file) {
+    post(api, file, token) {
         let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
-        Test.run(api, 'post', Url.GBKToUnicode(body));
+        Test.run(api, 'post',token, Url.GBKToUnicode(body));
         return this.isSuccess();
     },
     /**
@@ -50,11 +50,11 @@ let Http = {
      * @param {string} api 
      * @param {string} file 
      */
-    put(api, file) {
+    put(api, file, token) {
         let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
-        Test.run(api,'put', Url.GBKToUnicode(body));
+        Test.run(api,'put', token, Url.GBKToUnicode(body));
         return this.isSuccess();
     },
     /**
@@ -65,14 +65,14 @@ let Http = {
      * @param {string} head 
      * @param {string} tail 
      */
-    putAfterGetById(api, file, head, tail) {
+    putAfterGetById(api, file, head, tail, token) {
         if(head || tail) {
             let index = head == undefined ? -1 : 0;
             api = Http.getId(api, index);
             console.log(`redirect api: PUT ${api}`);
-            return Http.put(api, `${root}/temp/gen.json`);
+            return Http.put(api, `${root}/temp/gen.json`, token);
         } else {
-            return Http.put(api, `${root}/temp/gen.json`);
+            return Http.put(api, `${root}/temp/gen.json`, token);
         }
     },
     /**
