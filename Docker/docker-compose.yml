@@ -1,6 +1,6 @@
 version: '3.4'
 services:
-  zero-test:
+  zerotest:
     image: zero-test
     container_name: zero-test
     build:
@@ -8,8 +8,4 @@ services:
       dockerfile: ./Docker/Dockerfile
     environment:
       NODE_ENV: production
-    # volumes:
-      # ./config/server.config:/usr/src/app/config/server.config
-    command: 
-      - "--help"
       

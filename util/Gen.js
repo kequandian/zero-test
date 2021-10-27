@@ -21,24 +21,27 @@ let Gen = {
      * @param {string} params gen参数列表
      */
     genarator(api, method, table, swagger, params) {
+        let genData
         if(table) {
             shell.cd(`${root}/cli-tools/api-gen`);
             shell.exec(`(node index.js -t ${table} ${params} > ${this.genFile})`);
-            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
+            
+            genData = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8"));
             
         } else if(swagger) { 
             Swagger.writeFields("/" + api, method, `${root}/${fileMap.params}`);
             shell.cd(`${root}/cli-tools/api-gen`);
             shell.exec(`(node index.js -f ${root}/${fileMap.params} ${params} > ${this.genFile})`);
             Path.cd();
-            params = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8")); 
+
+            genData = Reader.parseJson(fs.readFileSync(this.genFile, "UTF-8")); 
         } else {
             //this.writeFilterToJson(params);
-            params = Reader.parseJson(params ? params : "{}")
+            genData = Reader.parseJson(params ? params : "{}")
         }
         //params = Reader.parseJson(params);
-        params = StringUtil.replacePlaceholder(JSON.stringify(params));
-        fs.writeFileSync(this.genFile, params, "utf-8");
+        genData = StringUtil.replacePlaceholder(JSON.stringify(genData));
+        fs.writeFileSync(this.genFile, genData, "utf-8");
     },
     writeFilterToJson(filter) {
         let arr = filter.substring(1, filter.length - 1).split(",");

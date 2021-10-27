@@ -194,10 +194,11 @@ program.parse(process.argv);
 
 // fix api
 if(api){
-    //console.log('api=',api)
     // ensure api start with slash/, just like /api
-    if(api.substring(0, 3) == "C:/") {
+    if(api.indexOf('Git/') > 0) {
        api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 3 : 0);
+    }else if(api.startsWith("https://") || api.startsWith("http://")){
+        // skip 
     }else if( !(api.substring(0, 1) == "/") ) {
         api = "/" + api;
     }

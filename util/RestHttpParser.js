@@ -22,6 +22,7 @@ const Parser = {
             this.parseCommentline(line)
         }else if(line.startsWith("GET ") || line.startsWith("get ") || line.startsWith("POST ") || line.startsWith("post ") || line.startsWith("PUT ") || line.startsWith("put ") || line.startsWith("DELETE ") || line.startsWith("delete ")){
             this.parseHttpRequest(line)
+            this.expectHeader()
         }else if(line.startsWith("{")){
             this.parseBodyBegin(line)
             // until empty line
@@ -98,6 +99,9 @@ const Parser = {
     closeTest(){
         this.currentTest()['status'] = 'closed'
     },
+    expectHeader(){
+        this.currentTest()['status'] = 'header_expecting'
+    },
     isTestExpectingHeader(){
         return this.currentTest()['status'] == 'header_expecting'   // meet empty line
     },
@@ -119,6 +123,9 @@ const Parser = {
             this.currentTest()['body']=''
         }
         this.currentTest()['body'] += json_line
+    },
+    authRequest(token){
+        this.currentTest()['token'] = token
     },
 
     // handle @ variables
@@ -147,6 +154,12 @@ const Parser = {
         }
         throw new Error('current test status is not \'closed\'') 
     },
+    testToken(){
+        if(this.currentTestStatus()==='closed'){
+           return this.currentTest()['token']    
+        }
+        throw new Error('current test status is not \'closed\'') 
+     },
 
     // create a new item, which start with "### "
     parseTestTitle(line){
@@ -214,7 +227,17 @@ const Parser = {
     }, 
 
     parseHttpHeader(line){
-        // TODO, do not handle header
+        let contentType = 'Content-Type'
+        let auth='Authorization'
+        // only handle Content-Type, Authorization
+        if(line.startsWith(contentType)){
+            //skip, default application/json
+        }else if(line.startsWith(auth)){
+            //handle {{}} VARS
+            let VAR=line.substring(line.indexOf("{{")+"{{".length, line.indexOf("}}"))
+            let token = this.tVARS[VAR]
+            this.authRequest(token)
+        }
     },
 
     parseQueryParam(line){
@@ -241,7 +264,7 @@ const Parser = {
     // not empty
     parseAnyline(line){
         if(this.isTestExpectingHeader()){
-            // TODO, temp skip header
+            this.parseHttpHeader(line)
         }else if(this.isTestRequestingBody()){
             // collect body lines
             this.collectBodyLine(line)

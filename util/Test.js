@@ -16,16 +16,22 @@ let Test = {
             //demo: run '{\"url\":\"testbody\"}'
             body = `'${body}'`;
             body = body.replace(new RegExp(" ", "g"), "nbsp");
+        }else if(body==undefined){
+            body=''
         }
+        
+        let serverEndpoint = server.endpoint
+        endpointapi=(api.startsWith("http://") || api.startsWith("https://")) ? api : serverEndpoint.concat(api)
+
+        // console.log(`sh ./test ${method} ${endpointapi} run ${body} > ${root}/${fileMap.response}`)
+
         shell.cd(`${root}/cli-tools/env-test`);
-        console.log(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`)
-        if (shell.exec(`sh ./test ${method} ${server.endpoint}${api} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+        if (shell.exec(`sh ./test ${method} ${endpointapi} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
             shell.cd(__dirname);
             shell.exit(1);
         }
 
-        // root path
         shell.cd(path.dirname(__dirname));
     },
 

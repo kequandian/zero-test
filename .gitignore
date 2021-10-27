@@ -10,3 +10,4 @@ _temp.html
 yarn-error.log
 *.png
 output/
+public/logs/

@@ -17,8 +17,8 @@ let Testcase = {
     fromLineToExecutableLine(method, url, body){
 
         // TODO, handle body
-        let exec = `node ./index.js ${method} ${url} --report`;
-
+        let exec = body ? (`node ./index.js ${method} ${url} --filter=${body} --report`): 
+                          (`node ./index.js ${method} ${url} --report`);
 
         exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
 
@@ -81,7 +81,7 @@ let Testcase = {
             // 单'#'号注释记录
             } else if(line.length>0 && line.startsWith("#")) {
                 // 把注释加到文档, 统一注释  ##
-                line= line.replaceAll("^[\\#]+ ", "")
+                line=line.replace("^[\\#]+ ", "")
                 fs.appendFileSync(`${logConf.dir}${logConf.file}`, `## ${num ++}、${line}\n`, "UTF-8");
             }
         }
