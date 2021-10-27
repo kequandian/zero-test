@@ -2,7 +2,6 @@ var shell = require("shelljs");
 var fs = require('fs');
 var path = require('path')
 var server = require(`../config/server.config`);
-// var loginInfo = require(`../test-env/login.config`);
 var fileMap = require(`../config/file_map.config`);
 var Reader = require('./Reader');
 var root = path.dirname(__dirname)
@@ -11,7 +10,7 @@ var root = path.dirname(__dirname)
  * env-test 脚本调用
  */
 let Test = {
-    run(api, method, body) {
+    run(api, method, token, body) {
         if(body) {
             //demo: run '{\"url\":\"testbody\"}'
             body = `'${body}'`;
@@ -23,10 +22,9 @@ let Test = {
         let serverEndpoint = server.endpoint
         endpointapi=(api.startsWith("http://") || api.startsWith("https://")) ? api : serverEndpoint.concat(api)
 
-        // console.log(`sh ./test ${method} ${endpointapi} run ${body} > ${root}/${fileMap.response}`)
-
+        //console.log(`sh ./test ${method} ${endpointapi} ${token} run ${body} > ${root}/${fileMap.response}`)
         shell.cd(`${root}/cli-tools/env-test`);
-        if (shell.exec(`sh ./test ${method} ${endpointapi} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
+        if (shell.exec(`sh ./test ${method} ${endpointapi} ${token} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');
             shell.cd(__dirname);
             shell.exit(1);

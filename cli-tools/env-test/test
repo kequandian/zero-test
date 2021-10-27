@@ -3,9 +3,14 @@
 
 method=$1
 api=$2
+if [ $3 = run ];then
 cmd=$3
 body=$4
-
+elif [ $4 = run ];then
+token=$3
+cmd=$4
+body=$5
+fi
 
 ## method lowercase 
 ##method="${method,,}" ## work bash 4.0
@@ -25,7 +30,7 @@ fi
 ## usage
 if [ ! $api ];then
  bin=$(basename $0)
- echo "Usage: $bin <method> <api> [tc|trace|vi|run]"
+ echo "Usage: $bin <method> <api> [token] [tc|trace|vi|run] [body]"
  echo "       $bin ."
  exit
 fi
@@ -68,7 +73,7 @@ if [ "$cmd"x == "run"x  ];then
     elif [ "$method"x == "delete"x ];then
        "$dir/delete" $api
     elif [ "$method"x == "get"x ];then
-       "$dir/get" $api
+       "$dir/get" $api $token
     fi
     exit
 fi
@@ -112,7 +117,7 @@ if [ "$method"x == "post"x -o "$method"x == "put"x ];then
    fi
 
 elif [ "$method"x == "get"x ];then
-   $swagger_cli $method $api
+   $swagger_cli $method $api $token
 fi
 
 

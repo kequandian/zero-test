@@ -1,19 +1,25 @@
 #!/usr/bin/env perl
+my $token_opt = '--token';
+my $log_opt = '--log';
+my $token_flag, $log_flag;
+my $api, $token;
 
-my $token_tag = shift @ARGV;
-my $api = shift @ARGV;
-
-my $print_log = shift @ARGV;
-## token
-my $token_flag;
-if($token_tag eq '--token'){
-   $token_flag = 1;
+foreach my $arg (@ARGV) {
+   if($arg eq $token_opt){
+      $token_flag=1
+   }elsif($arg eq $log_opt){
+      $log_flag=1
+   }elsif($token_flag && !$token){
+      $token=$arg
+   }else{
+      $api=$arg
+   }
 }
+# print "api=$api, token=$token, token_flag=$token_flag, log_flag=$log_flag\n";
 
 if(!$api){
    print "Usage: \n";
-   print "  $0 <token> <api> [--log]\n";
-   print "  token: --token,--no-token\n"; 
+   print "  $0 <api> [--token] [--log]\n";
    exit(0);
 }
 
@@ -44,27 +50,27 @@ if( $api =~ /^http/){
    $api = $endpoint.$api;
 }
 
-my $token;
-if($token_flag){
-   my $in_t = 'app.token';
-   $token = &get_data($in_t);
-}
 
-if($print_log){
-   if($token_flag){
-      print "curl -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X GET $api\n";
-   }else{
-      print "curl -H \"Content-Type:application/json\" -X GET $api\n";
+if($token_flag){
+   if(!$token){
+      my $in_t = 'app.token';
+      $token = &get_data($in_t);
    }
 }
 
-if($token_flag){
-   print `curl -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X GET $api`;
+
+## main
+if($token){
+   if($print_log){
+      print "curl -s -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X GET $api\n";
+   }
+   print `curl -s -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X GET $api`;
 }else{
-   print `curl -H \"Content-Type:application/json\" -X GET $api`;
+   if($print_log){
+      print "curl -s -H \"Content-Type:application/json\" -X GET $api\n";
+   }
+   print `curl -s -H \"Content-Type:application/json\" -X GET $api`;
 }
-
-
 
 sub get_lines {
    my $in = shift;

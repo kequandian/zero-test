@@ -124,7 +124,7 @@ const Parser = {
         }
         this.currentTest()['body'] += json_line
     },
-    authRequest(token){
+    collectRequestToken(token){
         this.currentTest()['token'] = token
     },
 
@@ -199,14 +199,17 @@ const Parser = {
         // removed HTTP
 
         let CURRENT_TEST = this.currentTest()
-        if(request.startsWith("GET ")){
+        if(request.startsWith("GET ") || request.startsWith("get ") ){
             CURRENT_TEST['method'] = 'GET'
-        }else if(request.startsWith("POST ")){
+        }else if(request.startsWith("POST ")||request.startsWith("post ")){
             CURRENT_TEST['method'] = 'POST'
-        }else if(request.startsWith("PUT ")){
+        }else if(request.startsWith("PUT ") || request.startsWith("put ")){
             CURRENT_TEST['method'] = 'PUT'
-        }else if(request.startsWith("DELETE ")){
+        }else if(request.startsWith("DELETE ")||request.startsWith("delete ")){
             CURRENT_TEST['method'] = 'DELETE'
+
+        }else if(request.startsWith("login ")){
+            CURRENT_TEST['method'] = 'login'
         }
 
         // remote method 
@@ -224,7 +227,7 @@ const Parser = {
     parseBodyBegin(line){
         this.requestBody()
         this.collectBodyLine(line)
-    }, 
+    },
 
     parseHttpHeader(line){
         let contentType = 'Content-Type'
@@ -236,7 +239,7 @@ const Parser = {
             //handle {{}} VARS
             let VAR=line.substring(line.indexOf("{{")+"{{".length, line.indexOf("}}"))
             let token = this.tVARS[VAR]
-            this.authRequest(token)
+            this.collectRequestToken(token)
         }
     },
 

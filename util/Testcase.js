@@ -14,11 +14,18 @@ var root = path.dirname(__dirname)
  * @force  -- 遇到错误继续执行
  */
 let Testcase = {
-    fromLineToExecutableLine(method, url, body){
-
-        // TODO, handle body
-        let exec = body ? (`node ./index.js ${method} ${url} --filter=${body} --report`): 
-                          (`node ./index.js ${method} ${url} --report`);
+    // 由Parse结果转换为执行命令
+    fromLineToExecutableLine(method, url, body, token){
+        let exec
+        if(body && token){
+            exec = `node ./index.js ${method} ${url} --filter=${body} --token=${token} --report`
+        }else if(body){
+            exec = `node ./index.js ${method} ${url} --filter=${body} --report`
+        }else if(token){
+            exec = `node ./index.js ${method} ${url} --token=${token} --report`
+        }else {
+            exec = `node ./index.js ${method} ${url} --report`;
+        }
 
         exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
 
@@ -38,15 +45,6 @@ let Testcase = {
             fs.writeFileSync(`${logConf.dir}${logConf.file}`, '', "UTF-8");
         }
 
-        // let httpTests = {}
-        // // handle vsocde rest client .http file
-        // if(testcase.endsWith(".http")){
-        //     httpTests = RestHttpParser.parseHttpContent(fileData)
-        //     console.log(httpTests)
-        // }
-        //let isHttpCase = Object.keys(httpTests).length === 0
-
-
         // read each line in testcase file
         let read = fileData.split("\n");
         let num = 1;
@@ -61,13 +59,19 @@ let Testcase = {
                 let methodLine = RestHttpParser.testMethod()
                 let requestLine = RestHttpParser.testRequest()
                 let bodyLine = RestHttpParser.testBody()
+                let tokenLine = RestHttpParser.testToken()
 
-                let lineExec = this.fromLineToExecutableLine(methodLine, requestLine, bodyLine)
+                let lineExec = this.fromLineToExecutableLine(methodLine, requestLine, bodyLine, tokenLine)
+                //console.log("cli=", lineExec)
                 shell.exec(`${lineExec} > ${root}/${fileMap.testTemp}`);
 
-                let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
+                // append the result
+                let runInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
+                fs.appendFileSync(`${logConf.dir}${logConf.file}`, runInfo, "UTF-8");
+
 
                 // 错误中止
+                let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
                 if(!force && response.code != 200 && response.status_code != 0) {
                     let errorInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
                     console.log(`\n\ntest error !!!`);
@@ -79,6 +83,9 @@ let Testcase = {
                 }
 
             // 单'#'号注释记录
+            } else if(line.length>0 && line.startsWith("## ")) {
+                // 用于测试用例的注释,不打印到PDF
+                
             } else if(line.length>0 && line.startsWith("#")) {
                 // 把注释加到文档, 统一注释  ##
                 line=line.replace("^[\\#]+ ", "")
@@ -86,12 +93,13 @@ let Testcase = {
             }
         }
 
-        // start test 
+        // append testcase to log 
         let testcaseFileContent = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"
         let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
         testcaseLog = testcaseFileContent + testcaseLog;
         testcaseLog = testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');
         fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
+
 
         console.log(`export report: ${journalFile}`);
         Pdf.export(`${logConf.dir}${logConf.file}`, journalFile);

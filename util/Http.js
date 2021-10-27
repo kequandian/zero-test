@@ -19,8 +19,8 @@ let Http = {
      * @param {string} api api
      * @param {int} index 下标
      */
-    getId(api, index) {
-        Test.run(api, 'GET');
+    getId(api, index, token) {
+        Test.run(api, 'GET', token);
 
         let response = Reader.readJson(this.response_file);
         if (response.code != 200 && response.status_code != 0) {
@@ -83,15 +83,15 @@ let Http = {
      * @param {int} head 
      * @param {int} tail 
      */
-    actionAfterGetById(api, method, head, tail) {
+    actionAfterGetById(api, method, head, tail, token) {
         if (head || tail) {
             // head for index=0 and tail for -1
             let index = head ? 0 : tail ? -1 : 0
             api = Http.getId(api, index);
             console.log(`redirect api: ${method} ${api}`);
-            Test.run(api, `${method}`);
+            Test.run(api, `${method}`, token);  // no body for get
         } else {
-            Test.run(api, `${method}`);
+            Test.run(api, `${method}`, token);
         }
         return this.isSuccess();
     },

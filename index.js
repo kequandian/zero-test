@@ -42,6 +42,7 @@ program
     .option('--table <value>', '指定数据库表生成请求参数')
     .option('--swagger', "从swagger中获取api所需字段信息生成请求参数")
     .option('--filter <value>', "添加或替换生成参数")
+    .option('--token <value>', "指定鉴权token")
     .option('--only', "仅处理当前api，post/put请求后不带回get列表")
     .option('--save <field>', '保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值')
     .on('--help', function() {
@@ -172,7 +173,7 @@ program
         shell.exit(0);
     });
 program
-    .command('test <testcase> <journal-file>')
+    .command('test <testcase> <journal-file> [options]')
     .description('测试报告-多api组合测试')
     .option('-f, --force', '执行整个testcase,不被错误返回所打断')
     .option('-r, --recreate', '测试前清空日志文件')
@@ -181,9 +182,9 @@ program
         console.log('Usage:');
         console.log('   test Wdemo/testcase demo/testcase.pdf');
     })
-    .action(function (testcase, journalFile, options) {
-        console.log("testcase running...");
-        Testcase.run(testcase, journalFile, options.force==undefined?false:options.force, options.recreate==undefined?false:options.recreate)
+    .action(function (testcase, journalFile, ...options) {
+        //console.log("testcase running...");
+        Testcase.run(testcase, journalFile, options[0], options[1])
     });
 
 
@@ -273,8 +274,8 @@ if(program.out || program.report) {
             console.log('Options: both --head --tail confict !')
             shell.exit(0)
         }
-        //console.log(`${api}, 'GET', ${program.head}, ${program.tail}`)
-        Http.actionAfterGetById(api, 'GET', program.head, program.tail);
+        console.log(`${api}, 'GET', ${program.head}, ${program.tail}, ${program.token}`)
+        Http.actionAfterGetById(api, 'GET', program.head, program.tail, program.token);
         Save.saveValue(program.save);
         // if(program.head || program.tail ){
         //     shell.exit()
@@ -316,6 +317,8 @@ if(program.head) {
 
 if (program.out || program.report) {
     // 输出api结果
+    
+
     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
 // } else if (program.report) {
