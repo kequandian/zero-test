@@ -21,7 +21,7 @@ img {
     
 }
 .markdown-body p{
-    text-indent: 2em;
+    text-indent: 1em;
 }
 
 h1, h2, h3, h4 {
@@ -32,7 +32,7 @@ h1, h2, h3, h4 {
 
 h1, h2, h3, h4, h5 {
     font-family: Georgia, Palatino, serif;
-    text-indent: 2em;
+    text-indent: 1em;
 }
 h1, h2, h3, h4, h5, dl{
     margin-bottom: 16px;

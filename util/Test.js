@@ -18,11 +18,14 @@ let Test = {
         }else if(body==undefined){
             body=''
         }
+        if(token===undefined){
+            token=''
+        }
         
         let serverEndpoint = server.endpoint
         endpointapi=(api.startsWith("http://") || api.startsWith("https://")) ? api : serverEndpoint.concat(api)
 
-        //console.log(`sh ./test ${method} ${endpointapi} ${token} run ${body} > ${root}/${fileMap.response}`)
+        console.log(`sh ./test ${method} ${endpointapi} ${token} run ${body} > ${root}/${fileMap.response}`)
         shell.cd(`${root}/cli-tools/env-test`);
         if (shell.exec(`sh ./test ${method} ${endpointapi} ${token} run ${body} > ${root}/${fileMap.response}`).code !== 0) {
             console.log('error while exec env-test/test');

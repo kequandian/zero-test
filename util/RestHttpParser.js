@@ -23,6 +23,9 @@ const Parser = {
         }else if(line.startsWith("GET ") || line.startsWith("get ") || line.startsWith("POST ") || line.startsWith("post ") || line.startsWith("PUT ") || line.startsWith("put ") || line.startsWith("DELETE ") || line.startsWith("delete ")){
             this.parseHttpRequest(line)
             this.expectHeader()
+        }else if(line.startsWith("login ")){
+            this.parseLoginRequest(line)
+            this.expectHeader()
         }else if(line.startsWith("{")){
             this.parseBodyBegin(line)
             // until empty line
@@ -127,6 +130,9 @@ const Parser = {
     collectRequestToken(token){
         this.currentTest()['token'] = token
     },
+    isCurrentTestLogin(){
+        return this.currentTest()['method'] == 'login'
+    },
 
     // handle @ variables
     parseVariable(line){
@@ -137,13 +143,13 @@ const Parser = {
         this.tVARS[key]=value
     },
     testMethod(){
-        if(this.currentTestStatus()==='closed'){
+        if(this.currentTestStatus()==='closed' || this.currentTestStatus()==='titled_closed'){
            return this.currentTest()['method']    
         }
         throw new Error('current test status is not \'closed\'') 
      },
     testRequest(){
-       if(this.currentTestStatus()==='closed'){
+       if(this.currentTestStatus()==='closed' || this.currentTestStatus()==='titled_closed'){
           return this.currentTest()['request']    
        }
        throw new Error('current test status is not \'closed\'') 
@@ -161,29 +167,42 @@ const Parser = {
         throw new Error('current test status is not \'closed\'') 
      },
 
-    // create a new item, which start with "### "
+    // create a new item, which start with "#"
     parseTestTitle(line){
         let key = line
 
         // close last current
-        if(this.currentTest()!=undefined)
-        {
+        if(this.currentTest()!=undefined){
             // mean ## again, just delete last test
             if(this.currentTestStatus()==='titled'){
                // delete current Test
                this.deleteCurrentTest()
+            }else if(this.currentTestStatus()==='closed'){
+                // already close, skip
             }else{
-               this.currentTest()['status']='closed'
+                // not, closed, just closed it
+               this.currentTest()['status']='titled_closed'
             }
         }
 
-        // 
+        // set TEST status
         this.TESTS[key] = {}
         this.TESTS[key]['status'] = 'titled'
 
-        // set current key 
+        let titledMethod, titledRequest
+        if(this.currentTestStatus()==='titled_closed'){
+            titledMethod=this.testMethod();
+            titledRequest=this.testRequest();
+        }
+
+        // set current key
         this.TESTS['current']= this.TESTS[key]
         this.TESTS['current']['key'] = key
+
+        // set method & request
+        this.TESTS['current']['method']=titledMethod
+        this.TESTS['current']['request']=titledRequest
+
     },
     parseCommentline(line){
         this.parseTestTitle(line)  // title the test first
@@ -223,6 +242,17 @@ const Parser = {
         CURRENT_TEST['request']=request
     },
 
+    parseLoginRequest(line){
+        let request = line
+
+        let CURRENT_TEST = this.currentTest()
+        CURRENT_TEST['method'] = 'login'
+
+        // remote method 
+        request = request.substring(CURRENT_TEST['method'].length).trim()
+        CURRENT_TEST['request']=request
+    },
+
     // handle body begin "{""
     parseBodyBegin(line){
         this.requestBody()
@@ -249,7 +279,7 @@ const Parser = {
 
     // 遇空行结束
     parseEmptyLine(line){
-        if(this.isCurrentTestGet()){
+        if(this.isCurrentTestGet() || this.isCurrentTestLogin()){
             // close Test
             this.closeTest()
         }else if(this.isCurrentTestPost() || this.isCurrentTestPut()){

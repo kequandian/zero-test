@@ -8,25 +8,16 @@ login api admin 111111 report
 get /api/sys/org
 
 # 组织A用户登录
-login sys user1234 111111 report
+login api user1234 111111 report
 # 获取组织列表
 get /api/sys/org
 
 # 组织A1用户登录
-login sys user12341 111111 report
+login api user12341 111111 report
 # 获取组织列表
 get /api/sys/org
 
 # 组织B用户登录
-login sys user12345 111111 report
+login api user12345 111111 report
 # 获取组织列表
 get /api/sys/org
-
-
-### TEST
-GET {{endpoint}}/api/sys/org
-Content-Type: application/json
-
-{
-    
-}

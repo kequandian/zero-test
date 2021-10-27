@@ -274,7 +274,7 @@ if(program.out || program.report) {
             console.log('Options: both --head --tail confict !')
             shell.exit(0)
         }
-        console.log(`${api}, 'GET', ${program.head}, ${program.tail}, ${program.token}`)
+        //console.log(`${api}, 'GET', ${program.head}, ${program.tail}, ${program.token}`)
         Http.actionAfterGetById(api, 'GET', program.head, program.tail, program.token);
         Save.saveValue(program.save);
         // if(program.head || program.tail ){
@@ -316,15 +316,16 @@ if(program.head) {
 }
 
 if (program.out || program.report) {
-    // 输出api结果
     
-
-    console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
-    shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
-// } else if (program.report) {
-//     // 输出并打印日志
-//     console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
-//     shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+    // 输出api结果
+    if (program.out) {
+        console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
+        shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
+    } else if (program.report) {
+        // 输出并打印日志
+        console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+        shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
+    }
 
 } else if(program.info && method && api) {
     console.log(`output swagger info: ${method} ${api}`);

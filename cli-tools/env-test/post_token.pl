@@ -78,22 +78,16 @@ $data=~s/\s+/ /g;
 #my $result= `echo $data | iconv -t "UTF-8"`;
 
 ## pring log
-##
-if($print_log){
-   print "----------------------\n";
-   if($token_flag){
-      print "curl -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X $method -d $data $api\n";
-   }else{
-      print "curl -H \"Content-Type:application/json\" -X $method -d $data $api\n";
-   }
-}
-
-
-## execute script
 if($token_flag){
-   print `curl -H "Content-Type:application/json; charset=UTF-8" -H "Authorization:Bearer $token" -X $method -d $data $api`;
+   if($print_log){
+      print "curl -s -H \"Content-Type:application/json\" -H \"Authorization:Bearer $token\" -X $method -d $data $api\n";
+   }
+   print `curl -s -H "Content-Type:application/json; charset=UTF-8" -H "Authorization:Bearer $token" -X $method -d $data $api`;
 }else{
-   print `curl -H "Content-Type:application/json" -X $method -d $data $api`;
+    if($print_log){
+      print "curl -s -H \"Content-Type:application/json\" -X $method -d $data $api\n";
+   }
+   print `curl -s -H "Content-Type:application/json" -X $method -d $data $api`;
 }
 
 

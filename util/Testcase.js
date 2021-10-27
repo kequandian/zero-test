@@ -7,6 +7,7 @@ var Formatter = require('./Formatter');
 var Reader = require('./Reader');
 var Pdf = require('./Pdf');
 var RestHttpParser = require('./RestHttpParser');
+const { exit } = require("process");
 var root = path.dirname(__dirname)
 
 /**
@@ -25,6 +26,11 @@ let Testcase = {
             exec = `node ./index.js ${method} ${url} --token=${token} --report`
         }else {
             exec = `node ./index.js ${method} ${url} --report`;
+        }
+
+        // handle login + --report
+        if(method == 'login'){
+            exec = `node ./index.js ${method} ${url}`;
         }
 
         exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
@@ -48,11 +54,13 @@ let Testcase = {
         // read each line in testcase file
         let read = fileData.split("\n");
         let num = 1;
+        let s_ok=0;
         for(let i in read) {
             let line = read[i]==undefined?'':read[i].trim()
             console.log(line)
 
             let readLineStatus = RestHttpParser.readEachLine(line)
+            //console.log('readLineStatus=', readLineStatus)
 
             // 执行结果记录
             if(readLineStatus === 'closed') {
@@ -64,11 +72,6 @@ let Testcase = {
                 let lineExec = this.fromLineToExecutableLine(methodLine, requestLine, bodyLine, tokenLine)
                 //console.log("cli=", lineExec)
                 shell.exec(`${lineExec} > ${root}/${fileMap.testTemp}`);
-
-                // append the result
-                let runInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
-                fs.appendFileSync(`${logConf.dir}${logConf.file}`, runInfo, "UTF-8");
-
 
                 // 错误中止
                 let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
@@ -85,7 +88,6 @@ let Testcase = {
             // 单'#'号注释记录
             } else if(line.length>0 && line.startsWith("## ")) {
                 // 用于测试用例的注释,不打印到PDF
-                
             } else if(line.length>0 && line.startsWith("#")) {
                 // 把注释加到文档, 统一注释  ##
                 line=line.replace("^[\\#]+ ", "")
@@ -99,7 +101,6 @@ let Testcase = {
         testcaseLog = testcaseFileContent + testcaseLog;
         testcaseLog = testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');
         fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
-
 
         console.log(`export report: ${journalFile}`);
         Pdf.export(`${logConf.dir}${logConf.file}`, journalFile);

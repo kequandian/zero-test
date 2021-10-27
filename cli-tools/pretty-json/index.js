@@ -45,9 +45,12 @@ let header = "data";
 if(program.title != undefined) {
     flag ++;
     console.log(program.title);
-   // printLog(program.title, program.log);
-   printLog(`### **${program.title}**`, program.log)
+    // printLog(program.title, program.log);
+    let titled = program.title
+    titled = titled.replace(/http[s]?:\/\/[0-9.:]+\//, '/')
+    printLog(`### **${titled}**`, program.log)
 }
+
 if(program.body != undefined) {
     let body = fs.readFileSync(program.body, "UTF-8");
     printLog("```\nBody: " + body + "\n```", program.log);
