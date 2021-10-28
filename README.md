@@ -1,13 +1,14 @@
-
 # zero-test
 
 ## Install
-`git clone https://github.com/kequandian/zero-test.git`  
+
+`git clone https://github.com/kequandian/zero-test.git`
 `sh ./init install`
 
 ## Usage
+
 ```
-Usage: zero-test <method> <api> [options] [value ...]
+Usage: node index.js <method> <api> [options] [value ...]
 
 Options:
   --out                                           输出结果
@@ -21,7 +22,6 @@ Options:
   --table <value>                                 指定数据库表生成请求参数
   --swagger                                       从swagger中获取api所需字段信息生成请求参数
   --filter <value>                                添加或替换生成参数
-  --only                                          仅处理当前api，post/put请求后不带回get列表
   --save <field>                                  保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值
   -h, --help                                      output usage information
 
@@ -41,8 +41,9 @@ Example: login api admin 111111
 ```
 
 **Journal**
+
 ```
-$ zero-test journal --help
+$ node index.js journal --help
 Usage: journal [options] <cmd> [option]
 
 Options:
@@ -57,8 +58,9 @@ Usage:
 ```
 
 **PDF**
+
 ```
-$ zero-test pdf --help
+$ node index.js pdf --help
 Usage: pdf [options] <outputFile>
 
 Options:
@@ -71,6 +73,7 @@ Usage:
 ```
 
 **testcase**
+
 ```
 Usage: test [options] <testcase> <journal-file>
 
@@ -85,18 +88,25 @@ Usage:
 ```
 
 ## How to use
+
 ### Base
-1. 安装 
+
+1. 安装
+
 ```
 $ ./init install
 ```
+
 2. 配置子工作目录 (可选)
+
 ```
 $ ./init map ‪C:/Users/10238/Desktop/
 map zero-test to C:/Users/10238/Desktop/ ...
 done!
 ```
+
 3. 修改配置文件(若使用子工作目录，进行相应切换即可)
+
 ```
 $ vim config/server.config
 module.exports = {
@@ -111,13 +121,13 @@ module.exports = {
 };
 
 ---------------- OR ----------------
-$ zero-test server --help
+$ node index.js server --help
 Usage: server [options] <host> <port>
 
 Options:
   -h, --help  output usage information
 
-$ zero-test mysql --help
+$ node index.js mysql --help
 Usage: mysql [options] <opt> [argv1] [argv2]
 
 mysql <host|database|user> [argv1] [argv2]
@@ -130,18 +140,24 @@ Example: mysql set host 127.0.0.1 3306
 
 
 ```
+
 4. 设置日志(设置日志文件，清空文件内容)
+
 ```
-$ zero-test journal set testcase
-$ zero-test journal rewrite
+$ node index.js journal set testcase
+$ node index.js journal rewrite
 ```
+
 5. 登录（api访问请求头需要带上Authorization时可选)
+
 ```
-$ zero-test login sys admin 111111
+$ node index.js login sys admin 111111
 ```
+
 6. 调用api并输出
+
 ```
-$ zero-test post api/eav/entities --filter='{"entityName":"E1"}' --out
+$ node index.js post api/eav/entities --filter='{"entityName":"E1"}' --out
 
 post--api/eav/entities
 +----------------------------------------------------------+
@@ -159,9 +175,11 @@ post--api/eav/entities
 | 0   │ 3  │ E1         │           |
 +-----+----+------------+-----------+
 ```
+
 7. 获取列表api第一条数据id并查询其详情(即相当于调用get api/eav/entities/3), 并将返回字段id的值保存
+
 ```
-$ zero-test get api/eav/entities --head --save=id --out
+$ node index.js get api/eav/entities --head --save=id --out
 
 get--api/eav/entities
 +-----------------+
@@ -172,9 +190,11 @@ get--api/eav/entities
 | 3  │ E1         |
 +----+------------+
 ```
+
 8. 通过保存值调用api, 并保存字段entityName的值
+
 ```
-$ zero-test get api/eav/entities/#SAVE_VALUE --save=entityName --out
+$ node index.js get api/eav/entities/#SAVE_VALUE --save=entityName --out
 
 get--api/eav/entities/3
 +-----------------+
@@ -185,9 +205,11 @@ get--api/eav/entities/3
 | 3  │ E1         |
 +----+------------+
 ```
+
 9. 通过保存值post数据
+
 ```
-$ zero-test post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
+$ node index.js post api/eav/entities --filter='{"entityName":"#SAVE_VALUE"}' --out
 
 post--api/eav/entities
 +--------------------------+
@@ -198,14 +220,18 @@ post--api/eav/entities
 | 4007 │ []     │ 重复键值 |
 +------+--------+----------+
 ```
+
 执行的sql为
+
 ```
 ==>  Preparing: INSERT INTO t_eav_entity ( entity_name ) VALUES ( ? ) 
 ==> Parameters: E1(String)
 ```
+
 10. 单post调用并将结果记录日志
+
 ```
-$ zero-test post api/eav/entities --filter='{"entityName":"E2"}' --only --report
+$ node index.js post api/eav/entities --filter='{"entityName":"E2"}' --report
 
 post--api/eav/entities
 +------------------------+
@@ -216,9 +242,11 @@ post--api/eav/entities
 | 200  │ 1    │ 操作成功 |
 +------+------+----------+
 ```
+
 11. 调用GET请求并记录
+
 ```
-$ zero-test get api/eav/entities --report
+$ node index.js get api/eav/entities --report
 
 get--api/eav/entities
 +----------------------------------------------------------+
@@ -238,14 +266,19 @@ get--api/eav/entities
 | 1   │ 5  │ E2         │           |
 +-----+----+------------+-----------+
 ```
+
 12. 将日志中记录的内容导出pdf
+
 ```
-$ zero-test pdf demo/testcase.pdf
+$ node index.js pdf demo/testcase.pdf
 converting pdf from public/logs/testcase to demo/testcase.pdf
 Done
 ```
+
 ### Testcase
+
 1. 编写testcase
+
 ```
 $ cat demo/testcase_demo
 
@@ -277,6 +310,7 @@ get api/sys/org
 ```
 
 2. 执行testcase
+
 ```
 $ ./index.js test public/testcase/demo.tc output/demo.pdf
 testcase running...
@@ -300,9 +334,10 @@ converting pdf from public/logs/testcase to demo/testcase_demo.pdf
 Done
 ```
 
-
 ## Demo
+
 ### Base
+
 ```
 $ ./index.js get api/cms/article/categories --out
 +----------------------------------------------------------+
@@ -326,6 +361,7 @@ $ ./index.js get api/cms/article/categories --out
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 ```
+
 ```
 $ ./index.js post api/cms/article/categories --out --table=article_category
 +----------------------------------------------------------+
@@ -352,6 +388,7 @@ $ ./index.js post api/cms/article/categories --out --table=article_category
 +-----+------------+-----------+----+----------------------------------------------------------------+--------+
 
 ```
+
 ```
 $ ./index.js put api/cms/article/categories --out --table=article_category --tail --filter='{name:test}'
 +----------------------------------------------------------+
@@ -377,6 +414,7 @@ $ ./index.js put api/cms/article/categories --out --table=article_category --tai
 | 4   │ 1          │ 0         │ 27 │ test    │ 6283   |
 +-----+------------+-----------+----+---------+--------+
 ```
+
 ```
 $ ./index.js delete api/cms/article/categories --out --tail
 +----------------------------------------------------------+
@@ -400,7 +438,9 @@ $ ./index.js delete api/cms/article/categories --out --tail
 | 3   │ 63         │ 93        │ 26 │ !H      │ 36     |
 +-----+------------+-----------+----+---------+--------+
 ```
+
 ### Report
+
 ```
 $ ./index.js get api/cms/article/categories --report
 +----------------------------------------------------------+
@@ -430,8 +470,8 @@ Done
 ```
 
 ### Testcase
+
 ```
 $ ./index.js test public/testcase/demo.tc output/demo.pdf
 
 ```
-

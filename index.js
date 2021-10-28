@@ -43,7 +43,7 @@ program
     .option('--swagger', "从swagger中获取api所需字段信息生成请求参数")
     .option('--filter <value>', "添加或替换生成参数")
     .option('--token <value>', "指定鉴权token")
-    .option('--only', "仅处理当前api，post/put请求后不带回get列表 (默认)")
+    // .option('--only', "仅处理当前api，post/put请求后不带回get列表 (默认)")
     .option('--save <field>', '保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值')
     .on('--help', function() {
         console.log()
@@ -309,13 +309,14 @@ if(program.out || program.report) {
         }
 
         Save.saveValue(program.save);
-        if(isSuccess && !program.only) {
-            if(apiMap[originApi]) {
-                Test.run(apiMap[originApi], 'GET');   
-            } else {
-                Test.run(originApi, 'GET');   
-            }
-        }
+        // DO NOT GET LIST IMPLICIT, REMOVE ONLY PARAM
+        // if(isSuccess && !program.only) {
+        //     if(apiMap[originApi]) {
+        //         Test.run(apiMap[originApi], 'GET');   
+        //     } else {
+        //         Test.run(originApi, 'GET');   
+        //     }
+        // }
     } else {
         shell.exit(0);
     }
