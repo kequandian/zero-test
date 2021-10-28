@@ -124,7 +124,11 @@ function convertArrayToTable(header, json, mdLog) {
  */
 function convertToVTable(header, json, parent, sub, mdLog) {
     // 表格最大宽度
-    let maxTableSize = 400;
+    //let maxTableSize = 400;
+    let maxTableSize = 600;  // try large table width
+
+    //TODO 限制表格字符长度，超长换行
+
     let remainLen = 20;    // 单元格数据为对象或数组对象时保留长度
     let columnsNum = 0; // 列数
     let columnsTitle = []; 
@@ -154,6 +158,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
             columnsNum ++;
         // }
     }
+
     if(columnsNum > 0) {
         log += "\n|";
         for(let i = 0; i < columnsNum; i++) {
@@ -237,7 +242,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
         mdLog.data = subLog + "\n---\n";
         return subTable;
     }
-    mdLog.data = log + "\n" + subLog + "\n---\n";
+    mdLog.data = log + "\n\n" + subLog + "\n---\n";
     return res.toString() + subTable;
 }
 

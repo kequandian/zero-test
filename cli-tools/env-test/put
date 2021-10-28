@@ -24,6 +24,6 @@ if [ ! $token_flag ];then
    token='--token'
 fi
 
-echo $post_bin PUT $@ $token
+# echo $post_bin PUT $@ $token > /dev/stderr
 $post_bin PUT $@ $token
 

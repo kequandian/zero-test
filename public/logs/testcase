@@ -1,68 +1,72 @@
 # Testcase
 ```
-## 组合api测试
-# set journal testcase
-# journal rewrite
+@endpoint = http://192.168.3.189:8080
 
-# 管理员登录
-login api admin 111111 report
-# 获取组织列表
-get /api/sys/org
+### 提交数据
+POST {{endpoint}}/api/crud/option/options HTTP/1.1
 
-# 组织A用户登录
-login api user1234 111111 report
-# 获取组织列表
-get /api/sys/org
+{
+  "name": "string",
+  "value": "string"
+}
 
-# 组织A1用户登录
-login api user12341 111111 report
-# 获取组织列表
-get /api/sys/org
+### 获取数据
+GET {{endpoint}}/api/crud/option/options?pageNum=3
 
-# 组织B用户登录
-login api user12345 111111 report
-# 获取组织列表
-get /api/sys/org
 
 ```
 ---
 # Start
-## 1、# set journal testcase
-## 2、# journal rewrite
-## 3、# 管理员登录
-### **login--admin**
+## 1、### 提交数据
+### **POST--/api/crud/option/options**
+```
+Body: {"name":"string","value":"string"}
+```
 **data**
-| passwordIsEmpty | roleCodes | sessionID | avatar | accessToken | type | userId | orgId | expiresIn | tenantId | name | reset | perms | tokenType | roleNames | account |
-|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-| false | [] | CPLRwJTROpthXYJBGTolk03CRdKHyJ4GBEyIYF6B | /attachments/avatar/1623068357957.png | eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJvcmdJZCI6IjEwMDAwMDAwMDAwMDAwMDAwMSIsInVzZXJJZCI6Ijg3NjcwODA4MjQzNzE5Nzg1MiIsInVzZXJUeXBlIjoxMDEsImJVc2VyVHlwZSI6IlNZU1RFTSIsInRlbmFudE9yZ0lkIjoxMDAwMDAwMDAwMDAwMDAwMDEsImFjY291bnQiOiJhZG1pbiIsImV4dHJhVXNlclR5cGUiOjAsImlhdCI6MTYzNTMxOTI5NywianRpIjoiODc2NzA4MDgyNDM3MTk3ODUyIiwic3ViIjoiYWRtaW4iLCJleHAiOjE2MzU1Nzg0OTd9.hp20k5UQTpCHe_TINcKq6KIBiEdG-v5GStuwcg8sFbRHvP9PwFFotZww9OBkYqofMu0BNDcd_GEjZPdHgFdNBQ | A1 | 876708082437197852 | 100000000000000001 | 259200000 | 100000000000000001 | 管理员 | true | [] | Bearer | [] | admin |
+| current | orders | pages | records | searchCount | size | total |
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+| 1 | [] | 8 | [{"id":"1","name":"s... | true | 10 | 73 |
+
+**data#records**
+| row | id | name | value |
+|:----:|:----:|:----:|:----:|
+| 0 | 1 | string | string |
+ 1 | 2 |   | E1 |
+ 2 | 3 |   | E1 |
+ 3 | 4 |   | E1 |
+ 4 | 5 | string | string |
+ 5 | 6 | string | string |
+ 6 | 7 | string | string |
+ 7 | 8 | string | string |
+ 8 | 9 | string | string |
+ 9 | 10 | string | string |
+
 
 ---
 
 
 
-### **GET--/api/sys/org**
+## 2、### 获取数据
+### **GET--/api/crud/option/options?pageNum=3**
 **data**
-| row | id | bType | deptCount | domain | employeeCount | fullName | icon | leftNum | name | needValidate | nodeLevel | note | orgCode | orgId | orgType | peopleCount | phone | pid | rightNum | status | tenantId | userId | userName | visible |
-|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-| 0 | 100000000000000001 | SYSTEM | 0 |   | 7 | 北京爱奇艺科技有限公司 | 1 | 1 | 爱奇艺 | false | 1 | 总公司 | A1 |   | 1 |   |   |   | 24 | NORMAL |   |   |   | false |
- 1 | 100000000000000002 | SYSTEM | 0 |   | 6 | 北京总部 |   | 2 | 北京总部 | false | 2 |   |   |   | 2 |   |   | 100000000000000001 | 23 | NORMAL |   |   |   | false |
- 2 | 100000000000000003 | SYSTEM | 0 |   | 2 | 技术部门 |   | 3 | 技术部门 | false | 3 |   |   |   | 4 |   |   | 100000000000000002 | 10 | NORMAL |   |   |   | false |
- 3 | 100000000000000004 | SYSTEM | 0 |   | 0 | 市场部门 |   | 11 | 市场部门 | false | 3 |   |   |   | 4 |   |   | 100000000000000002 | 12 | NORMAL |   |   |   | false |
- 4 | 100000000000000005 | SYSTEM | 0 |   | 2 | 测试部门 |   | 13 | 测试部门 | false | 3 |   |   |   | 4 |   |   | 100000000000000002 | 18 | NORMAL |   |   |   | false |
- 5 | 100000000000000006 | SYSTEM | 0 |   | 0 | 市场小组 |   | 14 | 市场小组 | false | 4 |   |   |   | 5 |   |   | 100000000000000005 | 15 | NORMAL |   |   |   | false |
- 6 | 100000000000000007 | SYSTEM | 0 |   | 0 | 研发小组 |   | 4 | 研发小组 | false | 4 |   |   |   | 5 |   |   | 100000000000000003 | 5 | NORMAL |   |   |   | false |
- 7 | 100000000000000008 | SYSTEM | 0 |   | 0 | 测试小组 |   | 16 | 测试小组 | false | 4 |   |   |   | 5 |   |   | 100000000000000005 | 17 | NORMAL |   |   |   | false |
- 8 | 100000000000000009 | SYSTEM | 0 |   | 2 | 推广部门 |   | 19 | 推广部门 | false | 3 |   |   |   | 4 |   |   | 100000000000000002 | 22 | NORMAL |   |   |   | false |
- 9 | 100000000000000010 | SYSTEM | 0 |   | 0 |   |   | 20 | 客服小组 | false | 4 |   |   |   | 4 |   |   | 100000000000000009 | 21 | NORMAL |   |   |   | false |
+| current | orders | pages | records | searchCount | size | total |
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+| 3 | [] | 8 | [{"id":"21","name":"... | true | 10 | 73 |
 
+**data#records**
+| row | id | name | value |
+|:----:|:----:|:----:|:----:|
+| 0 | 21 | string | string |
+ 1 | 22 | string | string |
+ 2 | 23 | string | string |
+ 3 | 24 | string | string |
+ 4 | 25 | string | string |
+ 5 | 26 | string | string |
+ 6 | 27 | string | string |
+ 7 | 28 | string | string |
+ 8 | 29 | string | string |
+ 9 | 30 | string | string |
 
-
-## 4、# 组织A用户登录
-### **login--user1234**
-**data**
-| code | errors | message |
-|:----:|:----:|:----:|
-| 4043 | [] | 没有此用户 |
 
 ---
 

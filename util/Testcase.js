@@ -33,10 +33,12 @@ let Testcase = {
             exec = `node ./index.js ${method} ${url}`;
         }
 
-        exec = exec.replace(new RegExp('"', 'g'), '\\"').replace(new RegExp("'", "g"), "");
+        exec = exec.replace(new RegExp('"', 'g'), '\\"')
+                   .replace(new RegExp("'", "g"), "");
 
         //替换json对象中的占位符, 只支持个位天数 -9 ~ 9
         exec = StringUtil.replacePlaceholder(exec);
+
         //--filter='{}' 格式中的空格转换成其他字符
         exec = Formatter.replaceFilterBlank(exec);
 
@@ -46,6 +48,7 @@ let Testcase = {
         let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         let fileData = fs.readFileSync(testcase, "UTF-8");
         fileData = fileData.replace("\r\n", "\n");
+        fileData = fileData+'\n';  //add newline anyway
         fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
         if(recreate){
             fs.writeFileSync(`${logConf.dir}${logConf.file}`, '', "UTF-8");
@@ -54,13 +57,12 @@ let Testcase = {
         // read each line in testcase file
         let read = fileData.split("\n");
         let num = 1;
-        let s_ok=0;
         for(let i in read) {
             let line = read[i]==undefined?'':read[i].trim()
             console.log(line)
 
             let readLineStatus = RestHttpParser.readEachLine(line)
-            //console.log('readLineStatus=', readLineStatus)
+            // console.log('readLineStatus=', readLineStatus)
 
             // 执行结果记录
             if(readLineStatus === 'closed') {
@@ -70,11 +72,13 @@ let Testcase = {
                 let tokenLine = RestHttpParser.testToken()
 
                 let lineExec = this.fromLineToExecutableLine(methodLine, requestLine, bodyLine, tokenLine)
-                //console.log("cli=", lineExec)
+                console.error(lineExec)
                 shell.exec(`${lineExec} > ${root}/${fileMap.testTemp}`);
 
                 // 错误中止
                 let response = Reader.readJson(`${root}/${fileMap.response}`, "UTF-8");
+                console.error(response)
+
                 if(!force && response.code != 200 && response.status_code != 0) {
                     let errorInfo = fs.readFileSync(`${root}/${fileMap.testTemp}`, "UTF-8");
                     console.log(`\n\ntest error !!!`);
@@ -96,13 +100,16 @@ let Testcase = {
         }
 
         // append testcase to log 
-        let testcaseFileContent = "# Testcase\n```\n" + fileData + "\n```\n---\n# Start\n"
+        let testcaseHeader = 
+        "# Testcase\n"+
+        "```\n" + 
+        fileData + 
+        "\n```\n---\n# " +
+        "Start\n"
         let testcaseLog = fs.readFileSync(`${logConf.dir}${logConf.file}`, "UTF-8");
-        testcaseLog = testcaseFileContent + testcaseLog;
-        testcaseLog = testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');
+        testcaseLog = testcaseHeader + testcaseLog.replace(new RegExp('%26', 'g'), '&').replace(new RegExp('%20', 'g'), ' ');;
+        
         fs.writeFileSync(`${logConf.dir}${logConf.file}`, testcaseLog, "UTF-8");
-
-        console.log(`export report: ${journalFile}`);
         Pdf.export(`${logConf.dir}${logConf.file}`, journalFile);
     }
 }

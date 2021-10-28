@@ -43,7 +43,7 @@ program
     .option('--swagger', "从swagger中获取api所需字段信息生成请求参数")
     .option('--filter <value>', "添加或替换生成参数")
     .option('--token <value>', "指定鉴权token")
-    .option('--only', "仅处理当前api，post/put请求后不带回get列表")
+    .option('--only', "仅处理当前api，post/put请求后不带回get列表 (默认)")
     .option('--save <field>', '保存当前api返回的某字段值(id...), 通过#SAVE_VALUE使用该值')
     .on('--help', function() {
         console.log()
@@ -189,28 +189,32 @@ program
 
 
 ///  main
+/**
+ * fix the input api for tty terminator
+ * @param {*} api 
+ */
+function fixTtyApi(api){
+    if(api){
+        // ensure api start with slash/, just like /api
+        if(api.indexOf('Git/') > 0) {
+        api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 3 : 0);
+        }else if(api.startsWith("https://") || api.startsWith("http://")){
+            // skip 
+        }else if( !(api.substring(0, 1) == "/") ) {
+            api = "/" + api;
+        }
+    }
+}
 
 program.parse(process.argv);
 // console.log('processing ', process.argv)
+fixTtyApi(api)
 
-// fix api
-if(api){
-    // ensure api start with slash/, just like /api
-    if(api.indexOf('Git/') > 0) {
-       api = api.substring(api.indexOf("Git/") > 0 ? api.indexOf("Git/") + 3 : 0);
-    }else if(api.startsWith("https://") || api.startsWith("http://")){
-        // skip 
-    }else if( !(api.substring(0, 1) == "/") ) {
-        api = "/" + api;
-    }
-}
 
 if(!fs.existsSync(`${root}/${fileMap.save}`)) {
     shell.exec(`echo {} > ${root}/${fileMap.save}`);
 }
 let replaceValue = Reader.readJson(`${root}/${fileMap.save}`);
-//console.log('replaceValue=',replaceValue)
-
 
 /// build params string
 
@@ -232,7 +236,6 @@ if(method && method.toUpperCase() === 'POST'
     || method && method.toUpperCase() === 'PUT') {
         params += ` --body=${root}/${fileMap.gen}`;
 }
-
 
 // api-gen 参数列表 : genParams
 // --mysql=zero-test/config/server.config
@@ -270,6 +273,7 @@ if(!program.report && !program.info && method && api) {
     program.out = true;
 }
 if(program.out || program.report) {
+
     if (method && method.toUpperCase() === 'GET') {
         if(program.head && program.tail){
             console.log('Options: both --head --tail confict !')
@@ -278,14 +282,19 @@ if(program.out || program.report) {
         //console.log(`${api}, 'GET', ${program.head}, ${program.tail}, ${program.token}`)
         Http.actionAfterGetById(api, 'GET', program.head, program.tail, program.token);
         Save.saveValue(program.save);
+        
         // if(program.head || program.tail ){
         //     shell.exit()
         // }
-    } else if(method && (method.toUpperCase() === 'DELETE' || method.toUpperCase() === 'POST' 
-            || method.toUpperCase() === 'PUT')) {
+    } else if(method && 
+            ( method.toUpperCase() === 'POST' 
+            || method.toUpperCase() === 'PUT'
+            || method.toUpperCase() === 'DELETE' )
+            ) {
         let isSuccess = false;
         if (method && method.toUpperCase() === 'DELETE') {
             isSuccess = Http.actionAfterGetById(api, 'DELETE', program.head, program.tail);
+
         } else if(method && method.toUpperCase() === 'POST') {
             if(program.table && program.swagger){
                 console.log('Options both --table and --swagger confict !')
@@ -293,11 +302,12 @@ if(program.out || program.report) {
             }
             Gen.genarator(api, 'POST', program.table, program.swagger, genParams);
             isSuccess = Http.post(api, `${root}/${fileMap.gen}`, program.token);
-            
+
         }  else if(method && method.toUpperCase() === 'PUT') {
             Gen.genarator(`${api}/{id}`, 'PUT', program.table, program.swagger, genParams);
             isSuccess = Http.putAfterGetById(api, `${root}/${fileMap.gen}`, program.head, program.tail);
         }
+
         Save.saveValue(program.save);
         if(isSuccess && !program.only) {
             if(apiMap[originApi]) {
@@ -318,13 +328,13 @@ if(program.head) {
 }
 
 if (program.out || program.report) {
-    
     // 输出api结果
     if (program.out) {
         console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
         shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}`);
     } else if (program.report) {
         // 输出并打印日志
+        // -t --title
         console.log(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
         shell.exec(`node ${root}/cli-tools/pretty-json/index.js -f ${root}/${fileMap.response} ${params} -t ${method}--${originApi}  --log`);
     }

@@ -39,9 +39,10 @@ program.on('--help', function() {
 //解析commandline arguments
 program.parse(process.argv)
 
+
 let flag = 0;
 let header = "data";
-// 处理
+// 处理标题
 if(program.title != undefined) {
     flag ++;
     console.log(program.title);
@@ -50,11 +51,12 @@ if(program.title != undefined) {
     titled = titled.replace(/http[s]?:\/\/[0-9.:]+\//, '/')
     printLog(`### **${titled}**`, program.log)
 }
-
+// handle body
 if(program.body != undefined) {
     let body = fs.readFileSync(program.body, "UTF-8");
     printLog("```\nBody: " + body + "\n```", program.log);
 }
+// get json data from file
 let data;
 if(program.value != undefined) {
     data = JSON.parse(program.value);
@@ -71,6 +73,8 @@ if(program.value != undefined) {
     }
 
 }
+
+// handle json data
 if(data != undefined) {
     if(data.code != undefined && data.code == 200 && data.data instanceof Object ||
         data.status_code != undefined && data.status_code == 0 && data.data instanceof Object) {
@@ -119,6 +123,8 @@ if(data != undefined) {
         res = convertToTable(header, data, program.parent, program.sub);
     }
     console.log(res);
+    // console.log(md.data);
+
     // output
     printLog(md.data, program.log);
     flag = 1;

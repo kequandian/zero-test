@@ -58,6 +58,13 @@ const Parser = {
             }
         }
 
+        //handle last line
+        if(this.currentTestStatus()==='closed' || this.currentTestStatus()==='titled' || this.currentTestStatus()==='titled_closed'){
+            //skip
+        }else{
+            this.closeCurrentTest()
+        }
+
         // remove current TEST
         if(this.TESTS['current']!=undefined){
            delete this.TESTS['current']
@@ -96,10 +103,10 @@ const Parser = {
     isCurrentTestPut(){
         return this.currentTest()['method'] == 'PUT'
     },
-    isTestClosed(){
+    isCurrentTestClosed(){
         return this.currentTest()['status'] == 'closed'
     },
-    closeTest(){
+    closeCurrentTest(){
         this.currentTest()['status'] = 'closed'
     },
     expectHeader(){
@@ -279,9 +286,11 @@ const Parser = {
 
     // 遇空行结束
     parseEmptyLine(line){
-        if(this.isCurrentTestGet() || this.isCurrentTestLogin()){
+        if(this.isCurrentTestClosed()){
+            this.currentTest()['status']='closed_ignore'
+        }else if(this.isCurrentTestGet() || this.isCurrentTestLogin()){
             // close Test
-            this.closeTest()
+            this.closeCurrentTest()
         }else if(this.isCurrentTestPost() || this.isCurrentTestPut()){
             if(this.isTestExpectingHeader()){
                 // again empty line, close the test
@@ -289,7 +298,7 @@ const Parser = {
             }else if(this.isTestExpectingBody()){
                 this.requestBody()
             }else if(this.isTestRequestingBody()){
-                this.closeTest()
+                this.closeCurrentTest()
             }
         }
     },

@@ -40,7 +40,6 @@ let Gen = {
             let json=params ? params : "{}"
             genData = Reader.parseJson(json)
         }
-        //params = Reader.parseJson(params);
         genData = StringUtil.replacePlaceholder(JSON.stringify(genData));
         fs.writeFileSync(this.genFile, genData, "utf-8");
     },

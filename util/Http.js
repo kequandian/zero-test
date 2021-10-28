@@ -39,10 +39,11 @@ let Http = {
      * @param {int} index 
      */
     post(api, file, token) {
+        // console.log(Reader.readText(file))
         let body = Reader.readJson(file);
         body = JSON.stringify(body);
         body.replace(new RegExp('"', 'gm'), '\\"');
-        Test.run(api, 'post',token, Url.GBKToUnicode(body));
+        Test.run(api, 'post', token, Url.GBKToUnicode(body));
         return this.isSuccess();
     },
     /**
@@ -89,7 +90,7 @@ let Http = {
             let index = head ? 0 : tail ? -1 : 0
             api = Http.getId(api, index);
             console.log(`redirect api: ${method} ${api}`);
-            Test.run(api, `${method}`, token);  // no body for get
+            Test.run(api, `${method}`, token);
         } else {
             Test.run(api, `${method}`, token);
         }
