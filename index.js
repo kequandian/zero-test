@@ -173,18 +173,21 @@ program
         shell.exit(0);
     });
 program
-    .command('test <testcase> <journal-file> [options]')
+    .command('test <testcase> [options]')
     .description('测试报告-多api组合测试')
+    .option('-j, --journal <file>', '指定输出journal文件')
     .option('-f, --force', '执行整个testcase,不被错误返回所打断')
-    .option('-r, --recreate', '测试前清空日志文件')
+    .option('-a, --append', '日志内容追加到当前日志文件（默认重新创建）')
     .on('--help', function() {
         console.log('');
         console.log('Usage:');
         console.log('   test Wdemo/testcase demo/testcase.pdf');
     })
-    .action(function (testcase, journalFile, ...options) {
-        //console.log("testcase running...");
-        Testcase.run(testcase, journalFile, options[0], options[1])
+    .action(function (testcase, arg, ...options) {
+        // arg 为commander默认的预留参数
+        // console.log("testcase running...", options[0].journal, 'options.force=', options[0].force, 'options.append=', options[0].append);
+        let journalFile =  options[0].journal===undefined? testcase.replace(/.[\w]+$/, '.pdf') : options[0].journal
+        Testcase.run(testcase, journalFile, options[0].force, options[0].append)
     });
 
 

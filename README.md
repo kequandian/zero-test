@@ -309,10 +309,10 @@ login api user12345 111111
 get api/sys/org
 ```
 
-2. 执行testcase
+2. 执行 testcase
 
 ```
-$ ./index.js test public/testcase/demo.tc output/demo.pdf
+$ ./index.js test public/testcase/demo.tc --journal output/demo.pdf
 testcase running...
 
 ## 组合api测试
@@ -321,13 +321,8 @@ testcase running...
 
 # 管理员登录
 login api admin 111111 report
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100  2414  100  2356  100    58   2356     58  0:00:01 --:--:--  0:00:01 77870
 # 获取组织列表
 get api/sys/org
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
 
 export report: demo/testcase_demo.pdf
 converting pdf from public/logs/testcase to demo/testcase_demo.pdf
@@ -472,6 +467,6 @@ Done
 ### Testcase
 
 ```
-$ ./index.js test public/testcase/demo.tc output/demo.pdf
+$ ./index.js test public/testcase/demo.tc -j output/demo.pdf
 
 ```

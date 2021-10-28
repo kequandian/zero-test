@@ -44,13 +44,14 @@ let Testcase = {
 
         return exec
     },
-    run(testcase, journalFile, force, recreate) {
+    run(testcase, journalFile, force, append) {
         let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         let fileData = fs.readFileSync(testcase, "UTF-8");
         fileData = fileData.replace("\r\n", "\n");
         fileData = fileData+'\n';  //add newline anyway
         fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
-        if(recreate){
+        if(!append){
+            // console.log('test recreate............')
             fs.writeFileSync(`${logConf.dir}${logConf.file}`, '', "UTF-8");
         }
 

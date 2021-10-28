@@ -72,3 +72,7 @@ Body: {"name":"string","value":"string"}
 
 
 
+## 1、# set journal testcase
+## 2、# journal rewrite
+## 3、### 管理员登录
+## 4、### 获取组织列表
