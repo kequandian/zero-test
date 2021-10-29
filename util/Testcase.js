@@ -70,7 +70,7 @@ let Testcase = {
             }
 
             // 执行结果记录
-            if(readLineStatus === 'closed') {
+            if(readLineStatus==='closed' || readLineStatus==='titled_closed' || readLineStatus==='terminated_closed') {
                 let methodLine = RestHttpParser.testMethod()
                 let requestLine = RestHttpParser.testRequest()
                 let bodyLine = RestHttpParser.testBody()

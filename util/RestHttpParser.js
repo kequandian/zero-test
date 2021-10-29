@@ -19,6 +19,9 @@ const Parser = {
         if(this.isTestTerminated()){
             return this.currentTestStatus()
         }
+        if(this.currentTestStatus()==='terminated_closed'){
+            this.currentTest()['status']='terminated'
+        }
 
         if (line.startsWith("@")){
             this.parseVariable(line)
@@ -302,13 +305,18 @@ const Parser = {
 
     parseTerminateLine(line){
         //terminate parsing
-        this.currentTest()['status'] = 'terminated'
+        let testStatus=this.currentTestStatus()
+        if(testStatus=='titled' || testStatus=='closed' || testStatus==='terminated_closed' || testStatus==='titled_closed'){
+           this.currentTest()['status'] = 'terminated'
+        }else{
+            this.currentTest()['status'] = 'terminated_closed'
+        }
     },
 
     // 遇空行结束
     parseEmptyLine(line){
         if(this.isCurrentTestClosed()){
-            this.currentTest()['status']='closed_ignore'
+            this.currentTest()['status']='closed_ignore' // do not handle any work
         }else if(this.isCurrentTestGet() || this.isCurrentTestLogin()){
             // close Test
             this.closeCurrentTest()
