@@ -3,14 +3,29 @@ const mdpdf = require('mdpdf');
 const fs = require('fs');
 const path = require('path');
 
+// https://openbase.com/js/mdpdf/documentation
 var options = {
   source: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.md'),
   destination: path.join(path.dirname(__dirname),'unittest','markdown', 'testcase.pdf'),
   styles: path.join(path.dirname(__dirname), 'public', 'css', 'markdown.css'),
   pdf: {
-      format: 'A1',
-      orientation: 'portrait'
-  }
+    format: 'A3',
+    //   portrait or landscape
+    orientation: 'landscape',
+    quality: '100',
+    header: {
+        height: '20mm'
+    },
+    footer: {
+        height: '20mm'
+    },
+    border: {
+        top: '10mm',
+        left: '10mm',
+        bottom: '10mm',
+        right: '10mm'
+    }
+}
 };
 
 let Pdf = {

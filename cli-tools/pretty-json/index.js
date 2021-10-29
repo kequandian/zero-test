@@ -8,6 +8,9 @@ let convertToTable = require('./convertToTable');
 let printLog = require('./printLog');
 let convertToVTable = require("./convertToVTable");
 let DataUtil = require("./util/dataUtil");
+const { exit } = require("process");
+// let result= convertToTable('data', JSON.parse('{\"code\":200,\"data\":[{\"key\":\"value\"}]}'))
+// let result= convertToTable('data', JSON.parse('{\"code\":200,\"data\":[\"key\",\"value\"]}'))
 
 function list (val) {
     return val.split(',');

@@ -307,8 +307,10 @@ const Parser = {
         //terminate parsing
         let testStatus=this.currentTestStatus()
         if(testStatus=='titled' || testStatus=='closed' || testStatus==='terminated_closed' || testStatus==='titled_closed'){
-           this.currentTest()['status'] = 'terminated'
+            //already closed, terminated
+            this.currentTest()['status'] = 'terminated'
         }else{
+            //expecting closd, closed and terminated
             this.currentTest()['status'] = 'terminated_closed'
         }
     },
