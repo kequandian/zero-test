@@ -2,77 +2,162 @@
 ```
 @endpoint = http://192.168.3.189:8080
 
-### 提交数据
-POST {{endpoint}}/api/crud/option/options HTTP/1.1
+### delete ios
+DELETE {{endpoint}}/api/crud/option/os/ios
+
+### delete android
+DELETE {{endpoint}}/api/crud/option/os/android
+
+### 增加选项
+POST {{endpoint}}/api/crud/option/options
 
 {
-  "name": "string",
-  "value": "string"
+  "name": "os",
+  "value": "ios"
 }
 
-### 获取数据
-GET {{endpoint}}/api/crud/option/options?pageNum=3
+### 增加新选项
+POST {{endpoint}}/api/crud/option/options
+
+{
+  "name": "os",
+  "value": "android"
+}
+
+
+### 查询选项
+GET {{endpoint}}/api/crud/option/options?name=os
+
+
+### 删除选项
+// DELETE {{endpoint}}/api/crud/option/<name>/<value>
+DELETE {{endpoint}}/api/crud/option/os/android
+
+
+### 删除选项后查询选项
+GET {{endpoint}}/api/crud/option/os
 
 
 ```
 ---
 # Start
-## 1、### 提交数据
+## 1、### delete ios
+### **DELETE--/api/crud/option/os/ios**
+**data**
+| code | data | message |
+|:----:|:----:|:----:|
+| 200 | null | Success |
+
+
+---
+
+
+
+## 2、### delete android
+### **DELETE--/api/crud/option/os/android**
+**data**
+| code | data | message |
+|:----:|:----:|:----:|
+| 200 | null | Success |
+
+
+---
+
+
+
+## 3、### 增加选项
 ### **POST--/api/crud/option/options**
 ```
-Body: {"name":"string","value":"string"}
+Body: {"name":"os","value":"ios"}
 ```
 **data**
-| current | orders | pages | records | searchCount | size | total |
-|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-| 1 | [] | 8 | [{"id":"1","name":"s... | true | 10 | 73 |
-
-**data#records**
-| row | id | name | value |
-|:----:|:----:|:----:|:----:|
-| 0 | 1 | string | string |
- 1 | 2 |   | E1 |
- 2 | 3 |   | E1 |
- 3 | 4 |   | E1 |
- 4 | 5 | string | string |
- 5 | 6 | string | string |
- 6 | 7 | string | string |
- 7 | 8 | string | string |
- 8 | 9 | string | string |
- 9 | 10 | string | string |
+| code | data | message |
+|:----:|:----:|:----:|
+| 200 | 1 | Success |
 
 
 ---
 
 
 
-## 2、### 获取数据
-### **GET--/api/crud/option/options?pageNum=3**
+## 4、### 增加新选项
+### **POST--/api/crud/option/options**
+```
+Body: {"name":"os","value":"android"}
+```
+**data**
+| code | errors | message |
+|:----:|:----:|:----:|
+| 4007 | [] | 重复键值 |
+
+
+---
+
+
+
+## 5、### 查询选项
+### **GET--/api/crud/option/options?name=os**
 **data**
 | current | orders | pages | records | searchCount | size | total |
 |:----:|:----:|:----:|:----:|:----:|:----:|:----:|
-| 3 | [] | 8 | [{"id":"21","name":"... | true | 10 | 73 |
+| 1 | [] | 1 | [{"id":"21","name":"... | true | 10 | 1 |
 
 **data#records**
 | row | id | name | value |
 |:----:|:----:|:----:|:----:|
-| 0 | 21 | string | string |
- 1 | 22 | string | string |
- 2 | 23 | string | string |
- 3 | 24 | string | string |
- 4 | 25 | string | string |
- 5 | 26 | string | string |
- 6 | 27 | string | string |
- 7 | 28 | string | string |
- 8 | 29 | string | string |
- 9 | 30 | string | string |
+| 0 | 21 | os | ios |
 
 
 ---
 
 
 
-## 1、# set journal testcase
-## 2、# journal rewrite
-## 3、### 管理员登录
-## 4、### 获取组织列表
+### **GET--/api/crud/option/options?name=os**
+**data**
+| current | orders | pages | records | searchCount | size | total |
+|:----:|:----:|:----:|:----:|:----:|:----:|:----:|
+| 1 | [] | 1 | [{"id":"21","name":"... | true | 10 | 1 |
+
+**data#records**
+| row | id | name | value |
+|:----:|:----:|:----:|:----:|
+| 0 | 21 | os | ios |
+
+
+---
+
+
+
+### **DELETE--/api/crud/option/os/android**
+**data**
+| code | data | message |
+|:----:|:----:|:----:|
+| 200 | null | Success |
+
+
+---
+
+
+
+### **DELETE--/api/crud/option/os/android**
+**data**
+| code | data | message |
+|:----:|:----:|:----:|
+| 200 | null | Success |
+
+
+---
+
+
+
+### **GET--/api/crud/option/os**
+**data**
+| 0 |
+|:----:|
+|
+
+
+---
+
+
+

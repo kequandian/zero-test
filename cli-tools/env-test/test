@@ -16,7 +16,6 @@ fi
 ##method="${method,,}" ## work bash 4.0
 method=$(echo $method | tr '[A-Z]' '[a-z]')
 
-
 ## swagger cli path
 dir=$(dirname $0)
 swagger_cli="$dir/swagger-cli"
@@ -47,6 +46,7 @@ if [ ${#api} -ne ${#api_noid} ];then
   api_noquery="$api_noid{id}"
 fi
 tc=$($swagger_cli $method $api_noquery)
+
 if [[ $tc == POST* || $tc == PUT* ]];then
    #tc=${tc##*\s}
    tc=${tc##*CRUD}  ## cut before CRUD
@@ -62,6 +62,7 @@ if [[ $tc == POST* || $tc == PUT* ]];then
 else 
    err=1
 fi
+
 ## tc file
 if [ "$cmd"x == "run"x  ];then
     if [ "$method"x == "post"x ];then

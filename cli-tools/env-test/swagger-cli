@@ -98,12 +98,12 @@ if(-e $app_swagger){
       }
  
    }else{
-      print "$swagger_path not exist\n";
+      # print STDERR "$swagger_path not exist\n";
       exit(0);
    }
 
 }else{
-   print "$app_swagger not exist\n";
+   # print STDERR  "$app_swagger not exist\n";
    exit(0);
 }
 

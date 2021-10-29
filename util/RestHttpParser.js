@@ -16,11 +16,18 @@ const Parser = {
     tVARS: {},       // 用于记录.http变量
 
     readEachLine(line){
+        if(this.isTestTerminated()){
+            return this.currentTestStatus()
+        }
+
         if (line.startsWith("@")){
             this.parseVariable(line)
         }else if(line.startsWith("#") || line.startsWith("//")){
             this.parseCommentline(line)
-        }else if(line.startsWith("GET ") || line.startsWith("get ") || line.startsWith("POST ") || line.startsWith("post ") || line.startsWith("PUT ") || line.startsWith("put ") || line.startsWith("DELETE ") || line.startsWith("delete ")){
+        }else if(line.startsWith("GET ") || line.startsWith("get ") || 
+                line.startsWith("POST ") || line.startsWith("post ") || 
+                line.startsWith("PUT ") || line.startsWith("put ") || 
+                line.startsWith("DELETE ") || line.startsWith("delete ")){
             this.parseHttpRequest(line)
             this.expectHeader()
         }else if(line.startsWith("login ")){
@@ -33,6 +40,8 @@ const Parser = {
             this.parseQueryParam(line)
         }else if(line == '') {
             this.parseEmptyLine(line)
+        }else if(line == '---'){
+            this.parseTerminateLine(line)
         }else{
             this.parseAnyline(line)
         }
@@ -40,7 +49,8 @@ const Parser = {
         if(this.currentTest()['status']==undefined){
             return ''
         }
-        return this.currentTest()['status'];
+        
+        return this.currentTestStatus()
     },
 
     // vscoe rest client plugin .http 
@@ -103,6 +113,9 @@ const Parser = {
     isCurrentTestPut(){
         return this.currentTest()['method'] == 'PUT'
     },
+    isCurrentTestDelete(){
+        return this.currentTest()['method'] == 'DELETE'
+    },
     isCurrentTestClosed(){
         return this.currentTest()['status'] == 'closed'
     },
@@ -124,6 +137,9 @@ const Parser = {
     },
     isTestRequestingBody(){
         return this.currentTest()['status'] == 'body_requesting'
+    },
+    isTestTerminated(){
+        return this.currentTest()['status'] == 'terminated'
     },
     requestBody(){
         this.currentTest()['status'] = 'body_requesting'
@@ -284,6 +300,11 @@ const Parser = {
 
     },
 
+    parseTerminateLine(line){
+        //terminate parsing
+        this.currentTest()['status'] = 'terminated'
+    },
+
     // 遇空行结束
     parseEmptyLine(line){
         if(this.isCurrentTestClosed()){
@@ -300,6 +321,8 @@ const Parser = {
             }else if(this.isTestRequestingBody()){
                 this.closeCurrentTest()
             }
+        }else if(this.isCurrentTestDelete()){
+            this.closeCurrentTest()
         }
     },
 

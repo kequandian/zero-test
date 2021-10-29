@@ -48,6 +48,7 @@ let Testcase = {
         let logConf = Reader.readJson(`${root}/${fileMap.logConf}`);
         let fileData = fs.readFileSync(testcase, "UTF-8");
         fileData = fileData.replace("\r\n", "\n");
+        fileData = fileData.indexOf("\n---")>0 ? fileData.substring(0,fileData.indexOf("\n---")) : fileData
         fileData = fileData+'\n';  //add newline anyway
         fs.writeFileSync(`${root}/${fileMap.response}`, JSON.stringify({code : 200}, "UTF-8"));
         if(!append){
@@ -64,6 +65,9 @@ let Testcase = {
 
             let readLineStatus = RestHttpParser.readEachLine(line)
             // console.log('readLineStatus=', readLineStatus)
+            if(readLineStatus === 'terminated'){
+                continue
+            }
 
             // 执行结果记录
             if(readLineStatus === 'closed') {

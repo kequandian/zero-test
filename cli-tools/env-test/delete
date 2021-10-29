@@ -12,5 +12,5 @@ if [ ! $api ];then
  exit 0
 fi
 
-perl post_token.pl --token DELETE $api $log
+perl post_token.pl DELETE $api $log --token 
 
