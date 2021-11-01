@@ -41,18 +41,14 @@ const Parser = {
             // until empty line
         }else if(line.startsWith("&") || line.startsWith("?")){
             this.parseQueryParam(line)
-        }else if(line == '') {
+        }else if(line === '') {
             this.parseEmptyLine(line)
-        }else if(line == '---'){
+        }else if(line === '---'){
             this.parseTerminateLine(line)
         }else{
             this.parseAnyline(line)
         }
 
-        if(this.currentTest()['status']==undefined){
-            return ''
-        }
-        
         return this.currentTestStatus()
     },
 
@@ -319,8 +315,9 @@ const Parser = {
     parseEmptyLine(line){
         if(this.isCurrentTestClosed()){
             this.currentTest()['status']='closed_ignore' // do not handle any work
+        }else if(this.currentTestStatus()==='closed_ignore'){
+            // do nothing
         }else if(this.isCurrentTestGet() || this.isCurrentTestLogin()){
-            // close Test
             this.closeCurrentTest()
         }else if(this.isCurrentTestPost() || this.isCurrentTestPut()){
             if(this.isTestExpectingHeader()){
@@ -343,6 +340,8 @@ const Parser = {
         }else if(this.isTestRequestingBody()){
             // collect body lines
             this.collectBodyLine(line)
+        }else if(this.isCurrentTestClosed()){
+            console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>> unkonwn line: ', line, " with wrong status: ", this.currentTestStatus())
         }
     }
 }

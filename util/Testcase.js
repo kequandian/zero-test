@@ -64,7 +64,6 @@ let Testcase = {
             console.log(line)
 
             let readLineStatus = RestHttpParser.readEachLine(line)
-            // console.log('readLineStatus=', readLineStatus)
             if(readLineStatus === 'terminated'){
                 continue
             }
@@ -95,8 +94,6 @@ let Testcase = {
                 }
 
             // 单'#'号注释记录
-            } else if(line.length>0 && line.startsWith("## ")) {
-                // 用于测试用例的注释,不打印到PDF
             } else if(line.length>0 && line.startsWith("#")) {
                 // 把注释加到文档, 统一注释  ##
                 line=line.replace("^[\\#]+ ", "")
