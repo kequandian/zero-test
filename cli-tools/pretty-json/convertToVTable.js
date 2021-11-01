@@ -13,7 +13,7 @@ function truncated(str, len) {
  * json数组对象 -> table
  * 针对特殊情况， 如 {code:200,data:[{key:value}]}
  * @param {*} header 
- * @param {*} json 
+ * @param {*} json array of from data
  */
 function convertArrayToTable(header, json, mdLog) {
     let remainLen = 20;    // 单元格数据为对象或数组对象时保留长度
@@ -23,10 +23,18 @@ function convertArrayToTable(header, json, mdLog) {
         return ;
     }
 
+    // get fields for {key:value}, fields is index
     let fields = new Set();
     for(let i in json) {
-        for(let column in json[i]) {
-            fields.add(column);
+        let jsonItem=json[i]
+
+        if(jsonItem instanceof Object){
+            // this is JSONObject 
+            for(let column in jsonItem) {
+                fields.add(column);
+            }
+        }else{
+            fields.add(0);  // just string array
         }
     }
 
@@ -50,6 +58,7 @@ function convertArrayToTable(header, json, mdLog) {
         delete json[0]["id"];
         columnsNum ++;
     }
+    // data array
     for(let item of fields) {
        // let jsonString = JSON.stringify(json[0][item]);
         columnsTitle.push({content:item, hAlign:'center'});
@@ -93,7 +102,9 @@ function convertArrayToTable(header, json, mdLog) {
         }
 
         for(let item of fields) {
-            let itemString = json[index][item] != undefined ? JSON.stringify(json[index][item]) : " ";
+            let itemString = json[index] instanceof Object? (json[index][item] != undefined ? JSON.stringify(json[index][item]) : " ")  // JSON Object
+                                                           : (json[index] != undefined ? JSON.stringify(json[index]) : " ")             // just string
+
             // 含有对象时，将这一层的对象转成表格
             if(json[index][item] instanceof Object && !Array.isArray(json[index][item])) {
                 let md = {};
@@ -103,9 +114,11 @@ function convertArrayToTable(header, json, mdLog) {
             } else if(itemString[0] == '"' && itemString[itemString.length - 1] == '"') {
                 itemString = itemString.substring(1, itemString.length - 1);
             }
+            
             log += ` ${itemString} |`;
             rowData.push(StringUtil.wordWrap(itemString, maxColumnSize));
         }
+
         log += "\n";
         res.push(rowData);
     }
@@ -135,6 +148,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
     let subLog = "";
     let log = "";
 
+    // id
     let dataRowOneId;
     if(json["id"] != undefined && !(json["id"] instanceof Object)) {
         columnsTitle.push("id");
@@ -144,9 +158,10 @@ function convertToVTable(header, json, parent, sub, mdLog) {
         columnsNum ++;
     }
 
+    // builder header 
     for(let item in json) {
+        //let jsonString = JSON.stringify(json[item]);
 
-        let jsonString = JSON.stringify(json[item]);
         // if(jsonString != undefined && (jsonString[0] == '{' || (jsonString[0] == '[' && jsonString[1] == '{'))) {
         //     // nothing
         // } else {
@@ -167,6 +182,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
         log +="\n|"
     }
 
+    // start to append data
     let maxColumnSize = Math.round(maxTableSize / columnsNum) - 3;
     let res = new Table({chars: charConfig, style:{head:[], border:[]}, wordWrap:true});
     if(header != undefined) {
@@ -176,27 +192,30 @@ function convertToVTable(header, json, parent, sub, mdLog) {
     res.push(columnsTitle);
     
 
-    
     // JSON转表格形式字符串，仅转2层, 第二层为对象时，数据下挂到另一表格中
     let subTable = "";
     let rowData = [];
 
-    if(dataRowOneId != undefined) {     // set id
+    // set id
+    if(dataRowOneId != undefined) {
         rowData.push(dataRowOneId);
         log += ` ${dataRowOneId} |`;
     }
+
+
     if(Array.isArray(json)) {       // 匹配 ：{data: []}
         if(json.length == 0) {
-            
         } else {
             let jsonString = JSON.stringify(json);
-            if(JSON.stringify(json[0])[0] == '{') { // 纯对象数组
+            //if(JSON.stringify(json[0])[0] == '{') { // 纯对象数组
+            {
                 let md = {};
                 let result = convertArrayToTable(`${header}`, json, md);
                 mdLog.data = md.data;
                 return result;
             }
         }
+
     } else {
         for(let item in json) {
             let jsonString = JSON.stringify(json[item]);
@@ -234,6 +253,7 @@ function convertToVTable(header, json, parent, sub, mdLog) {
             }
         }
     }
+
     res.push(rowData);
     if(parent && !sub) {
         mdLog.data = log + "\n---\n";
