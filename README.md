@@ -470,3 +470,7 @@ Done
 $ ./index.js test public/testcase/demo.tc -j output/demo.pdf
 
 ```
+
+### url-pdf
+
+[说明](./cli-tools/url-pdf/README.md)
