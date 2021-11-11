@@ -1,0 +1,6 @@
+logs/
+pdf/
+pdf-cli/
+dist/
+package-lock.json
+node_modules/

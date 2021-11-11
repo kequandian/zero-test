@@ -1,0 +1,1 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([[1],{RXBc:function(n,e,t){"use strict";t.r(e);var u=t("q1tI"),a=t.n(u),c=t("9kvl"),o=(t("ZGKy"),t("Vx04"));e["default"]=function(){return Object(o["getToken"])()?c["a"].push("/pdf"):c["a"].push("/login"),a.a.createElement("div",null,"\u9996\u9875")}}}]);

@@ -1,0 +1,87 @@
+@endpoint = http://localhost:3005
+### 获取JSON
+GET {{endpoint}}/getPageJson
+
+### 更改JSON
+POST {{endpoint}}/setPageJson
+Content-Type: application/json
+
+{
+    "columns": 1,
+    "listAPI": "/api/crud/testApi/testApis",
+    "createAPI": "/api/crud/testApi/testApis",
+    "getAPI": "/api/crud/testApi/testApis/[id]",
+    "updateAPI": "/api/crud/testApi/testApis/[id]",
+    "deleteAPI": "/api/crud/testApi/testApis/(id)",
+    "searchType": "MoreSearch",
+    "searchButtonType": "text",
+    "pageName": {
+        "table": "标准测试用例",
+        "new": "新增测试用例",
+        "edit": "编辑测试用例",
+        "name": "测试用例"
+    },
+    "createFields": [
+        {
+        "field": "field",
+        "label": "字段",
+        "props": {
+            "placeholder": "请输入..."
+        },
+        "type": "input"
+        }
+    ],
+    "updateFields": [
+        {
+        "field": "field",
+        "label": "字段",
+        "props": {
+            "placeholder": "请输入..."
+        },
+        "type": "input"
+        }
+    ],
+    "layout": {
+        "table": "Content",
+        "form": "TitleContent"
+    },
+    "tableActions": [
+        {
+        "title": "新增",
+        "type": "path",
+        "options": {
+            "path": "/pdf/pdf-add"
+        }
+        }
+    ],
+    "tableOperation": [],
+    "searchFields": [
+        {
+        "field": "field",
+        "label": "标题1",
+        "type": "search",
+        "props": {
+            "placeholder": "请输入..."
+        }
+        }
+    ],
+    "tableFields": [
+        {
+        "field": "field",
+        "label": "字段",
+        "align": "left"
+        }
+    ],
+    "viewConfig": [
+        {
+        "title": "详情",
+        "type": "plain",
+        "fields": [
+            {
+            "field": "field",
+            "label": "字段"
+            }
+        ]
+        }
+    ]
+}
