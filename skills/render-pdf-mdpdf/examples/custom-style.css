@@ -1,0 +1,183 @@
+/**
+ * Custom Style Example for render-pdf-mdpdf
+ * This demonstrates various CSS customization options
+ */
+
+/* Base styles - Change default font and size */
+body {
+    font-family: "SimSun", "Microsoft YaHei", "Segoe UI", sans-serif;
+    font-size: 11pt;
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+/* Headers - Custom colors and borders */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
+h1 {
+    font-size: 2em;
+    color: #3498db;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 0.3em;
+}
+
+h2 {
+    font-size: 1.5em;
+    color: #2980b9;
+    border-bottom: 2px solid #2980b9;
+    padding-bottom: 0.3em;
+}
+
+h3 {
+    font-size: 1.25em;
+    color: #1a5276;
+}
+
+/* Paragraphs */
+p {
+    margin-top: 0;
+    margin-bottom: 1em;
+}
+
+/* Links - Custom color */
+a {
+    color: #3498db;
+    text-decoration: none;
+    border-bottom: 1px dotted #3498db;
+}
+
+a:hover {
+    color: #2980b9;
+    border-bottom-style: solid;
+}
+
+/* Code blocks - Dark theme */
+pre {
+    background-color: #282c34;
+    color: #abb2bf;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 1em;
+    border: 1px solid #3e4451;
+}
+
+/* Inline code */
+code {
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 0.9em;
+    background-color: #f4f4f4;
+    color: #e74c3c;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+}
+
+/* Code in code blocks */
+pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 0.9em;
+}
+
+/* Blockquotes - Custom style */
+blockquote {
+    margin: 1em 0;
+    padding: 0.5em 1em;
+    border-left: 5px solid #3498db;
+    background-color: #ecf0f1;
+    color: #7f8c8d;
+    border-radius: 0 4px 4px 0;
+}
+
+blockquote p {
+    margin-bottom: 0;
+}
+
+/* Lists */
+ul, ol {
+    padding-left: 2em;
+    margin-bottom: 1em;
+}
+
+li {
+    margin-bottom: 0.25em;
+}
+
+/* Tables - Professional styling */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+/* Header cells */
+th {
+    background-color: #3498db;
+    color: white;
+    font-weight: 600;
+}
+
+/* Even rows */
+tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Hover effect */
+tr:hover {
+    background-color: #e8f4f8;
+}
+
+/* Horizontal rule */
+hr {
+    border: 0;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #3498db, transparent);
+    margin: 2em 0;
+}
+
+/* Strong/Bold */
+strong {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Emphasis/Italic */
+em {
+    color: #7f8c8d;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Page break before major sections */
+h1, h2 {
+    page-break-before: auto;
+}
+
+/* Avoid breaking after headers */
+h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+}
+
+/* Avoid breaking inside code blocks */
+pre, blockquote {
+    page-break-inside: avoid;
+}
