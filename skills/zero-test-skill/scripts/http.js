@@ -1,9 +1,18 @@
 /**
  * HTTP Request Module
  * Uses axios to send HTTP requests
+ * Falls back to native implementation if axios is not available
  */
 
-const axios = require('axios');
+let axios;
+try {
+    axios = require('axios');
+} catch (e) {
+    // Fall back to native implementation
+    const native = require('./http-native');
+    module.exports = native;
+    return; // Exit early
+}
 
 /**
  * Send HTTP request

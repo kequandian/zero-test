@@ -3,7 +3,16 @@
  * Executes parsed test cases and collects results
  */
 
-const { sendRequest, isSuccessful, formatResponse } = require('./http');
+// Try to use axios, fall back to native implementation
+let httpModule;
+try {
+    httpModule = require('./http');
+} catch (e) {
+    console.warn('axios not available, using native HTTP module');
+    httpModule = require('./http-native');
+}
+
+const { sendRequest, isSuccessful, formatResponse } = httpModule;
 
 /**
  * Run a single test case

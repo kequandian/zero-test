@@ -11,12 +11,26 @@
     "get_token.pl": "./cli-tools/env-test/get_token.pl",
     "post_token.pl": "./cli-tools/env-test/post_token.pl"
   },
+  "scripts": {
+    "test:jspdf": "node test-jspdf-md.js",
+    "test:pdfkit": "node test-pdfkit-markdown.js",
+    "test:pdfkit-cn": "node test-pdfkit-chinese.js",
+    "test:typst": "node test-typst.js",
+    "test:mdpdf": "node test-md-to-pdf.js",
+    "test:pdf": "node test-markdown-pdf-wrapper.js"
+  },
   "dependencies": {
     "cli-table2": "^0.2.0",
     "commander": "^2.19.0",
-    "mdpdf": "^2.1.2",
-    "path": "^0.12.7",
+    "fontkit": "file:fontkit-2.0.4.tgz",
+    "markdown-it": "file:markdown-it-14.1.0.tgz",
+    "pdfkit": "file:pdfkit-0.18.0.tgz",
     "shelljs": "^0.8.3"
+  },
+  "optionalDependencies": {
+    "jspdf": "^2.5.2",
+    "md-to-pdf": "^5.2.5",
+    "mdpdf": "^2.1.2"
   },
   "devDependencies": {
     "process.args": "0.0.6"

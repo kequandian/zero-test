@@ -11,3 +11,21 @@ yarn-error.log
 *.png
 output/
 public/logs/
+
+# Local package files (should use npm/yarn instead)
+*.tgz
+*.ttf
+
+# Skills node_modules
+skills/zero-test-skill/skills/
+
+# Test files (temporary development files)
+# Exclude project root test files only
+/test-*.js
+/test-*.md
+/temp-*.typ
+/extract-*.js
+
+# Temporary documentation
+PDF-*.md
+TYPST-*.md
