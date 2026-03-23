@@ -52,8 +52,8 @@ async function sendRequest(method, url, options = {}) {
         validateStatus: () => true // Accept all status codes
     };
 
-    // Add body for POST/PUT
-    if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT')) {
+    // Add body for POST/PUT/PATCH
+    if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT' || method.toUpperCase() === 'PATCH')) {
         if (typeof body === 'string') {
             try {
                 config.data = JSON.parse(body);
