@@ -26,7 +26,7 @@ zero-test/
 ├── skills/zero-test-skill/         # Universal HTTP testing framework
 │   ├── SKILL.md                    # Skill documentation
 │   ├── test-runner-simple.js       # Test runner (Markdown only)
-│   ├── test-runner.js              # Test runner (with PDF support)
+│   ├── test-render-pdf-mdpdf.js    # Test runner (Markdown + PDF)
 │   ├── scripts/
 │   │   ├── parser.js               # .http file parser
 │   │   ├── http-native.js          # Native HTTP client

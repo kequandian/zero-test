@@ -338,7 +338,7 @@ node scripts/render.js input.md output.pdf --css ./assets/custom.css
 ### With Zero-Test Skill
 
 ```javascript
-// In zero-test-skill/test-runner.js
+// In zero-test-skill/test-render-pdf-mdpdf.js
 const { convertMarkdownToPDF } = require('../render-pdf-mdpdf/scripts/pdf-converter');
 
 // After generating markdown report

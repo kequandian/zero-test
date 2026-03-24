@@ -1,0 +1,9 @@
+{
+  "name": "render-pdf-mdpdf-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Runtime dependencies for render-mdpdf-service",
+  "dependencies": {
+    "mdpdf": "^2.1.2"
+  }
+}
