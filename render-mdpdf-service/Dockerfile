@@ -22,8 +22,10 @@ RUN apk add --no-cache \
     wget \
     && rm -rf /var/cache/apk/*
 
+COPY render-pdf-mdpdf/package.json render-pdf-mdpdf/package-lock.json ./render-pdf-mdpdf/
+RUN cd render-pdf-mdpdf && npm ci --production
+
 COPY render-pdf-mdpdf ./render-pdf-mdpdf
-# node_modules are pre-installed and included in the build context
 
 COPY --from=rust-builder /build/target/release/render-mdpdf-service /usr/local/bin/render-mdpdf-service
 COPY README.md ./README.md
