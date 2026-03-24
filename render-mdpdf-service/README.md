@@ -1,54 +1,86 @@
 # render-mdpdf-service
 
-独立远程服务（Rust），通过 HTTP/SSE 提供 Markdown 转 PDF 能力。  
-`render-pdf-mdpdf` 原代码已复制到本目录 `render-pdf-mdpdf/`，服务内部直接调用 `render-pdf-mdpdf/scripts/render.js`。  
-原 `zero-test/skills/render-pdf-mdpdf` 保持不变。
+A standalone Rust-based HTTP service that provides Markdown to PDF conversion capabilities via HTTP/SSE API. It integrates `render-pdf-mdpdf` (Node.js + mdpdf/puppeteer) internally.
 
-## 运行
+## Features
+
+- **Rust/Axum HTTP Server** - High-performance server on port 39090
+- **Synchronous Rendering** - Direct PDF conversion with immediate response
+- **Asynchronous Rendering** - Job-based conversion with SSE progress streaming
+- **Docker Support** - Multi-stage builds for easy deployment
+- **k3s Integration** - Build via k3s-proxy for cluster deployment
+
+## Quick Start
 
 ```bash
 cd zero-test/render-mdpdf-service
 cargo run
 ```
 
-默认监听：`http://127.0.0.1:39090`
+Default: `http://127.0.0.1:39090`
 
-## Docker 构建运行
+## Project Structure
+
+```
+render-mdpdf-service/
+├── src/
+│   └── main.rs              # Axum HTTP server
+├── render-pdf-mdpdf/        # Node.js PDF renderer
+│   ├── package.json
+│   ├── scripts/
+│   │   ├── render.js        # Main render script
+│   │   └── pdf-converter.js # PDF converter
+│   └── assets/
+│       └── markdown-pdf.css # Styling
+├── build/cli/
+│   ├── build-via-k3s-proxy.py   # Python build script
+│   ├── build-via-k3s-proxy.sh   # Bash build script
+│   └── build-and-upload.sh      # Upload & build script
+├── Cargo.toml               # Rust dependencies
+├── Dockerfile               # Multi-stage build
+└── README.md                # This file
+```
+
+## Docker Build & Run
+
+### Local Build
 
 ```bash
 cd zero-test/render-mdpdf-service
 
-# 构建镜像
+# Build image
 docker build -t render-mdpdf-service:latest .
 
-# 启动容器
+# Run container
 docker run --rm -p 39090:39090 \
   -v "$(pwd)/output:/app/output" \
   render-mdpdf-service:latest
 ```
 
-容器内 `WORKSPACE_ROOT=/app`，默认输出可写到 `/app/output`。
+Container `WORKSPACE_ROOT=/app`, output writes to `/app/output`.
 
-## 接口
+### Build via k3s-proxy
 
-- `GET /health`  
-  健康检查
+```bash
+cd zero-test/render-mdpdf-service/build/cli
+python3 build-via-k3s-proxy.py
+```
 
-- `POST /api/v1/render/sync`  
-  同步转换，直接返回输出 PDF 路径
+After successful build, image is available at `registry.k3s.local/render-mdpdf-service:latest`.
 
-- `POST /api/v1/render/async`  
-  异步转换，返回 `job_id`，可轮询状态并通过 SSE 订阅进度
+## API Endpoints
 
-- `GET /api/v1/render/jobs/{id}`  
-  查询任务状态
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| POST | `/api/v1/render/sync` | Synchronous PDF conversion |
+| POST | `/api/v1/render/async` | Asynchronous PDF conversion |
+| GET | `/api/v1/render/jobs/{id}` | Query job status |
+| GET | `/api/v1/render/jobs/{id}/events` | SSE job events stream |
 
-- `GET /api/v1/render/jobs/{id}/events`  
-  SSE 任务事件流
+## Request Examples
 
-## 请求示例
-
-### 同步（markdown 字符串）
+### Synchronous (markdown string)
 
 ```bash
 curl -X POST "http://127.0.0.1:39090/api/v1/render/sync" \
@@ -59,7 +91,7 @@ curl -X POST "http://127.0.0.1:39090/api/v1/render/sync" \
   }'
 ```
 
-### 异步（markdown 文件）
+### Asynchronous (markdown string)
 
 ```bash
 curl -X POST "http://127.0.0.1:39090/api/v1/render/async" \
@@ -70,17 +102,55 @@ curl -X POST "http://127.0.0.1:39090/api/v1/render/async" \
   }'
 ```
 
-### SSE 订阅
+### SSE Subscribe
 
 ```bash
 curl -N "http://127.0.0.1:39090/api/v1/render/jobs/<job_id>/events"
 ```
 
-## 请求体字段
+## Request Body Fields
 
-- `markdown`：Markdown 文本（与 `markdown_path` 二选一）
-- `markdown_path`：Markdown 文件路径（支持相对 workspace 根目录）
-- `output_path`：输出 PDF 路径（可选，不传则自动写到 `output/<job_id>.pdf`）
-- `css_path`：自定义 CSS 文件路径（可选）
-- `header`：页眉（可选）
-- `footer`：页脚（可选）
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `markdown` | string | No* | Markdown text (mutually exclusive with `markdown_path`) |
+| `markdown_path` | string | No* | Path to markdown file (relative to workspace root) |
+| `output_path` | string | No | Output PDF path (default: `output/<job_id>.pdf`) |
+| `css_path` | string | No | Custom CSS file path |
+| `header` | string | No | Page header |
+| `footer` | string | No | Page footer |
+
+*Either `markdown` or `markdown_path` must be provided.
+
+## Technology Stack
+
+- **Rust**: 1.92+ with Axum 0.8 framework
+- **Node.js**: 20-alpine with mdpdf/puppeteer
+- **Container**: Multi-stage Dockerfile (Rust builder + Node runtime)
+
+## Dependencies
+
+### Rust (Cargo.toml)
+- axum = "0.8"
+- tokio = "1" (full features)
+- serde = "1"
+- uuid = "1" (v4)
+
+### Node.js (render-pdf-mdpdf)
+- mdpdf
+- puppeteer
+
+## Deployment
+
+### Deploy to k3s
+
+```bash
+# After successful build
+kubectl create deployment render-mdpdf --image=registry.k3s.local/render-mdpdf-service:latest
+kubectl expose deployment render-mdpdf --port=39090 --type=NodePort
+```
+
+## Related Documentation
+
+- [k3s-proxy Skill](http://192.168.3.105:8080/skill) - Build system documentation
+- [zero-test CLAUDE.md](../CLAUDE.md) - Parent project documentation
+- [CLAUDE.md](./CLAUDE.md) - Claude Code instructions
