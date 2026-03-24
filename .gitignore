@@ -1,4 +1,7 @@
 node_modules/
+render-mdpdf-service/target/
+target/
+debug/
 /template
 /swagger
 temp/
@@ -29,3 +32,27 @@ skills/zero-test-skill/skills/
 # Temporary documentation
 PDF-*.md
 TYPST-*.md
+
+# macOS metadata
+._*
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Rust profiler output
+*.pprof
+*.perf
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db

@@ -1,6 +1,10 @@
 ---
 name: zero-test
-description: Execute .http test files and generate test reports with Markdown and PDF output. Use for parsing and executing HTTP requests from .http format files. Supports GET/POST/PUT/DELETE methods with variable substitution. Generates automated test reports with pass/fail statistics. Exports results as both Markdown and PDF documents. Ideal for API testing, contract testing, and generating test execution documentation.
+description: Core framework for executing .http test files and generating test reports. Provides parser, HTTP client, test runner, and Markdown reporter modules. Use this skill for understanding internals or programmatic usage. For agent-oriented task guidance, use the focused sub-skills instead.
+related_skills:
+  - run-http-skill: Execute .http test files (../run-http-skill/SKILL.md)
+  - test-report-skill: Understand and customize Markdown reports (../test-report-skill/SKILL.md)
+  - render-pdf-mdpdf: Convert Markdown reports to PDF (../render-pdf-mdpdf/SKILL.md)
 ---
 
 # Zero-Test Skill

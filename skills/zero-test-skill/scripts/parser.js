@@ -27,6 +27,7 @@ class HttpParser {
         } else if (line.startsWith("GET ") || line.startsWith("get ") ||
                    line.startsWith("POST ") || line.startsWith("post ") ||
                    line.startsWith("PUT ") || line.startsWith("put ") ||
+                   line.startsWith("PATCH ") || line.startsWith("patch ") ||
                    line.startsWith("DELETE ") || line.startsWith("delete ")) {
             this.parseHttpRequest(line);
             this.expectHeader();
@@ -198,6 +199,8 @@ class HttpParser {
             CURRENT_TEST['method'] = 'POST';
         } else if (request.startsWith("PUT ") || request.startsWith("put ")) {
             CURRENT_TEST['method'] = 'PUT';
+        } else if (request.startsWith("PATCH ") || request.startsWith("patch ")) {
+            CURRENT_TEST['method'] = 'PATCH';
         } else if (request.startsWith("DELETE ") || request.startsWith("delete ")) {
             CURRENT_TEST['method'] = 'DELETE';
         }
@@ -205,13 +208,10 @@ class HttpParser {
         // Remove method
         request = request.substring(CURRENT_TEST['method'].length).trim();
 
-        // Handle {{variable}} substitution
-        const varMatch = request.match(/\{\{([^}]+)\}\}/);
-        if (varMatch) {
-            const VAR = varMatch[1];
-            const value = this.tVARS[VAR] || varMatch[0];
-            request = request.replace(varMatch[0], value);
-        }
+        // Handle {{variable}} substitution (replace all occurrences)
+        request = request.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+            return this.tVARS[varName] !== undefined ? this.tVARS[varName] : match;
+        });
 
         CURRENT_TEST['request'] = request;
     }
@@ -254,7 +254,10 @@ class HttpParser {
             if (!this.TESTS['current']['body']) {
                 this.TESTS['current']['body'] = '';
             }
-            this.TESTS['current']['body'] += json_line;
+            const substituted = json_line.replace(/\{\{([^}]+)\}\}/g, (match, varName) => {
+                return this.tVARS[varName] !== undefined ? this.tVARS[varName] : match;
+            });
+            this.TESTS['current']['body'] += substituted;
         }
     }
 
