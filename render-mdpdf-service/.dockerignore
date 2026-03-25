@@ -1,8 +1,47 @@
+# Rust build artifacts
 target
+
+# Temporary and output directories
 tmp
 output
+*.tar.gz
+
+# Git
 .git
+.gitignore
+
+# Node modules (will be installed during build)
 node_modules
 render-pdf-mdpdf/node_modules
+
+# macOS metadata
 ._*
 **/._*
+.DS_Store
+**/.DS_Store
+
+# Documentation (CLAUDE.md not needed in container)
+CLAUDE.md
+docs
+
+# Build scripts (not needed in container)
+build
+buildcli
+scripts
+
+# Docker files (not needed in container)
+Dockerfile
+.dockerignore
+.docker
+
+# IDE files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Test files
+public/testcase
+tests
+*.test.http

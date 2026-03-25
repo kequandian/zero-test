@@ -7,9 +7,10 @@ use std::{
 
 use axum::{
     Json, Router,
+    body::Body,
     extract::{Path as AxumPath, State},
-    http::StatusCode,
-    response::sse::{Event, KeepAlive, Sse},
+    http::{header, StatusCode},
+    response::{sse::{Event, KeepAlive, Sse}, Response},
     routing::{get, post},
 };
 use futures::{Stream, StreamExt};
@@ -49,6 +50,7 @@ struct JobState {
     id: Uuid,
     status: JobStatus,
     output_path: Option<String>,
+    download_url: Option<String>,
     error: Option<String>,
     created_at_ms: u128,
     updated_at_ms: u128,
@@ -67,7 +69,6 @@ struct JobEvent {
 struct RenderRequest {
     markdown: Option<String>,
     markdown_path: Option<String>,
-    output_path: Option<String>,
     css_path: Option<String>,
     header: Option<String>,
     footer: Option<String>,
@@ -83,20 +84,26 @@ struct AsyncRenderResponse {
     job_id: Uuid,
     status_url: String,
     events_url: String,
+    download_url: String,
 }
 
 #[derive(Serialize)]
 struct SyncRenderResponse {
     output_path: String,
+    download_url: String,
     duration_ms: u128,
 }
 
 #[tokio::main]
 async fn main() {
-    let service_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = std::env::var("WORKSPACE_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| service_root.clone());
+    // In container, WORKSPACE_ROOT=/app, use it as service_root
+    // In local dev, use CARGO_MANIFEST_DIR
+    let service_root = if let Ok(root) = std::env::var("WORKSPACE_ROOT") {
+        PathBuf::from(root)
+    } else {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    };
+    let workspace_root = service_root.clone();
     let script_path = service_root.join("render-pdf-mdpdf/scripts/render.js");
 
     if !script_path.exists() {
@@ -113,10 +120,11 @@ async fn main() {
 
     let app = Router::new()
         .route("/health", get(health))
-        .route("/api/v1/render/sync", post(render_sync))
-        .route("/api/v1/render/async", post(render_async))
-        .route("/api/v1/render/jobs/{id}", get(get_job))
-        .route("/api/v1/render/jobs/{id}/events", get(job_events))
+        .route("/api/mdpdf/render", post(render_sync))
+        .route("/api/mdpdf/render/async", post(render_async))
+        .route("/api/mdpdf/jobs/{id}", get(get_job))
+        .route("/api/mdpdf/jobs/{id}/events", get(job_events))
+        .route("/api/mdpdf/files/{filename}", get(download_file))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:39090")
@@ -140,8 +148,10 @@ async fn render_sync(
     let output_path = run_render(&state, job_id, req, None)
         .await
         .map_err(internal_err)?;
+    let download_url = make_download_url(&state, &output_path);
     Ok(Json(SyncRenderResponse {
         output_path: output_path.to_string_lossy().to_string(),
+        download_url,
         duration_ms: started.elapsed().as_millis(),
     }))
 }
@@ -153,10 +163,13 @@ async fn render_async(
     let job_id = Uuid::new_v4();
     let created_at = now_ms();
     let (tx, _rx) = broadcast::channel(64);
+    let output_filename = format!("{job_id}.pdf");
+
     let job_state = JobState {
         id: job_id,
         status: JobStatus::Queued,
         output_path: None,
+        download_url: None,
         error: None,
         created_at_ms: created_at,
         updated_at_ms: created_at,
@@ -184,7 +197,7 @@ async fn render_async(
     let state_clone = state.clone();
     tokio::spawn(async move {
         let started = Instant::now();
-        update_job_status(&state_clone, job_id, JobStatus::Running, None, None, None).await;
+        update_job_status(&state_clone, job_id, JobStatus::Running, None, None, None, None).await;
         let _ = tx.send(JobEvent {
             job_id,
             kind: "running".to_string(),
@@ -194,19 +207,20 @@ async fn render_async(
 
         match run_render(&state_clone, job_id, req, Some(tx.clone())).await {
             Ok(output) => {
+                let download_url = make_download_url(&state_clone, &output);
                 update_job_status(
                     &state_clone,
                     job_id,
                     JobStatus::Succeeded,
                     Some(output.to_string_lossy().to_string()),
+                    Some(download_url.clone()),
                     None,
                     Some(started.elapsed().as_millis()),
-                )
-                .await;
+                ).await;
                 let _ = tx.send(JobEvent {
                     job_id,
                     kind: "succeeded".to_string(),
-                    message: "pdf generated".to_string(),
+                    message: format!("pdf generated: {download_url}"),
                     timestamp_ms: now_ms(),
                 });
             }
@@ -215,6 +229,7 @@ async fn render_async(
                     &state_clone,
                     job_id,
                     JobStatus::Failed,
+                    None,
                     None,
                     Some(err),
                     Some(started.elapsed().as_millis()),
@@ -230,10 +245,12 @@ async fn render_async(
         }
     });
 
+    let download_url = format!("/api/mdpdf/files/{output_filename}");
     Ok(Json(AsyncRenderResponse {
         job_id,
-        status_url: format!("/api/v1/render/jobs/{job_id}"),
-        events_url: format!("/api/v1/render/jobs/{job_id}/events"),
+        status_url: format!("/api/mdpdf/jobs/{job_id}"),
+        events_url: format!("/api/mdpdf/jobs/{job_id}/events"),
+        download_url,
     }))
 }
 
@@ -298,7 +315,7 @@ async fn run_render(
     req: RenderRequest,
     tx: Option<broadcast::Sender<JobEvent>>,
 ) -> Result<PathBuf, String> {
-    let output_path = resolve_output_path(state, &req, job_id)?;
+    let output_path = resolve_output_path(state, job_id);
     if let Some(parent) = output_path.parent() {
         tokio::fs::create_dir_all(parent)
             .await
@@ -388,16 +405,8 @@ async fn resolve_markdown_input(
     Err("must provide markdown or markdown_path".to_string())
 }
 
-fn resolve_output_path(
-    state: &AppState,
-    req: &RenderRequest,
-    job_id: Uuid,
-) -> Result<PathBuf, String> {
-    if let Some(path) = req.output_path.as_ref() {
-        return Ok(resolve_path(&state.workspace_root, path));
-    }
-    let output_dir = state.service_root.join("output");
-    Ok(output_dir.join(format!("{job_id}.pdf")))
+fn resolve_output_path(state: &AppState, job_id: Uuid) -> PathBuf {
+    state.service_root.join("output").join(format!("{job_id}.pdf"))
 }
 
 fn resolve_path(root: &Path, path: &str) -> PathBuf {
@@ -414,6 +423,7 @@ async fn update_job_status(
     id: Uuid,
     status: JobStatus,
     output_path: Option<String>,
+    download_url: Option<String>,
     error: Option<String>,
     duration_ms: Option<u128>,
 ) {
@@ -423,6 +433,9 @@ async fn update_job_status(
         job.state.updated_at_ms = now_ms();
         if output_path.is_some() {
             job.state.output_path = output_path;
+        }
+        if download_url.is_some() {
+            job.state.download_url = download_url;
         }
         if error.is_some() {
             job.state.error = error;
@@ -463,4 +476,65 @@ fn status_to_str(status: &JobStatus) -> &'static str {
         JobStatus::Succeeded => "succeeded",
         JobStatus::Failed => "failed",
     }
+}
+
+/// Create download URL for a file path
+/// Returns URL path like /api/mdpdf/files/filename.pdf
+fn make_download_url(_state: &AppState, output_path: &Path) -> String {
+    let filename = output_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("output.pdf");
+    format!("/api/mdpdf/files/{filename}")
+}
+
+/// Download PDF file by filename
+/// Only serves files from the output directory for security
+async fn download_file(
+    State(state): State<AppState>,
+    AxumPath(filename): AxumPath<String>,
+) -> Result<Response<Body>, (StatusCode, Json<ApiError>)> {
+    // Security: validate filename to prevent path traversal
+    if filename.contains("..") || filename.contains('/') || filename.contains('\\') {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                error: "invalid filename".to_string(),
+            }),
+        ));
+    }
+
+    let output_dir = state.service_root.join("output");
+    let file_path = output_dir.join(&filename);
+
+    if !file_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: format!("file not found: {filename}"),
+            }),
+        ));
+    }
+
+    // Read file content
+    let content = tokio::fs::read(&file_path)
+        .await
+        .map_err(|e| internal_err(format!("read file failed: {e}")))?;
+
+    // Determine content type based on extension
+    let content_type = if filename.ends_with(".pdf") {
+        "application/pdf"
+    } else {
+        "application/octet-stream"
+    };
+
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, content_type)
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{filename}\""),
+        )
+        .body(Body::from(content))
+        .unwrap())
 }
