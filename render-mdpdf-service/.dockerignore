@@ -1,6 +1,60 @@
-target
+# =============================================================================
+# Docker Build Context Exclusions
+# =============================================================================
+
+# Rust build artifacts (exclude debug, keep release binary)
+target/debug
+target/**/debug
+target/*/debug
+target/*/deps
+target/*/build
+target/*.d
+target/.rustc_info.json
+target/CACHEDIR.TAG
+target/x86_64-unknown-linux-musl
+
+# Temporary and output directories
 tmp
 output
+*.tar.gz
+*.pdf
+
+# Git
 .git
-node_modules
-render-pdf-mdpdf/node_modules
+.gitignore
+
+# macOS metadata
+._*
+**/._*
+.DS_Store
+**/.DS_Store
+
+# Documentation
+CLAUDE.md
+README.md
+docs
+
+# Build scripts (not needed in container)
+build
+buildcli
+scripts
+*.sh
+source.sh
+source.tar.gz
+
+# Docker files (not needed in container)
+Dockerfile*
+.dockerignore
+.docker
+
+# IDE files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Test files
+public/testcase
+tests
+*.test.http
