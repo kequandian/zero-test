@@ -1,10 +1,11 @@
 {
   "name": "zero-test",
   "version": "0.4.0",
-  "description": "zero-test",
+  "description": "zero-test - HTTP Testing Framework",
   "main": "index.js",
   "bin": {
     "zero-test": "./index.js",
+    "run-http-test": "./bin/run-http-test.js",
     "get": "./cli-tools/env-test/get",
     "post": "./cli-tools/env-test/post",
     "swagger-cli": "./cli-tools/env-test/swagger-cli",
@@ -20,11 +21,9 @@
     "test:pdf": "node test-markdown-pdf-wrapper.js"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "cli-table2": "^0.2.0",
     "commander": "^2.19.0",
-    "fontkit": "file:fontkit-2.0.4.tgz",
-    "markdown-it": "file:markdown-it-14.1.0.tgz",
-    "pdfkit": "file:pdfkit-0.18.0.tgz",
     "shelljs": "^0.8.3"
   },
   "optionalDependencies": {
