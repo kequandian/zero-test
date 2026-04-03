@@ -1,30 +1,38 @@
 ---
 name: run-http-skill
-description: 执行 .http 测试文件的技能。解析 .http 格式中的变量定义、HTTP 请求（GET/POST/PUT/PATCH/DELETE）、请求头、JSON Body，逐条发送请求，输出实时 PASS/FAIL 控制台结果，并自动保存 Markdown 测试报告到指定输出目录。
+description: 通用 HTTP API 测试技能。执行 .http 测试文件，对目标 API 发送真实 HTTP 请求，输出实时 PASS/FAIL 控制台结果，并自动生成 Markdown 测试报告。
 ---
 
 # run-http-skill
 
-执行 `.http` 格式测试文件，对目标 API 发送真实 HTTP 请求，输出测试结果。
+通用 HTTP API 测试技能，可从任何项目目录执行 `.http` 格式的测试文件。
+
+> **位置说明**: 本文档 (SKILL.md) 位于技能目录根目录，所有路径均相对于此目录。
 
 ## 触发条件
 
 当需要：
-- 对运行中的 API 服务执行 `.http` 测试文件中的用例
-- 验证 EAV-Rust 服务、业务逻辑服务的接口是否正常
+- 对运行中的 API 服务执行 `.http` 测试文件
+- 验证 RESTful API 接口是否正常工作
 - 获取每个测试用例的 PASS/FAIL 状态与 HTTP 状态码
+- 生成 API 测试报告（Markdown 格式）
 
 ## 前置条件
 
 - Node.js 已安装（`node --version`）
-- npm 依赖已安装：`cd zero-test && npm install`（依赖 `axios`）
-- 目标 API 服务已运行（如 EAV Server：`curl http://localhost:3000/health`）
+- npm 依赖已安装：
+  ```bash
+  cd (技能目录)
+  npm install
+  ```
+- 目标 API 服务已运行
 
-## 执行命令
+## 使用方法
+
+### 基本用法
 
 ```bash
-# 从 workspace 根目录执行
-node zero-test/skills/zero-test-skill/test-runner-simple.js \
+node (技能目录)/test-runner-simple.js \
   <test-file.http> \
   <output-dir> \
   <report-name>
@@ -34,172 +42,226 @@ node zero-test/skills/zero-test-skill/test-runner-simple.js \
 
 | 参数 | 说明 | 示例 |
 |-----|------|------|
-| `<test-file.http>` | `.http` 测试文件路径 | `module-student-profile/tests/student-profile-tests.http` |
-| `<output-dir>` | 报告输出目录（自动创建） | `module-student-profile/tests/output` |
-| `<report-name>` | 报告文件名（不含扩展名） | `student-profile-test-report` |
+| `<test-file.http>` | `.http` 测试文件路径（相对或绝对路径） | `tests/api-tests.http` |
+| `<output-dir>` | 报告输出目录（自动创建） | `tests/output` |
+| `<report-name>` | 报告文件名（不含扩展名） | `api-test-report` |
 
-**输出**：
-- 控制台实时显示：`✓ PASS` / `✗ FAIL` + HTTP 状态码 + 耗时
-- 自动保存 Markdown 报告：`<output-dir>/<report-name>.md`（见 [test-report-skill](../test-report-skill/SKILL.md)）
+### 使用示例
+
+假设技能位于 `skills/run-http-skill`：
+
+```bash
+# 从项目根目录执行测试
+node skills/run-http-skill/test-runner-simple.js \
+  tests/eav-api-test.http \
+  tests/output \
+  eav-report
+
+# 使用绝对路径
+node /path/to/skills/run-http-skill/test-runner-simple.js \
+  /path/to/project/tests/api-tests.http \
+  /path/to/project/tests/output \
+  test-report
+```
+
+### 创建便捷别名（可选）
+
+在项目的 `package.json` 中添加脚本：
+
+```json
+{
+  "scripts": {
+    "test:http": "node skills/run-http-skill/test-runner-simple.js tests/api-tests.http tests/output report"
+  }
+}
+```
+
+然后运行：`npm run test:http`
 
 ## .http 文件格式
 
-### 文件变量定义
+### 变量定义
 
 ```http
 @baseUrl = http://localhost:3000/api
 @contentType = application/json
-@testId = 202401001
+@token = your-auth-token
 ```
 
 - 以 `@` 开头，支持在请求 URL、Header、Body 中用 `{{varName}}` 引用
-- 多个 `{{var}}` 全部被替换（支持同一行多个变量）
 
-### 测试用例分隔符
+### 动态变量提取
+
+从 API 响应中提取值并在后续请求中使用：
 
 ```http
-### 测试用例标题（显示在报告中）
+### 创建资源
+# 创建新资源并捕获其 ID
+
+POST {{baseUrl}}/resources
+Authorization: Bearer {{token}}
+
+{
+    "name": "测试资源",
+    "type": "test"
+}
+
+# @extract data.id -> resourceId
+
+### 获取创建的资源
+# 使用提取的 ID 获取资源
+
+GET {{baseUrl}}/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+### 更新资源
+# 使用捕获的 ID 更新资源
+
+PUT {{baseUrl}}/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+{
+    "name": "已更新的资源"
+}
+
+### 删除资源
+# 清理测试数据
+
+DELETE {{baseUrl}}/resources/{{resourceId}}
+Authorization: Bearer {{token}}
 ```
 
-以 `###` 开头的注释行作为测试用例的标题。每个 `###` 块对应一个测试用例。
+**提取器语法**: `# @extract <JSONPath> -> <变量名>`
 
-### 支持的 HTTP 方法
+- 使用点表示法访问嵌套值：`data.user.id`、`items.0.name`
+- 提取的变量在所有后续测试中持久存在
+- 变量可在 URL、Header 和请求 Body 中使用
+- 如果路径不存在，不会创建变量（不会报错）
+
+### 测试用例格式
 
 ```http
-### 获取资源列表
-GET {{baseUrl}}/v1/students?page=1&page_size=20
+### 测试用例标题
+# 描述（可选）
 
-### 创建资源
-POST {{baseUrl}}/v1/students
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### 创建用户
+POST {{baseUrl}}/users
 Content-Type: {{contentType}}
 
 {
-  "name": "张三",
-  "phone": "13800138000"
+  "name": "John Doe",
+  "email": "john@example.com"
 }
-
-### 更新资源（全量）
-PUT {{baseUrl}}/v1/students/{{testId}}
-Content-Type: application/json
-
-{ "name": "张三（更新）" }
-
-### 部分更新资源
-PATCH {{baseUrl}}/v1/students/{{testId}}
-Content-Type: application/json
-
-{ "phone": "13900139000" }
-
-### 删除资源
-DELETE {{baseUrl}}/v1/students/{{testId}}
 ```
 
-**支持的方法**：GET、POST、PUT、PATCH、DELETE（大小写均可）
+**支持的 HTTP 方法**：GET、POST、PUT、PATCH、DELETE
 
-### 请求头
+## 输出
 
-```http
-GET {{baseUrl}}/v1/students
-Content-Type: application/json
-X-Request-ID: 550e8400-e29b-41d4-a716-446655440000
-# Authorization: Bearer <PASTE_YOUR_JWT_TOKEN_HERE>
-```
-
-- `#` 开头的行为注释，不作为请求头发送
-- `Authorization: Bearer {{token}}` 若变量存在会自动注入
-
-### 用例与用例之间的分隔
-
-```http
-### 用例一
-GET {{baseUrl}}/v1/students
-
-###
-
-### 用例二
-POST {{baseUrl}}/v1/students
-Content-Type: application/json
-
-{ "name": "李四" }
-```
-
-- 空 `###` 或空行均可分隔用例
-
-## 控制台输出示例
+### 控制台输出
 
 ```
 ============================================================
 Zero-Test Runner (Simple Version)
 ============================================================
-Test File:    module-student-profile/tests/student-profile-tests.http
-Output Dir:   module-student-profile/tests/output
-Report Name:  student-profile-test-report
+Test File:    tests/api-tests.http
+Output Dir:   tests/output
+Report Name:  api-test-report
 ============================================================
 
-Found 38 test cases
+Found 5 test cases
 
 Running tests...
 ------------------------------------------------------------
-[1] ✓ PASS - EAV_SETUP_01 — 健康检查 (200 OK, 12ms)
-[2] ✓ PASS - EAV_SETUP_02 — 查看路由映射 (200 OK, 8ms)
-[3] ✗ FAIL - D001_TC_001_01 — 创建学生 (0 Connection Error)
+[1] ✓ PASS - 获取用户列表 (200 OK, 45ms)
+[2] ✓ PASS - 创建用户 (201 Created, 82ms) [Extracted: userId=123]
+[3] ✓ PASS - 获取用户详情 (200 OK, 38ms) [Extracted: userName=张三, email=zhangsan@example.com]
+[4] ✗ FAIL - 更新用户 (400 Bad Request, 55ms)
 ...
 ------------------------------------------------------------
 
 Test Execution Summary
 ============================================================
-Total Tests:   38
-Passed:        25
-Failed:        13
-Skipped:       1
-Duration:      2.34s
-Pass Rate:     65.8%
+Total Tests:   5
+Passed:        3
+Failed:        2
+Duration:      1.23s
+Pass Rate:     60%
 ============================================================
 
-Markdown report saved: module-student-profile/tests/output/student-profile-test-report.md
+Markdown report saved: tests/output/api-test-report.md
 ```
+
+### Markdown 报告
+
+自动生成：`<output-dir>/<report-name>.md`
+
+包含：
+- 测试概览（总数、通过、失败、耗时）
+- 每个测试用例的详细信息
+- 请求/响应详情
 
 ## 判定规则
 
 | 结果 | 条件 |
 |-----|------|
 | PASS | HTTP 状态码 2xx |
-| FAIL | HTTP 状态码非 2xx，或连接失败（0 Connection Error），或 URL 解析失败 |
-| SKIP | `.http` 文件中用例解析为空（无 HTTP 方法行） |
+| FAIL | HTTP 状态码非 2xx，或连接失败 |
+| SKIP | 用例解析为空（无 HTTP 方法行） |
 
-## 常见错误处理
+## 依赖
 
-| 错误 | 原因 | 解决方法 |
-|-----|------|---------|
-| `Connection Error` | 目标服务未运行 | 启动 API 服务 |
-| `Invalid URL` | 变量未替换（`{{var}}` 残留） | 检查 `@var = value` 定义是否在文件顶部 |
-| `Module not found: axios` | npm 依赖未安装 | `cd zero-test && npm install` |
-| PATCH 用例被跳过 | 旧版 parser 不支持 PATCH | 已在 `scripts/parser.js` 修复，更新代码 |
+- `axios` - HTTP 客户端
 
-## 与其他 skill 的关系
-
-- **输出报告**：执行后自动生成 Markdown 报告，详见 [test-report-skill](../test-report-skill/SKILL.md)
-- **PDF 转换**：将 Markdown 报告转为 PDF，详见 [render-pdf-mdpdf](../render-pdf-mdpdf/SKILL.md)
-- **调用场景**：在 [api-task-skill](../../../saas-skills/saas-e2e-design/api-task-skill/SKILL.md) Phase 6/7 中被调用
-
-## 典型使用示例（student-profile 领域）
-
+安装依赖：
 ```bash
-# 1. 确认 EAV 服务运行
-curl http://localhost:3000/health
-
-# 2. 执行测试
-node zero-test/skills/zero-test-skill/test-runner-simple.js \
-  edu-design/module-student-profile/tests/student-profile-tests.http \
-  edu-design/module-student-profile/tests/output \
-  student-profile-test-report
-
-# 3. 查看报告（Markdown）
-# edu-design/module-student-profile/tests/output/student-profile-test-report.md
-
-# 4. 转换为 PDF（需绝对路径）
-$WORKSPACE = (Get-Location).Path
-node zero-test/skills/render-pdf-mdpdf/scripts/render.js \
-  "$WORKSPACE/edu-design/module-student-profile/tests/output/student-profile-test-report.md" \
-  "$WORKSPACE/edu-design/module-student-profile/tests/output/student-profile-test-report.pdf"
+cd (技能目录)
+npm install axios
 ```
+
+## 文件结构
+
+```
+(技能目录)/
+├── SKILL.md                      # 本文档
+├── test-runner-simple.js         # 主测试运行器
+├── package.json                  # npm 配置
+├── scripts/
+│   ├── parser.js                 # .http 文件解析器
+│   ├── http.js                   # HTTP 客户端 (axios)
+│   ├── http-native.js            # HTTP 客户端 (native)
+│   └── runner.js                 # 测试执行引擎
+├── assets/
+│   └── markdown.css              # Markdown 样式
+└── references/
+    └── SYNTAX.md                 # .http 语法参考
+```
+
+## 常见问题
+
+**Q: 如何处理需要认证的 API？**
+
+A: 在 `.http` 文件顶部定义 token 变量：
+```http
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Q: 如何调试失败的测试？**
+
+A: 查看 Markdown 报告中的详细请求/响应信息，包括：
+- 完整请求 URL
+- 请求头
+- 请求体
+- 响应状态码
+- 响应体
+
+**Q: 支持哪些 HTTP 方法？**
+
+A: GET、POST、PUT、PATCH、DELETE（大小写不敏感）
+
+## 相关文档
+
+- [.http 语法参考](references/SYNTAX.md) - 完整的 .http 文件语法说明

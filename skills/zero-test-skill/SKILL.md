@@ -30,6 +30,7 @@ node test-render-pdf-mdpdf.js ../../path/to/test.http ../../output report-name
 
 - **.http File Format**: Use familiar HTTP request format
 - **Variable Substitution**: Define variables and reuse across tests
+- **Dynamic Variable Extraction**: Capture values from API responses and use in subsequent requests
 - **Multiple HTTP Methods**: GET, POST, PUT, PATCH, DELETE, etc.
 - **Test Reports**: Generate Markdown and PDF reports
 - **Flexible Testing**: Ideal for API testing, contract testing, smoke tests
@@ -73,6 +74,56 @@ Authorization: Bearer {{token}}
     "name": "Jane Doe"
 }
 ```
+
+### Dynamic Variable Extraction
+
+Extract values from API responses and use them in subsequent requests:
+
+```
+### Create Resource
+# Create a new resource and capture its ID
+
+POST {{baseUrl}}/api/resources
+Authorization: Bearer {{token}}
+
+{
+    "name": "Test Resource",
+    "type": "test"
+}
+
+# @extract data.id -> resourceId
+
+### Get Created Resource
+# Use the extracted ID to fetch the resource
+
+GET {{baseUrl}}/api/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+### Update Resource
+# Update the resource using the captured ID
+
+PUT {{baseUrl}}/api/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+{
+    "name": "Updated Resource"
+}
+
+# @extract data.id -> updatedResourceId
+
+### Delete Resource
+# Clean up test data
+
+DELETE {{baseUrl}}/api/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+```
+
+**Extractor Syntax**: `# @extract <JSONPath> -> <VariableName>`
+
+- Uses dot notation for nested values: `data.user.id`, `items.0.name`
+- Extracted variables persist across all subsequent tests
+- Variables can be used in URLs, headers, and request bodies
+- If the path doesn't exist, no variable is created (no error)
 
 ## Running Tests
 
@@ -118,7 +169,9 @@ Running tests...
 ------------------------------------------------------------
 [1] ✓ PASS - Health Check (200 OK)
 [2] ✓ PASS - List Users (200 OK)
-[3] ✗ FAIL - Create User (400 Bad Request)
+[3] ✓ PASS - Create User (201 Created) [Extracted: userId=123]
+[4] ✓ PASS - Get User (200 OK) [Extracted: userName=John, email=john@example.com]
+[5] ✗ FAIL - Update User (400 Bad Request)
 ...
 ------------------------------------------------------------
 
@@ -138,6 +191,8 @@ Pass Rate:     80.0%
 ### scripts/parser.js
 Parses .http file format:
 - Variable substitution (`@variable=value`, `{{variable}}`)
+- Dynamic extractor syntax (`# @extract <JSONPath> -> <VariableName>`)
+- Lazy variable binding (variables resolved at runtime)
 - HTTP methods (GET, POST, PUT, DELETE, PATCH)
 - JSON body parsing
 - Test titles from comments
@@ -152,10 +207,13 @@ Native HTTP client (Node.js built-in):
 
 ### scripts/runner.js
 Test execution engine:
+- Runtime variable context management
+- JIT (Just-In-Time) variable compilation
+- Response value extraction with JSONPath
 - Sequential test execution
 - Success/failure tracking
 - Force mode (continue on errors)
-- Progress reporting
+- Progress reporting with extracted variables
 
 ### scripts/reporter.js
 Report generation:
@@ -220,7 +278,18 @@ const fs = require('fs');
 const parser = new HttpParser();
 const tests = parser.parseHttpContent(fs.readFileSync('api-tests.http', 'utf-8'));
 
-runTests(tests).then(summary => {
+// Get initial variables defined in the .http file
+const initialVars = parser.getInitialVars();
+
+runTests(tests, {
+    initialVars: initialVars,
+    onTestComplete: async (result, index) => {
+        const extractInfo = result.extractedVars && Object.keys(result.extractedVars).length > 0
+            ? ` [Extracted: ${Object.entries(result.extractedVars).map(([k, v]) => `${k}=${v}`).join(', ')}]`
+            : '';
+        console.log(`[${index}] ${result.success ? 'PASS' : 'FAIL'}${extractInfo}`);
+    }
+}).then(summary => {
     console.log(`Passed: ${summary.passed}/${summary.total}`);
     console.log(`Duration: ${summary.duration}s`);
 });
@@ -250,8 +319,36 @@ Each test result includes:
     status: 200,
     response: "{...}",
     timestamp: "2025-03-21T10:30:00.000Z",
-    duration: 123
+    duration: 123,
+    extractedVars: {
+        userId: 123,
+        userName: "John Doe"
+    }
 }
+```
+
+### Extracted Variables in Reports
+
+The test report includes a dedicated section for extracted variables:
+
+```markdown
+### ✓ PASS - Create User
+
+**Method:** POST
+**URL:** http://api.example.com/users
+**Status:** 201 Created
+
+**Response:**
+```json
+{
+  "id": 123,
+  "name": "John Doe"
+}
+```
+
+**🔧 Extracted Variables:**
+- `userId`: `123`
+- `userName`: `John Doe`
 ```
 
 ## Advanced Features

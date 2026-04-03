@@ -1,0 +1,57 @@
+# Dynamic Variable Extraction Demo
+# This file demonstrates the new # @extract syntax
+# for capturing values from API responses and using
+# them in subsequent requests.
+
+@baseUrl=https://jsonplaceholder.typicode.com
+
+### Get All Posts
+# Fetch all posts and we'll extract the first post's ID
+
+GET {{baseUrl}}/posts
+
+# @extract 0.id -> firstPostId
+
+### Get Specific Post
+# Use the extracted ID to fetch a specific post
+
+GET {{baseUrl}}/posts/{{firstPostId}}
+
+# @extract id -> postId
+# @extract title -> postTitle
+# @extract userId -> userId
+
+### Get User Who Created Post
+# Use the extracted userId to get the author
+
+GET {{baseUrl}}/users/{{userId}}
+
+# @extract id -> authorId
+# @extract name -> authorName
+# @extract email -> authorEmail
+
+### Get User's Todos
+# Use the author's ID to get their todos
+
+GET {{baseUrl}}/users/{{authorId}}/todos
+
+# @extract 0.title -> firstTodo
+
+### Create New Post
+# Create a post for the extracted user
+
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+    "title": "Test Post by {{authorName}}",
+    "body": "This is a test post created dynamically",
+    "userId": {{authorId}}
+}
+
+# @extract id -> newPostId
+
+### Get Created Post
+# Verify the post was created
+
+GET {{baseUrl}}/posts/{{newPostId}}
