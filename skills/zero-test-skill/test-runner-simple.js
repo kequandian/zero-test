@@ -18,16 +18,25 @@ const path = require('path');
 
 // Import skill modules
 const HttpParser = require('./scripts/parser');
-const { runTests } = require('./scripts/runner');
+const { runTests, analyzeFailures, analyzeDependencies } = require('./scripts/runner');
 
 /**
  * Generate markdown report (without PDF)
  */
-function generateMarkdownReport(summary, reportPath) {
+function generateMarkdownReport(summary, reportPath, filter = null) {
     const lines = [];
 
     lines.push('# Test Report');
     lines.push('');
+
+    // Add filter info if present
+    if (filter) {
+        lines.push(`**🔍 Filter:** ${filter}`);
+        lines.push('');
+        lines.push('*This report only shows test cases matching the filter.*');
+        lines.push('');
+    }
+
     lines.push(`**Date:** ${new Date().toISOString()}`);
     lines.push(`**Total Tests:** ${summary.total}`);
     lines.push(`**Passed:** ${summary.passed}`);
@@ -57,6 +66,77 @@ function generateMarkdownReport(summary, reportPath) {
     lines.push(`| Skipped | ${summary.skipped} |`);
     lines.push('');
 
+    // Add failure analysis if there are failures
+    if (summary.failed > 0) {
+        const failureAnalysis = analyzeFailures(summary.results);
+
+        lines.push('## ❌ Failure Analysis');
+        lines.push('');
+
+        // Group by status code
+        if (Object.keys(failureAnalysis.byStatusCode).length > 0) {
+            lines.push('### By Status Code');
+            lines.push('');
+            for (const [status, tests] of Object.entries(failureAnalysis.byStatusCode).sort((a, b) => {
+                const statusA = parseInt(a[0]) || 0;
+                const statusB = parseInt(b[0]) || 0;
+                return statusB - statusA; // Sort descending
+            })) {
+                lines.push(`**${status}** (${tests.length} test${tests.length > 1 ? 's' : ''})`);
+                for (const test of tests) {
+                    lines.push(`  - ${test}`);
+                }
+                lines.push('');
+            }
+        }
+
+        // Group by failure reason
+        if (Object.keys(failureAnalysis.byReason).length > 0) {
+            lines.push('### By Failure Reason');
+            lines.push('');
+            for (const [reason, tests] of Object.entries(failureAnalysis.byReason).sort((a, b) => {
+                return b[1].length - a[1].length; // Sort by count descending
+            })) {
+                lines.push(`**${reason}** (${tests.length} test${tests.length > 1 ? 's' : ''})`);
+                for (const test of tests) {
+                    lines.push(`  - ${test}`);
+                }
+                lines.push('');
+            }
+        }
+
+        // Group by method
+        if (Object.keys(failureAnalysis.byMethod).length > 0) {
+            lines.push('### By HTTP Method');
+            lines.push('');
+            for (const [method, info] of Object.entries(failureAnalysis.byMethod)) {
+                lines.push(`**${method}**: ${info.fail} failed`);
+            }
+            lines.push('');
+        }
+
+        lines.push('---');
+        lines.push('');
+    }
+
+    // Add dependency analysis
+    const dependencyAnalysis = analyzeDependencies({}, summary.results);
+    if (dependencyAnalysis.chains.length > 0) {
+        lines.push('## 🔗 Test Dependencies');
+        lines.push('');
+        lines.push('The following extracted variables are used across tests:');
+        lines.push('');
+        for (const dep of dependencyAnalysis.chains) {
+            lines.push(`- **\`${dep.variable}\`**: Defined in *${dep.source}* → Used in:`);
+            for (const consumer of dep.consumers) {
+                lines.push(`  - ${consumer}`);
+            }
+            lines.push('');
+        }
+        lines.push('---');
+        lines.push('');
+    }
+
     // Add individual test results
     lines.push('## Test Cases');
     lines.push('');
@@ -68,8 +148,22 @@ function generateMarkdownReport(summary, reportPath) {
         lines.push(`**Method:** ${result.method}`);
         lines.push(`**URL:** ${result.url}`);
         lines.push(`**Status:** ${result.status} ${result.statusText}`);
+
+        // Show expected status if set
+        if (result.expectedStatus) {
+            const { min, max } = result.expectedStatus;
+            const expected = min === max ? min : `${min}-${max}`;
+            lines.push(`**Expected Status:** ${expected}`);
+        }
+
         lines.push(`**Time:** ${result.timestamp}`);
         lines.push('');
+
+        // Show failure reason if failed
+        if (!result.success && result.failureReason) {
+            lines.push(`**⚠️ Failure Reason:** ${result.failureReason}`);
+            lines.push('');
+        }
 
         if (result.response) {
             lines.push('**Response:**');
@@ -227,8 +321,23 @@ async function main() {
     const initialVars = parser.getInitialVars();
     console.log(`Initial variables: ${Object.keys(initialVars).join(', ') || 'none'}`);
 
-    const testCount = Object.keys(tests).filter(k => k !== 'current').length;
-    console.log(`Found ${testCount} test cases`);
+    const allTestCount = Object.keys(tests).filter(k => k !== 'current').length;
+
+    // Count tests that match the filter
+    let filteredTestCount = allTestCount;
+    if (filter) {
+        const filterLower = filter.toLowerCase();
+        filteredTestCount = Object.keys(tests).filter(k =>
+            k !== 'current' &&
+            k.toLowerCase().includes(filterLower)
+        ).length;
+    }
+
+    if (filter) {
+        console.log(`Found ${allTestCount} total test cases, ${filteredTestCount} matching filter "${filter}"`);
+    } else {
+        console.log(`Found ${allTestCount} test cases`);
+    }
     console.log('');
 
     // Run tests
@@ -244,17 +353,50 @@ async function main() {
             const status = result.success ? '✓ PASS' : '✗ FAIL';
             const statusColor = result.success ? '\x1b[32m' : '\x1b[31m';
             const resetColor = '\x1b[0m';
+            const dimColor = '\x1b[90m';
+            const boldColor = '\x1b[1m';
+
+            // Build the base output line
+            let outputLine = `${statusColor}${boldColor}[${index}]${resetColor} ${status} - ${result.title}`;
+
+            // Show status with color coding
+            if (result.status >= 200 && result.status < 300) {
+                outputLine += ` (\x1b[32m${result.status}\x1b[0m`;
+            } else if (result.status >= 400 && result.status < 500) {
+                outputLine += ` (\x1b[33m${result.status}\x1b[0m`;
+            } else if (result.status >= 500) {
+                outputLine += ` (\x1b[31m${result.status}\x1b[0m`;
+            } else if (result.status === 0) {
+                outputLine += ` (\x1b[90mCONN ERROR\x1b[0m`;
+            } else {
+                outputLine += ` (${result.status}`;
+            }
+
+            // Show expected status if different from actual
+            if (result.expectedStatus) {
+                const { min, max } = result.expectedStatus;
+                const expected = min === max ? min : `${min}-${max}`;
+                if (result.status < min || result.status > max) {
+                    outputLine += `, \x1b[36mexpected ${expected}\x1b[0m`;
+                }
+            }
+
+            outputLine += ')';
+
+            // Show failure reason for failed tests
+            if (!result.success && result.failureReason) {
+                outputLine += `\n${dimColor}       Reason: ${result.failureReason}${resetColor}`;
+            }
 
             // Show extracted variables in console output
-            let extractInfo = '';
             if (result.extractedVars && Object.keys(result.extractedVars).length > 0) {
                 const extracts = Object.entries(result.extractedVars)
                     .map(([k, v]) => `${k}=${typeof v === 'object' ? JSON.stringify(v) : v}`)
                     .join(', ');
-                extractInfo = ` [Extracted: ${extracts}]`;
+                outputLine += `\n${dimColor}       Extracted: ${extracts}${resetColor}`;
             }
 
-            console.log(`${statusColor}[${index}]${resetColor} ${status} - ${result.title} (${result.status} ${result.statusText})${extractInfo}`);
+            console.log(outputLine);
         }
     });
     const endTime = Date.now();
@@ -264,20 +406,63 @@ async function main() {
     console.log('');
     console.log('Test Execution Summary');
     console.log('='.repeat(60));
+
+    // Color-coded summary
+    const passColor = summary.passed > 0 ? '\x1b[32m' : '\x1b[90m';
+    const failColor = summary.failed > 0 ? '\x1b[31m' : '\x1b[90m';
+    const resetColor = '\x1b[0m';
+
     console.log(`Total Tests:   ${summary.total}`);
-    console.log(`Passed:        ${summary.passed}`);
-    console.log(`Failed:        ${summary.failed}`);
+    console.log(`${passColor}Passed:        ${summary.passed}${resetColor}`);
+    console.log(`${failColor}Failed:        ${summary.failed}${resetColor}`);
     console.log(`Skipped:       ${summary.skipped}`);
     console.log(`Duration:      ${duration}s`);
-    console.log(`Pass Rate:     ${summary.total > 0 ? ((summary.passed / summary.total) * 100).toFixed(1) : 0}%`);
+
+    const passRate = summary.total > 0 ? ((summary.passed / summary.total) * 100).toFixed(1) : 0;
+    const passRateColor = passRate >= 80 ? '\x1b[32m' : passRate >= 50 ? '\x1b[33m' : '\x1b[31m';
+    console.log(`${passRateColor}Pass Rate:     ${passRate}%${resetColor}`);
     console.log('='.repeat(60));
+
+    // Show failure analysis if there are failures
+    if (summary.failed > 0) {
+        console.log('');
+        console.log('❌ Failure Analysis:');
+        console.log('-'.repeat(60));
+
+        const failureAnalysis = analyzeFailures(summary.results);
+
+        // Group by status code
+        console.log('');
+        console.log('By Status Code:');
+        for (const [status, tests] of Object.entries(failureAnalysis.byStatusCode).sort((a, b) => {
+            const statusA = parseInt(a[0]) || 0;
+            const statusB = parseInt(b[0]) || 0;
+            return statusB - statusA;
+        })) {
+            const statusColor = status >= 500 ? '\x1b[31m' : status >= 400 ? '\x1b[33m' : '\x1b[90m';
+            console.log(`  ${statusColor}${status}${resetColor} (${tests.length} test${tests.length > 1 ? 's' : ''})`);
+        }
+
+        // Group by failure reason
+        console.log('');
+        console.log('By Failure Reason:');
+        for (const [reason, tests] of Object.entries(failureAnalysis.byReason).sort((a, b) => {
+            return b[1].length - a[1].length;
+        })) {
+            console.log(`  • ${reason} (${tests.length})`);
+        }
+
+        console.log('');
+        console.log('-'.repeat(60));
+    }
+
     console.log('');
 
     // Generate markdown report
     console.log('Generating markdown report...');
 
     try {
-        const markdownPath = generateMarkdownReport(summary, reportPath);
+        const markdownPath = generateMarkdownReport(summary, reportPath, filter);
         console.log(`Markdown report saved: ${markdownPath}`);
         console.log('');
 

@@ -79,7 +79,9 @@ async function runTest(test, context = {}) {
         response: null,
         error: null,
         timestamp: new Date().toISOString(),
-        extractedVars: {} // Track extracted variables
+        extractedVars: {}, // Track extracted variables
+        failureReason: null, // Enhanced failure analysis
+        expectedStatus: test.expectedStatus || null // Track expected status
     };
 
     try {
@@ -104,13 +106,55 @@ async function runTest(test, context = {}) {
             }
         );
 
-        result.success = isSuccessful(response);
         result.status = response.status;
         result.statusText = response.statusText;
         result.response = response.data;
         result.error = response.error;
 
-        // EXTRACT VARIABLES from response
+        // SUCCESS DETERMINATION with enhanced validation
+        let isSuccess = false;
+        let failureReason = null;
+
+        // Check expected status range first (highest priority)
+        if (test.expectedStatus) {
+            const { min, max } = test.expectedStatus;
+            if (response.status >= min && response.status <= max) {
+                isSuccess = true;
+            } else {
+                failureReason = `Expected status ${min}-${max}, got ${response.status}`;
+            }
+        } else if (isSuccessful(response)) {
+            // Fall back to default success check
+            isSuccess = true;
+        } else {
+            // Default failure reason
+            if (response.status >= 400 && response.status < 500) {
+                failureReason = `Client error ${response.status}: ${response.statusText}`;
+            } else if (response.status >= 500) {
+                failureReason = `Server error ${response.status}: ${response.statusText}`;
+            } else if (response.status === 0) {
+                failureReason = response.error || 'Connection failed';
+            } else {
+                failureReason = `Unexpected status ${response.status}`;
+            }
+        }
+
+        // Check for API-level error codes (even with 2xx HTTP status)
+        if (isSuccess && response.data) {
+            const apiCode = response.data.code;
+            const apiMsg = response.data.msg || response.data.message;
+
+            // Common API error patterns
+            if (apiCode !== undefined && apiCode !== null && apiCode !== 200 && apiCode !== 0) {
+                isSuccess = false;
+                failureReason = `API error code ${apiCode}${apiMsg ? ': ' + apiMsg : ''}`;
+            }
+        }
+
+        result.success = isSuccess;
+        result.failureReason = failureReason;
+
+        // EXTRACT VARIABLES from response (only if success or if extraction is still useful)
         if (test.extractors && test.extractors.length > 0 && response.data) {
             for (const extractor of test.extractors) {
                 const value = getValueByPath(response.data, extractor.path);
@@ -124,6 +168,7 @@ async function runTest(test, context = {}) {
         return result;
     } catch (error) {
         result.error = error.message;
+        result.failureReason = `Exception: ${error.message}`;
         return result;
     }
 }
@@ -205,6 +250,125 @@ async function runTests(tests, options = {}) {
         failed,
         skipped,
         results
+    };
+}
+
+/**
+ * Analyze failures and group by type
+ * @param {array} results - Test results array
+ * @returns {object} Failure analysis grouped by type
+ */
+function analyzeFailures(results) {
+    const analysis = {
+        byStatusCode: {},
+        byReason: {},
+        byMethod: {},
+        total: 0,
+        details: []
+    };
+
+    for (const result of results) {
+        if (result.success) continue;
+
+        analysis.total++;
+
+        // Group by HTTP status code
+        const statusKey = result.status || 'CONNECTION_ERROR';
+        if (!analysis.byStatusCode[statusKey]) {
+            analysis.byStatusCode[statusKey] = [];
+        }
+        analysis.byStatusCode[statusKey].push(result.title);
+
+        // Group by failure reason
+        let reasonKey = result.failureReason || 'Unknown';
+        // Simplify reason for grouping
+        if (reasonKey.startsWith('Server error')) {
+            reasonKey = 'Server Error (5xx)';
+        } else if (reasonKey.startsWith('Client error')) {
+            reasonKey = 'Client Error (4xx)';
+        } else if (reasonKey.startsWith('API error')) {
+            reasonKey = 'API Error Code';
+        } else if (reasonKey.startsWith('Expected status')) {
+            reasonKey = 'Unexpected Status';
+        }
+
+        if (!analysis.byReason[reasonKey]) {
+            analysis.byReason[reasonKey] = [];
+        }
+        analysis.byReason[reasonKey].push(result.title);
+
+        // Group by method
+        const methodKey = result.method || 'UNKNOWN';
+        if (!analysis.byMethod[methodKey]) {
+            analysis.byMethod[methodKey] = { fail: 0, tests: [] };
+        }
+        analysis.byMethod[methodKey].fail++;
+        analysis.byMethod[methodKey].tests.push(result.title);
+
+        // Store details for report
+        analysis.details.push({
+            title: result.title,
+            status: result.status,
+            reason: result.failureReason,
+            method: result.method,
+            url: result.url
+        });
+    }
+
+    return analysis;
+}
+
+/**
+ * Find test dependencies (extracted variables usage)
+ * @param {object} tests - Parsed test cases
+ * @param {array} results - Test results
+ * @returns {object} Dependency information
+ */
+function analyzeDependencies(tests, results) {
+    const dependencies = [];
+    const varUsage = {};
+
+    // Build variable usage map
+    for (const result of results) {
+        if (result.extractedVars && Object.keys(result.extractedVars).length > 0) {
+            for (const varName of Object.keys(result.extractedVars)) {
+                if (!varUsage[varName]) {
+                    varUsage[varName] = {
+                        definedIn: result.title,
+                        usedIn: []
+                    };
+                }
+            }
+        }
+    }
+
+    // Find which tests use which variables
+    for (const result of results) {
+        const url = result.url || '';
+        const matches = url.match(/\{\{([^}]+)\}\}/g) || [];
+
+        for (const match of matches) {
+            const varName = match.replace(/\{\{|\}\}/g, '').trim();
+            if (varUsage[varName] && varUsage[varName].definedIn !== result.title) {
+                varUsage[varName].usedIn.push(result.title);
+            }
+        }
+    }
+
+    // Build dependency chains
+    for (const [varName, info] of Object.entries(varUsage)) {
+        if (info.usedIn.length > 0) {
+            dependencies.push({
+                variable: varName,
+                source: info.definedIn,
+                consumers: info.usedIn
+            });
+        }
+    }
+
+    return {
+        variables: varUsage,
+        chains: dependencies
     };
 }
 
@@ -293,5 +457,7 @@ module.exports = {
     runTest,
     runTests,
     formatTestResult,
-    formatSummary
+    formatSummary,
+    analyzeFailures,
+    analyzeDependencies
 };

@@ -379,6 +379,16 @@ DELETE {{endpoint}}/api/users/1
 Authorization: Bearer {{testToken}}
 ```
 
+## Multi-entity dependencies and foreign keys
+
+When several entities share a parent key (e.g. `batch_id`, `notice_id`, `questionnaire_id`):
+
+1. **Do not delete the parent** until every child that still references `{{parentId}}` in the JSON body has finished its **POST → GET → list → PUT → DELETE** cycle.
+2. Placing **`DELETE` on the parent early** (e.g. deleting the batch in section 1 before section 2) typically causes child **POST** to fail with **5xx** and **no `@extract`**, so IDs stay as the literal placeholder **`dynamic`** in URLs → **404 / 4xx** on follow-up requests.
+3. **Preferred patterns**:
+   - Move **parent `DELETE` to the end** of the file (teardown section), or
+   - **Create a fresh parent** at the start of each major block and `@extract` a new id for that block only.
+
 ## Best Practices
 
 1. **Organize tests logically** - Group related tests together
@@ -387,3 +397,4 @@ Authorization: Bearer {{testToken}}
 4. **Add comments** - Explain what each test verifies
 5. **Follow the blank line rule** - Separate test cases with blank lines
 6. **Use force mode for suites** - Run entire test suite even if some tests fail
+7. **Respect parent/child order** - See [Multi-entity dependencies and foreign keys](#multi-entity-dependencies-and-foreign-keys) above

@@ -4,7 +4,13 @@
  * Main test execution script for .http test files
  *
  * Usage:
- *   node test-runner-simple.js <test-file> <output-dir> <report-name>
+ *   node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <substring>]
+ *
+ * Arguments:
+ *   test-file    Path to .http test file (required)
+ *   output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)
+ *   report-name  Name of the report file (optional, default: same as .http filename)
+ *   --filter     Run only tests whose title contains the specified substring (optional)
  */
 
 const fs = require('fs');
@@ -113,38 +119,92 @@ function generateMarkdownReport(summary, reportPath) {
 }
 
 /**
+ * Parse command line arguments
+ * Supports both positional and --filter option
+ */
+function parseArguments(args) {
+    const result = {
+        testFile: null,
+        outputDir: null,
+        reportName: null,
+        filter: null
+    };
+
+    let i = 0;
+    while (i < args.length) {
+        if (args[i] === '--filter' && i + 1 < args.length) {
+            result.filter = args[i + 1];
+            i += 2;
+        } else if (!result.testFile) {
+            result.testFile = args[i];
+            i++;
+        } else if (!result.outputDir) {
+            result.outputDir = args[i];
+            i++;
+        } else if (!result.reportName) {
+            result.reportName = args[i];
+            i++;
+        } else {
+            i++;
+        }
+    }
+
+    return result;
+}
+
+/**
  * Main execution function
  */
 async function main() {
     // Parse command line arguments
     const args = process.argv.slice(2);
 
-    if (args.length < 3) {
-        console.error('Usage: node test-runner-simple.js <test-file> <output-dir> <report-name>');
+    if (args.length < 1) {
+        console.error('Usage: node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <substring>]');
         console.error('');
         console.error('Arguments:');
-        console.error('  test-file    Path to .http test file');
-        console.error('  output-dir   Output directory for reports');
-        console.error('  report-name  Name of the report file (without extension)');
+        console.error('  test-file    Path to .http test file (required)');
+        console.error('  output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)');
+        console.error('  report-name  Name of the report file (optional, default: same as .http filename)');
+        console.error('  --filter     Run only tests whose title contains the specified substring (optional)');
         console.error('');
-        console.error('Example:');
-        console.error('  node test-runner-simple.js ../../public/testcase/eav-api-test.http ../../output test-report');
+        console.error('Examples:');
+        console.error('  node test-runner-simple.js tests/api-test.http');
+        console.error('  node test-runner-simple.js tests/api-test.http custom-output');
+        console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report');
+        console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001');
+        console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report --filter 创建用户');
         process.exit(1);
     }
 
-    const [testFile, outputDir, reportName] = args;
+    const { testFile, outputDir, reportName, filter } = parseArguments(args);
 
     // Resolve paths
     const testFilePath = path.resolve(testFile);
-    const outputDirPath = path.resolve(outputDir);
-    const reportPath = path.join(outputDirPath, `${reportName}.md`);
+
+    // Default output-dir to ./output/ relative to the .http file's directory
+    let outputDirPath;
+    if (outputDir) {
+        outputDirPath = path.resolve(outputDir);
+    } else {
+        const testFileDir = path.dirname(testFilePath);
+        outputDirPath = path.join(testFileDir, 'output');
+    }
+
+    // Default report-name to the .http filename without extension
+    const defaultReportName = path.basename(testFilePath, path.extname(testFilePath));
+    const finalReportName = reportName || defaultReportName;
+    const reportPath = path.join(outputDirPath, `${finalReportName}.md`);
 
     console.log('='.repeat(60));
     console.log('Zero-Test Runner (Simple Version)');
     console.log('='.repeat(60));
     console.log(`Test File:    ${testFilePath}`);
     console.log(`Output Dir:   ${outputDirPath}`);
-    console.log(`Report Name:  ${reportName}`);
+    console.log(`Report Name:  ${finalReportName}`);
+    if (filter) {
+        console.log(`Filter:       ${filter}`);
+    }
     console.log('='.repeat(60));
     console.log('');
 
@@ -179,6 +239,7 @@ async function main() {
     const summary = await runTests(tests, {
         force: true,
         initialVars: initialVars,
+        filter: filter,
         onTestComplete: async (result, index) => {
             const status = result.success ? '✓ PASS' : '✗ FAIL';
             const statusColor = result.success ? '\x1b[32m' : '\x1b[31m';

@@ -46,35 +46,69 @@ function openFile(filePath) {
 }
 
 /**
+ * Parse command line arguments
+ */
+function parseArguments(args) {
+    const result = {
+        testFile: null,
+        mdOutputDir: null,
+        reportName: null,
+        pdfOutputDir: null,
+        filter: null
+    };
+
+    let i = 0;
+    while (i < args.length) {
+        if (args[i] === '--pdf-output-dir' && i + 1 < args.length) {
+            result.pdfOutputDir = args[i + 1];
+            i += 2;
+        } else if (args[i] === '--filter' && i + 1 < args.length) {
+            result.filter = args[i + 1];
+            i += 2;
+        } else if (!result.testFile) {
+            result.testFile = args[i];
+            i++;
+        } else if (!result.mdOutputDir) {
+            result.mdOutputDir = args[i];
+            i++;
+        } else if (!result.reportName) {
+            result.reportName = args[i];
+            i++;
+        } else {
+            i++;
+        }
+    }
+
+    return result;
+}
+
+/**
  * Main execution
  */
 async function main() {
     const args = process.argv.slice(2);
 
     if (args.length < 3) {
-        console.error('Usage: node test-render-pdf-mdpdf.js <test-file> <md-output-dir> <report-name> [--pdf-output-dir]');
+        console.error('Usage: node test-render-pdf-mdpdf.js <test-file> <md-output-dir> <report-name> [--pdf-output-dir] [--filter <substring>]');
         console.error('');
         console.error('Arguments:');
         console.error('  test-file        Path to .http test file');
         console.error('  md-output-dir    Directory for markdown report');
         console.error('  report-name      Name of report (without extension)');
         console.error('  --pdf-output-dir (optional) Directory for PDF (default: ~/Downloads)');
+        console.error('  --filter         (optional) Run only tests whose title contains the specified substring');
         process.exit(1);
     }
 
-    const [testFile, mdOutputDir, reportName, ...rest] = args;
+    const { testFile, mdOutputDir, reportName, pdfOutputDir, filter } = parseArguments(args);
 
-    // Parse optional PDF output directory
-    let pdfOutputDir = path.join(getHomeDir(), 'Downloads');
-    const pdfDirIndex = rest.indexOf('--pdf-output-dir');
-    if (pdfDirIndex !== -1 && rest[pdfDirIndex + 1]) {
-        pdfOutputDir = rest[pdfDirIndex + 1];
-    }
+    // Default PDF output directory if not specified
+    const finalPdfOutputDir = pdfOutputDir || path.join(getHomeDir(), 'Downloads');
 
     // Resolve paths
     const testFilePath = path.resolve(testFile);
     const mdOutputDirPath = path.resolve(mdOutputDir);
-    const pdfOutputDirPath = path.resolve(pdfOutputDir);
+    const pdfOutputDirPath = path.resolve(finalPdfOutputDir);
 
     const mdReportPath = path.join(mdOutputDirPath, `${reportName}.md`);
     const pdfReportPath = path.join(pdfOutputDirPath, `${reportName}.pdf`);
@@ -88,6 +122,9 @@ async function main() {
     console.log(`Test File:     ${testFilePath}`);
     console.log(`MD Output:     ${mdReportPath}`);
     console.log(`PDF Output:    ${pdfReportPath}`);
+    if (filter) {
+        console.log(`Filter:        ${filter}`);
+    }
     console.log('============================================================');
     console.log(`PDF Converter: ${converterInfo.name}`);
     console.log(`Available:     ${converterInfo.available ? '✓ Yes' : '✗ No'}`);
@@ -131,8 +168,26 @@ async function main() {
     const parser = new HttpParser();
     const tests = parser.parseHttpContent(testContent);
 
-    const testCount = Object.keys(tests).filter(k => k !== 'current').length;
-    console.log(`Found ${testCount} test cases`);
+    // Get initial variables for runtime context
+    const initialVars = parser.getInitialVars();
+
+    const allTestCount = Object.keys(tests).filter(k => k !== 'current').length;
+
+    // Count tests that match the filter
+    let filteredTestCount = allTestCount;
+    if (filter) {
+        const filterLower = filter.toLowerCase();
+        filteredTestCount = Object.keys(tests).filter(k =>
+            k !== 'current' &&
+            k.toLowerCase().includes(filterLower)
+        ).length;
+    }
+
+    if (filter) {
+        console.log(`Found ${allTestCount} total test cases, ${filteredTestCount} matching filter "${filter}"`);
+    } else {
+        console.log(`Found ${allTestCount} test cases`);
+    }
     console.log('');
 
     // Run tests
@@ -142,6 +197,8 @@ async function main() {
     const startTime = Date.now();
     const summary = await runTests(tests, {
         force: true,
+        initialVars: initialVars,
+        filter: filter,
         onTestComplete: async (result, index) => {
             const status = result.success ? '✓ PASS' : '✗ FAIL';
             const statusColor = result.success ? '\x1b[32m' : '\x1b[31m';
@@ -167,7 +224,7 @@ async function main() {
 
     // Generate markdown report
     console.log('Generating markdown report...');
-    const markdown = generateMarkdown(summary);
+    const markdown = generateMarkdown(summary, filter);
     fs.writeFileSync(mdReportPath, markdown, 'utf-8');
     console.log(`✓ Markdown saved: ${mdReportPath}`);
     console.log('');

@@ -165,6 +165,21 @@ class HttpParser {
                 });
             }
         }
+
+        /**
+         * Parse expect directive: # @expect <statusCode>
+         * Example: # @expect 201
+         * Example: # @expect 200-299
+         */
+        const expectMatch = line.match(/^#\s*@expect\s+(\d+)(?:\s*-\s*(\d+))?$/);
+        if (expectMatch) {
+            const minStatus = parseInt(expectMatch[1], 10);
+            const maxStatus = expectMatch[2] ? parseInt(expectMatch[2], 10) : minStatus;
+
+            if (this.TESTS['current']) {
+                this.TESTS['current']['expectedStatus'] = { min: minStatus, max: maxStatus };
+            }
+        }
     }
 
     parseTestTitle(line) {

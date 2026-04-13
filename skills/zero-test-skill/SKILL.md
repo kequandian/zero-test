@@ -31,7 +31,11 @@ node test-render-pdf-mdpdf.js ../../path/to/test.http ../../output report-name
 - **.http File Format**: Use familiar HTTP request format
 - **Variable Substitution**: Define variables and reuse across tests
 - **Dynamic Variable Extraction**: Capture values from API responses and use in subsequent requests
+- **Expected Status Validation**: Specify expected HTTP status codes for each test
 - **Multiple HTTP Methods**: GET, POST, PUT, PATCH, DELETE, etc.
+- **Test Filtering**: Run only tests matching a specific substring with `--filter`
+- **Enhanced Failure Analysis**: Group failures by status code, reason, and method
+- **Test Dependency Tracking**: Visualize variable extraction and usage across tests
 - **Test Reports**: Generate Markdown and PDF reports
 - **Flexible Testing**: Ideal for API testing, contract testing, smoke tests
 
@@ -125,11 +129,92 @@ Authorization: Bearer {{token}}
 - Variables can be used in URLs, headers, and request bodies
 - If the path doesn't exist, no variable is created (no error)
 
+### Expected Status Validation
+
+Specify the expected HTTP status code for each test:
+
+```
+### Create Resource
+# Expect 201 Created status
+
+POST {{baseUrl}}/api/resources
+Authorization: Bearer {{token}}
+
+{
+    "name": "Test Resource"
+}
+
+# @expect 201
+
+### Get Resource
+# Expect 200 OK
+
+GET {{baseUrl}}/api/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+# @expect 200
+
+### Update Resource
+# Expect any 2xx status
+
+PUT {{baseUrl}}/api/resources/{{resourceId}}
+Authorization: Bearer {{token}}
+
+{
+    "name": "Updated"
+}
+
+# @expect 200-299
+```
+
+**Expect Syntax**: `# @expect <statusCode>` or `# @expect <min>-<max>`
+
+- Single status: `# @expect 201` - Test passes only if response status is 201
+- Status range: `# @expect 200-299` - Test passes if response status is within range
+- If no `@expect` is specified, test passes for any 2xx status
+- Expected status is shown in both console output and markdown report
+- If status doesn't match, failure reason will include expected vs actual
+
 ## Running Tests
 
 ### Basic Usage
 ```bash
 node test-runner-simple.js <test-file> <output-dir> <report-name>
+```
+
+### Filtering Tests
+
+You can run only a subset of tests by using the `--filter` option:
+
+```bash
+# Run only tests whose title contains "Create"
+node test-runner-simple.js tests/api-tests.http output report --filter "Create"
+
+# Run only tests whose title contains "TC-001"
+node test-runner-simple.js tests/api-tests.http output report --filter "TC-001"
+
+# Filter with Chinese characters
+node test-runner-simple.js tests/api-tests.http output report --filter "创建用户"
+```
+
+**Filter behavior:**
+- Only tests whose title contains the filter substring (case-insensitive) will be executed
+- The generated report will only include filtered test results
+- The report will show a filter indicator at the top: `**🔍 Filter:** <your filter>`
+- Console output shows both total test count and filtered count
+
+Example output with filter:
+```
+Found 10 total test cases, 2 matching filter "Create"
+```
+
+Example report header with filter:
+```markdown
+# Test Report
+
+**🔍 Filter:** Create
+
+*This report only shows test cases matching the filter.*
 ```
 
 ### Example
@@ -152,12 +237,13 @@ node test-runner-simple.js \
 
 The test runner generates:
 - **Console Output**: Real-time test execution status with ✓ PASS / ✗ FAIL indicators
-- **Markdown Report**: Detailed test results in markdown format
+- **Failure Analysis**: Grouped failures by status code, reason, and method
+- **Markdown Report**: Detailed test results with failure analysis
 
 Example console output:
 ```
 ============================================================
-Zero-Test Runner
+Zero-Test Runner (Enhanced)
 ============================================================
 Test File:    tests/api-tests.http
 Output Dir:   output
@@ -167,11 +253,15 @@ Found 10 test cases
 
 Running tests...
 ------------------------------------------------------------
-[1] ✓ PASS - Health Check (200 OK)
-[2] ✓ PASS - List Users (200 OK)
-[3] ✓ PASS - Create User (201 Created) [Extracted: userId=123]
-[4] ✓ PASS - Get User (200 OK) [Extracted: userName=John, email=john@example.com]
-[5] ✗ FAIL - Update User (400 Bad Request)
+[1] ✓ PASS - Health Check (200)
+[2] ✓ PASS - List Users (200)
+[3] ✓ PASS - Create User (201) [Extracted: userId=123]
+[4] ✓ PASS - Get User (200)
+       Extracted: userName=John, email=john@example.com
+[5] ✗ FAIL - Update User (400, expected 200)
+       Reason: Client error 400: Bad Request
+[6] ✗ FAIL - Delete User (500)
+       Reason: Server error 500: Internal Server Error
 ...
 ------------------------------------------------------------
 
@@ -184,6 +274,57 @@ Skipped:       0
 Duration:      1.23s
 Pass Rate:     80.0%
 ============================================================
+
+❌ Failure Analysis:
+------------------------------------------------------------
+
+By Status Code:
+  500 (1 test)
+  400 (1 test)
+
+By Failure Reason:
+  • Server Error (5xx) (1)
+  • Client Error (4xx) (1)
+------------------------------------------------------------
+```
+
+Example console output with `--filter Create`:
+```
+============================================================
+Zero-Test Runner (Simple Version)
+============================================================
+Test File:    tests/api-tests.http
+Output Dir:   output
+Report Name:  api-test-report
+Filter:       Create
+============================================================
+Found 10 total test cases, 2 matching filter "Create"
+
+Running tests...
+------------------------------------------------------------
+[1] ✓ PASS - Create User (201)
+[2] ✓ PASS - Create Post (201)
+------------------------------------------------------------
+
+Test Execution Summary
+============================================================
+Total Tests:   2
+Passed:        2
+Failed:        0
+Skipped:       0
+Duration:      0.45s
+Pass Rate:     100.0%
+============================================================
+```
+
+By Status Code:
+  500 (1 test)
+  400 (1 test)
+
+By Failure Reason:
+  • Server Error (5xx) (1)
+  • Client Error (4xx) (1)
+------------------------------------------------------------
 ```
 
 ## Script Modules
@@ -317,15 +458,28 @@ Each test result includes:
     url: "http://api.example.com/users",
     success: true,
     status: 200,
+    statusText: "OK",
     response: "{...}",
     timestamp: "2025-03-21T10:30:00.000Z",
-    duration: 123,
     extractedVars: {
         userId: 123,
         userName: "John Doe"
-    }
+    },
+    expectedStatus: { min: 200, max: 299 },  // If @expect was used
+    failureReason: null  // Set if success is false
 }
 ```
+
+### Failure Reasons
+
+When a test fails, `failureReason` explains why:
+
+- `Server error 500: Internal Server Error` - HTTP 5xx status
+- `Client error 400: Bad Request` - HTTP 4xx status
+- `Expected status 201, got 200` - Status didn't match @expect
+- `API error code 5001: Invalid token` - API-level error with 2xx HTTP status
+- `Connection failed` - Network or DNS error
+- `Exception: ...` - Unexpected error during request
 
 ### Extracted Variables in Reports
 
@@ -352,6 +506,42 @@ The test report includes a dedicated section for extracted variables:
 ```
 
 ## Advanced Features
+
+### Failure Analysis
+
+The test runner automatically analyzes failures and groups them by:
+
+- **Status Code**: See which HTTP status codes are causing failures
+- **Failure Reason**: Common reasons include Server Error (5xx), Client Error (4xx), API Error Code, Unexpected Status
+- **HTTP Method**: See which methods (GET, POST, etc.) are failing most
+
+This analysis is shown in:
+- Console output (immediate feedback)
+- Markdown report (detailed investigation)
+
+### Test Dependency Tracking
+
+The framework tracks how variables flow through tests:
+
+```markdown
+## 🔗 Test Dependencies
+
+The following extracted variables are used across tests:
+
+- `userId`: Defined in Create User → Used in:
+  - Get User
+  - Update User
+  - Delete User
+
+- `resourceId`: Defined in Create Resource → Used in:
+  - Get Resource
+  - Update Resource
+```
+
+This helps you:
+- Understand test order dependencies
+- Identify which tests might fail if a previous test fails
+- Plan test data cleanup
 
 ### Environment-Specific Variables
 ```

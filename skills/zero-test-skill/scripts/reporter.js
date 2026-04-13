@@ -10,14 +10,28 @@ const path = require('path');
 /**
  * Generate markdown from test summary with full formatting
  * @param {object} summary - Test run summary
+ * @param {string} filter - Filter used for test selection (optional)
  * @returns {string} Markdown content with full syntax support
  */
-function generateMarkdown(summary) {
+function generateMarkdown(summary, filter = null) {
     const lines = [];
 
     // Title and metadata
     lines.push('# 📊 Test Report');
     lines.push('');
+
+    // Add filter info if present
+    if (filter) {
+        lines.push('## 🔍 Filter Applied');
+        lines.push('');
+        lines.push(`**Filter:** \`${filter}\``);
+        lines.push('');
+        lines.push('*This report only shows test cases matching the filter.*');
+        lines.push('');
+        lines.push('---');
+        lines.push('');
+    }
+
     lines.push('## 📋 Summary');
     lines.push('');
     lines.push('| Metric | Value |');
