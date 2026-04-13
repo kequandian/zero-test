@@ -65,8 +65,12 @@ function substituteVariables(template, context) {
  * @returns {Promise<object>} Test result with extracted variables
  */
 async function runTest(test, context = {}) {
+    // Clean up title: remove ### prefix and trim whitespace
+    const rawTitle = test.key || 'Untitled Test';
+    const cleanTitle = rawTitle.replace(/^#+\s*/, '').trim();
+
     const result = {
-        title: test.key || 'Untitled Test',
+        title: cleanTitle,
         method: test.method,
         url: test.request,
         success: false,
@@ -131,13 +135,15 @@ async function runTest(test, context = {}) {
  * @param {boolean} options.force - Continue on errors
  * @param {function} options.onTestComplete - Callback after each test
  * @param {object} options.initialVars - Initial variables from parser
+ * @param {string} options.filter - Run only tests whose title contains this substring
  * @returns {Promise<object>} Test run summary
  */
 async function runTests(tests, options = {}) {
     const {
         force = true,
         onTestComplete = null,
-        initialVars = {}
+        initialVars = {},
+        filter = null
     } = options;
 
     const results = [];
@@ -149,7 +155,13 @@ async function runTests(tests, options = {}) {
     const context = { ...initialVars };
 
     // Get test keys (excluding 'current' if exists)
-    const testKeys = Object.keys(tests).filter(k => k !== 'current');
+    let testKeys = Object.keys(tests).filter(k => k !== 'current');
+
+    // Apply filter if provided
+    if (filter) {
+        const filterLower = filter.toLowerCase();
+        testKeys = testKeys.filter(k => k.toLowerCase().includes(filterLower));
+    }
 
     for (const key of testKeys) {
         const test = tests[key];

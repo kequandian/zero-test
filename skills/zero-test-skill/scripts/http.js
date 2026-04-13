@@ -40,7 +40,14 @@ async function sendRequest(method, url, options = {}) {
     };
 
     if (token) {
-        requestHeaders['Authorization'] = `Bearer ${token}`;
+        // Don't add 'Bearer ' prefix if token already starts with it
+        if (token.startsWith('Bearer ')) {
+            requestHeaders['Authorization'] = token;
+        } else if (token.startsWith('bearer ')) {
+            requestHeaders['Authorization'] = 'Bearer ' + token.substring(7);
+        } else {
+            requestHeaders['Authorization'] = `Bearer ${token}`;
+        }
     }
 
     // Prepare request config
@@ -116,19 +123,21 @@ async function sendRequest(method, url, options = {}) {
  * @returns {boolean}
  */
 function isSuccessful(response) {
-    // Check HTTP status
-    if (response.status >= 200 && response.status < 300) {
-        return true;
+    // Check API-specific response format FIRST (for APIs that return HTTP 200 with error codes)
+    if (response.data && typeof response.data === 'object') {
+        // Check for code field (common in Chinese APIs like ours)
+        if ('code' in response.data) {
+            return response.data.code === 200 || response.data.code === 0;
+        }
+        // Check for status_code field
+        if ('status_code' in response.data) {
+            return response.data.status_code === 0;
+        }
     }
 
-    // Check API-specific response format
-    if (response.data) {
-        // Common API success patterns
-        if (response.data.code === 200 ||
-            response.data.code === 0 ||
-            response.data.status_code === 0) {
-            return true;
-        }
+    // Fallback: Check HTTP status
+    if (response.status >= 200 && response.status < 300) {
+        return true;
     }
 
     return false;

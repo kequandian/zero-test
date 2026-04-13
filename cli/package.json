@@ -1,0 +1,23 @@
+{
+  "name": "run-http-test",
+  "version": "1.0.0",
+  "description": "Global CLI for running .http test files with zero-test-skill",
+  "main": "index.js",
+  "bin": {
+    "run-http-test": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "http",
+    "test",
+    "cli",
+    "zero-test"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9"
+  }
+}
