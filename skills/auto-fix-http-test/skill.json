@@ -1,0 +1,82 @@
+{
+  "name": "auto-fix-http-test",
+  "description": "Intelligent HTTP test runner with error analysis and iterative fixing. Parses test reports for specific error causes, applies targeted fixes, and retries until tests pass.",
+  "version": "3.0.0",
+  "author": "MDM AdCloud Team",
+  "triggers": [
+    "auto fix http test",
+    "fix and retry tests",
+    "analyze and fix tests",
+    "continuous test fixing"
+  ],
+  "parameters": {
+    "test-file": {
+      "type": "string",
+      "required": true,
+      "description": "Path to .http test file"
+    },
+    "filter": {
+      "type": "string",
+      "required": false,
+      "description": "Substring to filter test cases"
+    },
+    "max-retries": {
+      "type": "number",
+      "required": false,
+      "default": 5,
+      "description": "Maximum fix iterations"
+    }
+  },
+  "features": [
+    "Parse test reports for specific error messages",
+    "Categorize errors by type (NPE, SQL, 404, 500, etc.)",
+    "Attempt automatic fixes for common issues",
+    "Restart application when needed",
+    "Iterative retry until all tests pass",
+    "Non-interactive mode for CI/CD"
+  ],
+  "error_handlers": {
+    "NullPointerException": {
+      "detects": "NullPointerException in stack trace",
+      "fixes": "Adds TODO comments and suggests null checks"
+    },
+    "SQLException": {
+      "detects": "SQL syntax errors, table/column not found",
+      "fixes": "Fixes SQL syntax, adds missing tables to schema.sql"
+    },
+    "404 Not Found": {
+      "detects": "Missing endpoint",
+      "fixes": "Suggests controller implementation"
+    },
+    "400 Bad Request": {
+      "detects": "Type conversion, validation errors",
+      "fixes": "Checks @extract directives, parameter types"
+    },
+    "401/403": {
+      "detects": "Authentication/authorization failures",
+      "fixes": "Suggests security configuration check"
+    },
+    "Connection Refused": {
+      "detects": "Application not running",
+      "fixes": "Automatically restarts application"
+    }
+  },
+  "workflow": {
+    "steps": [
+      "1. Run HTTP tests",
+      "2. Parse report for error details",
+      "3. Analyze each failure by error type",
+      "4. Apply targeted fixes",
+      "5. Restart app if needed",
+      "6. Re-run tests",
+      "7. Repeat until pass or max retries"
+    ]
+  },
+  "environment": {
+    "AUTO_FIX_MODE": "true",
+    "AUTO_RESTART_APP": "true",
+    "SPRING_BOOT_JVM_ARGS": "-Dspring.classformat.ignore=true"
+  },
+  "categories": ["testing", "automation", "self-healing"],
+  "keywords": ["http", "test", "fix", "iterate", "continuous"]
+}
