@@ -24,6 +24,20 @@ const HttpParser = require('./scripts/parser');
 const { runTests } = require('./scripts/runner');
 
 /**
+ * Pretty-print request body for markdown (JSON if parseable, else raw)
+ */
+function formatRequestBodyForMarkdown(body) {
+    if (body == null) return null;
+    const s = String(body).trim();
+    if (!s) return null;
+    try {
+        return JSON.stringify(JSON.parse(s), null, 2);
+    } catch {
+        return s;
+    }
+}
+
+/**
  * Generate markdown report (without PDF)
  */
 function generateMarkdownReport(summary, reportPath) {
@@ -73,6 +87,15 @@ function generateMarkdownReport(summary, reportPath) {
         lines.push(`**Status:** ${result.status} ${result.statusText}`);
         lines.push(`**Time:** ${result.timestamp}`);
         lines.push('');
+
+        const reqBodyMd = formatRequestBodyForMarkdown(result.requestBody);
+        if (reqBodyMd) {
+            lines.push('**Request body:**');
+            lines.push('```json');
+            lines.push(reqBodyMd);
+            lines.push('```');
+            lines.push('');
+        }
 
         if (result.response) {
             lines.push('**Response:**');

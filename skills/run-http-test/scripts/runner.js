@@ -79,13 +79,19 @@ async function runTest(test, context = {}) {
         response: null,
         error: null,
         timestamp: new Date().toISOString(),
-        extractedVars: {} // Track extracted variables
+        extractedVars: {}, // Track extracted variables
+        requestBody: null // Compiled request body for reports (when .http block had a body)
     };
 
     try {
         // JIT COMPILATION: Substitute variables at runtime
         const compiledUrl = substituteVariables(test.request, context);
         const compiledBody = test.body ? substituteVariables(test.body, context) : undefined;
+
+        if (test.body) {
+            result.requestBody =
+                compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : '';
+        }
 
         // Handle token with lazy binding
         let token = test.token; // Old way (already substituted)
@@ -333,6 +339,20 @@ function formatTestResult(result) {
     lines.push(`**Status:** ${result.status} ${result.statusText}`);
     lines.push(`**Time:** ${result.timestamp}`);
     lines.push('');
+
+    if (result.requestBody != null && String(result.requestBody).trim() !== '') {
+        let reqFmt = String(result.requestBody).trim();
+        try {
+            reqFmt = JSON.stringify(JSON.parse(reqFmt), null, 2);
+        } catch {
+            // keep raw
+        }
+        lines.push('**Request body:**');
+        lines.push('```json');
+        lines.push(reqFmt);
+        lines.push('```');
+        lines.push('');
+    }
 
     if (result.response) {
         lines.push('**Response:**');

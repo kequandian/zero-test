@@ -247,7 +247,8 @@ Markdown report saved: tests/output/api-test-report.md
 包含：
 - 测试概览（总数、通过、失败、耗时）
 - 每个测试用例的详细信息
-- 请求/响应详情
+- **Request body**（当 `.http` 用例块内声明了请求体时，写入报告，JSON 会格式化）
+- 响应体（Response）
 
 ## 判定规则
 
