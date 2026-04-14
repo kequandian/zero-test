@@ -1,6 +1,6 @@
 ---
 name: run-http-test
-description: 通用 HTTP API 测试技能。执行 .http 测试文件，对目标 API 发送真实 HTTP 请求，输出实时 PASS/FAIL 控制台结果，并自动生成 Markdown 测试报告。支持按标题子串过滤测试用例。
+description: 通用 HTTP API 测试技能。执行 .http 测试文件，对目标 API 发送真实 HTTP 请求，输出实时 PASS/FAIL 控制台结果，并自动生成 Markdown 测试报告。支持按标题子串过滤测试用例（支持逗号分隔多条件，如 TC-001,TC-005；支持范围表达式，如 TC-001:TC-010）。
 ---
 
 # run-http-skill
@@ -42,7 +42,7 @@ node (技能目录)/test-runner-simple.js <test-file.http> [output-dir] [report-
 | `<test-file.http>` | `.http` 测试文件路径（相对或绝对路径） | 必填 | `tests/api-tests.http` |
 | `[output-dir]` | 报告输出目录（自动创建） | 可选 | `tests/output` |
 | `[report-name]` | 报告文件名（不含扩展名） | 可选 | `api-test-report` |
-| `--filter` | 仅运行标题包含指定子串的测试用例（不区分大小写） | 可选 | `TC-001`、`创建用户` |
+| `--filter` | 仅运行标题包含指定过滤条件的测试用例（不区分大小写）<br/>• 逗号分隔：`TC-001,TC-005`<br/>• 范围表达式：`TC-001:TC-010` (展开为 001-010)<br/>• 混合使用：`TC-001:TC-005,TC-008`<br/>• OR 逻辑：匹配任一条件即运行 | 可选 | `TC-001`、`TC-001,TC-005`、`TC-001:TC-010`、`创建用户` |
 
 **默认值**：
 - `output-dir`: `.http` 文件所在目录下的 `./output/` 子目录
@@ -79,12 +79,24 @@ node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter T
 # 仅运行标题包含 "创建用户" 的测试用例
 node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter 创建用户
 
+# 多条件过滤：仅运行标题包含 "TC-001" 或 "TC-005" 或 "TC-010" 的测试用例
+node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter TC-001,TC-005,TC-010
+
+# 范围过滤：运行 TC-001 到 TC-010 的所有测试用例
+node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter TC-001:TC-010
+
+# 混合过滤：运行 TC-001 到 TC-005，以及 TC-008
+node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter TC-001:TC-005,TC-008
+
+# 反向范围：自动识别并从小到大展开（TC-008:TC-002 等同于 TC-002:TC-008）
+node skills/run-http-skill/test-runner-simple.js tests/api-tests.http --filter TC-008:TC-002
+
 # 组合使用：自定义输出 + 过滤器
 node skills/run-http-skill/test-runner-simple.js \
   tests/api-tests.http \
   custom-output \
   custom-report \
-  --filter TC-001
+  --filter TC-001:TC-010
 ```
 
 ### 创建便捷别名（可选）

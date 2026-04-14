@@ -11,6 +11,7 @@
  *   output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)
  *   report-name  Name of the report file (optional, default: same as .http filename)
  *   --filter     Run only tests whose title contains the specified substring (optional)
+ *                Supports both formats: --filter VALUE or --filter=VALUE
  */
 
 const fs = require('fs');
@@ -226,17 +227,27 @@ function parseArguments(args) {
 
     let i = 0;
     while (i < args.length) {
-        if (args[i] === '--filter' && i + 1 < args.length) {
+        const arg = args[i];
+
+        // Handle --filter=value format
+        if (arg.startsWith('--filter=')) {
+            result.filter = arg.substring(9); // Remove '--filter=' prefix
+            i++;
+        }
+        // Handle --filter value format
+        else if (arg === '--filter' && i + 1 < args.length) {
             result.filter = args[i + 1];
             i += 2;
-        } else if (!result.testFile) {
-            result.testFile = args[i];
+        }
+        // Handle positional arguments
+        else if (!result.testFile) {
+            result.testFile = arg;
             i++;
         } else if (!result.outputDir) {
-            result.outputDir = args[i];
+            result.outputDir = arg;
             i++;
         } else if (!result.reportName) {
-            result.reportName = args[i];
+            result.reportName = arg;
             i++;
         } else {
             i++;
@@ -261,12 +272,14 @@ async function main() {
         console.error('  output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)');
         console.error('  report-name  Name of the report file (optional, default: same as .http filename)');
         console.error('  --filter     Run only tests whose title contains the specified substring (optional)');
+        console.error('               Supports both formats: --filter VALUE or --filter=VALUE');
         console.error('');
         console.error('Examples:');
         console.error('  node test-runner-simple.js tests/api-test.http');
         console.error('  node test-runner-simple.js tests/api-test.http custom-output');
         console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report');
         console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001');
+        console.error('  node test-runner-simple.js tests/api-test.http --filter=TC-001');
         console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report --filter 创建用户');
         process.exit(1);
     }

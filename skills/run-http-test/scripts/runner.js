@@ -129,13 +129,116 @@ async function runTest(test, context = {}) {
 }
 
 /**
+ * Extract test case number from title (e.g., "TC-001 Get Users" -> 1)
+ * @param {string} title - Test case title
+ * @returns {number|null} Extracted number or null if not found
+ */
+function extractTestNumber(title) {
+    // Match patterns like "TC-001", "TEST-123", "TC001", etc.
+    const match = title.match(/[A-Z]+-?(\d+)/i);
+    if (match) {
+        return parseInt(match[1], 10);
+    }
+    return null;
+}
+
+/**
+ * Check if a test key matches a filter pattern
+ * Supports both substring matching and numeric range matching
+ * @param {string} testKey - Test case key/title
+ * @param {string} filter - Filter pattern
+ * @returns {boolean} True if the test matches the filter
+ */
+function testMatchesFilter(testKey, filter) {
+    const testLower = testKey.toLowerCase();
+    const filterLower = filter.toLowerCase();
+
+    // Direct substring match
+    if (testLower.includes(filterLower)) {
+        return true;
+    }
+
+    // Try numeric matching for patterns like TC-001, TC001, etc.
+    const testNum = extractTestNumber(testKey);
+    const filterNum = extractTestNumber(filter);
+
+    if (testNum !== null && filterNum !== null && testNum === filterNum) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Expand filter range expression (e.g., "TC-001:TC-005" -> ["TC-001", "TC-002", ..., "TC-005"])
+ * Handles different number formats (TC-1:TC-5, TC-001:TC-005) intelligently
+ * @param {string} filter - Filter expression that may contain range
+ * @returns {Array<string>} Array of expanded filter patterns
+ */
+function expandFilterRange(filter) {
+    // Check for pattern like "TC-001:TC-005" or "TC-1:TC-5"
+    const patternMatch = filter.match(/^(.+?)-(\d+):(.+?)-(\d+)$/);
+    if (patternMatch) {
+        const prefix = patternMatch[1];
+        const startNumStr = patternMatch[2];
+        const endPrefix = patternMatch[3];
+        const endNumStr = patternMatch[4];
+        const startNum = parseInt(startNumStr, 10);
+        const endNum = parseInt(endNumStr, 10);
+
+        // Verify prefixes match and numbers are valid
+        if (prefix === endPrefix && !isNaN(startNum) && !isNaN(endNum)) {
+            const expanded = [];
+            const min = Math.min(startNum, endNum);
+            const max = Math.max(startNum, endNum);
+
+            // Use the max padding length from start/end numbers
+            const maxPadding = Math.max(startNumStr.length, endNumStr.length);
+
+            for (let i = min; i <= max; i++) {
+                // Generate pattern with original padding format
+                const numStr = String(i).padStart(maxPadding, '0');
+                expanded.push(`${prefix}-${numStr}`);
+            }
+            return expanded;
+        }
+    }
+    return [filter]; // No range, return original filter
+}
+
+/**
+ * Parse and expand filter expressions
+ * Supports comma-separated values and range expressions
+ * @param {string} filter - Filter expression(s)
+ * @returns {Array<string>} Array of expanded filter patterns
+ */
+function parseFilters(filter) {
+    if (!filter) return [];
+
+    // Split by comma and process each part
+    const parts = filter.split(',').map(f => f.trim()).filter(f => f);
+    const expanded = [];
+
+    for (const part of parts) {
+        // Check if this part is a range expression (contains :)
+        if (part.includes(':')) {
+            expanded.push(...expandFilterRange(part));
+        } else {
+            expanded.push(part);
+        }
+    }
+
+    return expanded;
+}
+
+/**
  * Run multiple test cases with shared variable context
  * @param {object} tests - Parsed test cases object
  * @param {object} options - Execution options
  * @param {boolean} options.force - Continue on errors
  * @param {function} options.onTestComplete - Callback after each test
  * @param {object} options.initialVars - Initial variables from parser
- * @param {string} options.filter - Run only tests whose title contains this substring
+ * @param {string} options.filter - Run only tests whose title contains this substring (supports comma-separated and range expressions)
  * @returns {Promise<object>} Test run summary
  */
 async function runTests(tests, options = {}) {
@@ -157,10 +260,16 @@ async function runTests(tests, options = {}) {
     // Get test keys (excluding 'current' if exists)
     let testKeys = Object.keys(tests).filter(k => k !== 'current');
 
-    // Apply filter if provided
+    // Apply filter if provided (supports comma-separated and range expressions)
     if (filter) {
-        const filterLower = filter.toLowerCase();
-        testKeys = testKeys.filter(k => k.toLowerCase().includes(filterLower));
+        // Parse and expand filter expressions
+        const filters = parseFilters(filter);
+
+        testKeys = testKeys.filter(k => {
+            // Match if ANY of the filters match the test key (OR logic)
+            // If a filter pattern matches no tests, it's silently skipped
+            return filters.some(f => testMatchesFilter(k, f));
+        });
     }
 
     for (const key of testKeys) {

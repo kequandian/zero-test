@@ -4,13 +4,16 @@
  * Main test execution script for .http test files
  *
  * Usage:
- *   node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <substring>]
+ *   node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <filters>]
  *
  * Arguments:
  *   test-file    Path to .http test file (required)
  *   output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)
  *   report-name  Name of the report file (optional, default: same as .http filename)
- *   --filter     Run only tests whose title contains the specified substring (optional)
+ *   --filter     Run only tests whose title contains the specified filter(s) (optional)
+ *                Supports comma-separated: --filter=TC-001,TC-005
+ *                Supports range expression: --filter=TC-001:TC-005 (expands to TC-001 through TC-005)
+ *                Multiple filters use OR logic: runs tests matching ANY filter
  */
 
 const fs = require('fs');
@@ -132,7 +135,13 @@ function parseArguments(args) {
 
     let i = 0;
     while (i < args.length) {
-        if (args[i] === '--filter' && i + 1 < args.length) {
+        // Handle --filter=value format (equals sign)
+        if (args[i].startsWith('--filter=')) {
+            result.filter = args[i].substring(9); // Remove '--filter=' prefix
+            i++;
+        }
+        // Handle --filter value format (space-separated)
+        else if (args[i] === '--filter' && i + 1 < args.length) {
             result.filter = args[i + 1];
             i += 2;
         } else if (!result.testFile) {
@@ -160,13 +169,16 @@ async function main() {
     const args = process.argv.slice(2);
 
     if (args.length < 1) {
-        console.error('Usage: node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <substring>]');
+        console.error('Usage: node test-runner-simple.js <test-file> [output-dir] [report-name] [--filter <filters>]');
         console.error('');
         console.error('Arguments:');
         console.error('  test-file    Path to .http test file (required)');
         console.error('  output-dir   Output directory for reports (optional, default: ./output/ relative to .http file)');
         console.error('  report-name  Name of the report file (optional, default: same as .http filename)');
-        console.error('  --filter     Run only tests whose title contains the specified substring (optional)');
+        console.error('  --filter     Run only tests whose title contains the specified filter(s) (optional)');
+        console.error('               Supports comma-separated: --filter=TC-001,TC-005');
+        console.error('               Supports range expression: --filter=TC-001:TC-005 (expands to 001-005)');
+        console.error('               Multiple filters use OR logic: runs tests matching ANY filter');
         console.error('');
         console.error('Examples:');
         console.error('  node test-runner-simple.js tests/api-test.http');
@@ -174,6 +186,9 @@ async function main() {
         console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report');
         console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001');
         console.error('  node test-runner-simple.js tests/api-test.http custom-output custom-report --filter 创建用户');
+        console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001,TC-005,TC-010');
+        console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001:TC-010  (range)');
+        console.error('  node test-runner-simple.js tests/api-test.http --filter TC-001:TC-005,TC-008  (mixed)');
         process.exit(1);
     }
 

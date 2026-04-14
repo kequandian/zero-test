@@ -5,12 +5,16 @@
  * This CLI executes the zero-test-skill test runner from any location.
  *
  * Usage:
- *   run-http-test <test-file> [output-dir] [report-name]
+ *   run-http-test <test-file> [output-dir] [report-name] [--filter <substring>]
  *
  * Arguments:
  *   test-file    Path to .http test file (required)
  *   output-dir   Output directory for reports (optional)
  *   report-name  Name of the report file (optional)
+ *
+ * Options:
+ *   --filter     Run only tests whose title contains the specified substring
+ *                Supports: --filter VALUE or --filter=VALUE
  *
  * Installation:
  *   cd /path/to/zero-test/cli
@@ -52,12 +56,22 @@ for (let i = 0; i < args.length; i++) {
     if (skipNext) {
         resolvedArgs.push(args[i]);
         skipNext = false;
-        positionalCount++;
         continue;
     }
+    // Handle --filter=value format (equals sign)
+    if (args[i].startsWith('--filter=')) {
+        resolvedArgs.push(args[i]);
+        continue;
+    }
+    // Handle --filter value or -f value format (space-separated)
     if (args[i] === '--filter' || args[i] === '-f') {
         resolvedArgs.push(args[i]);
         skipNext = true;
+        continue;
+    }
+    // Skip other flags/options (don't count as positional, don't resolve paths)
+    if (args[i].startsWith('-')) {
+        resolvedArgs.push(args[i]);
         continue;
     }
     // Only resolve the first positional argument (test-file)
@@ -88,12 +102,15 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log('  -v, --version    Show version number');
     console.log('  --filter <text>  Run only tests whose title contains the specified text');
     console.log('                   The report will only include filtered test results');
+    console.log('                   Supports: --filter VALUE or --filter=VALUE');
     console.log('');
     console.log('Examples:');
     console.log('  run-http-test tests/api-test.http');
     console.log('  run-http-test tests/api-test.http custom-output');
     console.log('  run-http-test tests/api-test.http custom-output my-report');
     console.log('  run-http-test tests/api-test.http --filter "Create User"');
+    console.log('  run-http-test tests/api-test.http --filter=TC-001');
+    console.log('  run-http-test tests/api-test.http --filter TC-001:TC-010');
     console.log('  run-http-test tests/api-test.http custom-output my-report --filter TC-001');
     process.exit(0);
 }
