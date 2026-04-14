@@ -97,6 +97,24 @@ async function runTest(test, context = {}) {
 
         result.url = compiledUrl; // Store compiled URL for reporting
 
+        // Store request information for reporting
+        result.request = {
+            url: compiledUrl,
+            method: test.method,
+            body: compiledBody,
+            headers: {}
+        };
+
+        // Add Authorization header if token exists
+        if (token) {
+            result.request.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Add Content-Type for POST/PUT/PATCH with body
+        if (compiledBody && ['POST', 'PUT', 'PATCH'].includes(test.method.toUpperCase())) {
+            result.request.headers['Content-Type'] = 'application/json';
+        }
+
         const response = await sendRequest(
             test.method,
             compiledUrl,

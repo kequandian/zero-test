@@ -160,6 +160,45 @@ function generateMarkdownReport(summary, reportPath, filter = null) {
         lines.push(`**Time:** ${result.timestamp}`);
         lines.push('');
 
+        // Show request details
+        if (result.request) {
+            lines.push('**📤 Request Details:**');
+            lines.push('');
+
+            // Show request headers if present
+            if (result.request.headers && Object.keys(result.request.headers).length > 0) {
+                lines.push('**Headers:**');
+                lines.push('```http');
+                for (const [key, value] of Object.entries(result.request.headers)) {
+                    lines.push(`${key}: ${value}`);
+                }
+                lines.push('```');
+                lines.push('');
+            }
+
+            // Show request body if present
+            if (result.request.body) {
+                lines.push('**Body:**');
+                lines.push('```json');
+                if (typeof result.request.body === 'object') {
+                    lines.push(JSON.stringify(result.request.body, null, 2));
+                } else if (typeof result.request.body === 'string') {
+                    // Try to format as JSON if it's a JSON string
+                    try {
+                        const jsonObj = JSON.parse(result.request.body);
+                        lines.push(JSON.stringify(jsonObj, null, 2));
+                    } catch {
+                        // Not valid JSON, show as plain text
+                        lines.push(result.request.body);
+                    }
+                } else {
+                    lines.push(String(result.request.body));
+                }
+                lines.push('```');
+                lines.push('');
+            }
+        }
+
         // Show failure reason if failed
         if (!result.success && result.failureReason) {
             lines.push(`**⚠️ Failure Reason:** ${result.failureReason}`);
