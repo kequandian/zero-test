@@ -109,11 +109,16 @@ function formatTestResultEnhanced(result) {
     }
 
     // Request details
-    if (result.request && (result.request.headers || result.request.body)) {
+    if (result.request) {
         lines.push('**📤 Request Details:**');
         lines.push('');
 
-        if (result.request.headers) {
+        if (result.request.method) {
+            lines.push(`**Method:** \`${result.request.method}\``);
+            lines.push('');
+        }
+
+        if (result.request.headers && Object.keys(result.request.headers).length > 0) {
             lines.push('**Headers:**');
             lines.push('```http');
             for (const [key, value] of Object.entries(result.request.headers)) {
