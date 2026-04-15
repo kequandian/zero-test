@@ -81,6 +81,14 @@ function formatTestResultEnhanced(result) {
     lines.push(`| **Status** | ${statusEmoji} |`);
     lines.push(`| **Method** | \`${result.method || 'GET'}\` |`);
     lines.push(`| **Status Code** | \`${result.status || 'N/A'}\` |`);
+    if (result.expectedStatus !== undefined && result.expectedStatus !== null) {
+        lines.push(`| **Expected Status** | \`${result.expectedStatus}\` |`);
+    } else if (result.expectStatus) {
+        lines.push(`| **Expected Status** | \`${result.expectStatus}\` |`);
+    }
+    if (result.expectBodyContains) {
+        lines.push(`| **Expected Body Contains** | "${result.expectBodyContains}" |`);
+    }
     lines.push(`| **Duration** | ${result.duration || 0} ms |`);
     lines.push('| **Timestamp** | `' + (result.timestamp || new Date().toISOString()) + '` |');
     lines.push('');

@@ -141,6 +141,9 @@ class HttpParser {
     // Parse comment/test title
     parseCommentLine(line) {
         this.parseExtractor(line);
+        this.parseExpectedStatus(line);
+        this.parseExpectStatus(line);
+        this.parseExpectBodyContains(line);
         this.parseTestTitle(line);
         this.parseEmptyLine(line);
     }
@@ -167,13 +170,68 @@ class HttpParser {
         }
     }
 
+    /**
+     * Parse expected status directive: # @expected <status>
+     * Example: # @expected 400
+     */
+    parseExpectedStatus(line) {
+        const match = line.match(/^#\s*@expected\s+(\d+)$/);
+        if (match) {
+            const status = parseInt(match[1].trim(), 10);
+            if (this.TESTS['current']) {
+                this.TESTS['current']['expectedStatus'] = status;
+            }
+        }
+    }
+
+    /**
+     * Parse expect-status directive: # @expect-status <values>
+     * Supports comma-separated status codes and ranges like 4xx
+     * Example: # @expect-status 400,409,422
+     */
+    parseExpectStatus(line) {
+        const match = line.match(/^#\s*@expect-status\s+(.+)$/);
+        if (match) {
+            const values = match[1].trim();
+            if (this.TESTS['current']) {
+                this.TESTS['current']['expectStatus'] = values;
+            }
+        }
+    }
+
+    /**
+     * Parse expect-body-contains directive: # @expect-body-contains <text>
+     * Example: # @expect-body-contains 归属编码已存在
+     */
+    parseExpectBodyContains(line) {
+        const match = line.match(/^#\s*@expect-body-contains\s+(.+)$/);
+        if (match) {
+            const text = match[1].trim();
+            if (this.TESTS['current']) {
+                this.TESTS['current']['expectBodyContains'] = text;
+            }
+        }
+    }
+
     parseTestTitle(line) {
         const key = line;
+
+        // Directive comments (e.g. # @expected 400) should not become test titles.
+        // They have already been parsed as metadata by the time we reach here.
+        if (/^#\s*@/.test(line)) {
+            return;
+        }
 
         // Close last current test
         if (this.TESTS['current']) {
             if (this.currentTestStatus() === 'titled') {
-                this.deleteCurrentTest();
+                // Rename the existing test instead of deleting it,
+                // so metadata (extractors, expected status, etc.) is preserved.
+                const oldKey = this.TESTS['current']['key'];
+                delete this.TESTS[oldKey];
+                this.TESTS[key] = this.TESTS['current'];
+                this.TESTS['current']['key'] = key;
+                return;
             } else if (this.currentTestStatus() === 'closed') {
                 // Already closed, skip
             } else {

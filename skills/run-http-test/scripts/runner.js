@@ -20,6 +20,81 @@ try {
 const { sendRequest, isSuccessful, formatResponse } = httpModule;
 
 /**
+ * Check if an HTTP status code matches an expect-status pattern.
+ * Supports exact codes (e.g. "400") and range wildcards (e.g. "4xx").
+ * @param {number} status - Actual HTTP status code
+ * @param {string} pattern - Comma-separated patterns like "400,409,422" or "4xx"
+ * @returns {boolean}
+ */
+function statusMatches(status, pattern) {
+    if (!pattern) return false;
+    const parts = pattern.split(',').map(p => p.trim()).filter(Boolean);
+    return parts.some(part => {
+        if (/^\dxx$/i.test(part)) {
+            const prefix = parseInt(part[0], 10);
+            return status >= prefix * 100 && status < (prefix + 1) * 100;
+        }
+        return String(status) === part;
+    });
+}
+
+/**
+ * Evaluate test success based on expected directives.
+ * Priority:
+ * 1. If @expect-body-contains is present and body doesn't contain text -> FAIL
+ * 2. If @expected or @expect-status is present and status doesn't match -> FAIL
+ * 3. Otherwise -> use default isSuccessful logic
+ *
+ * @param {object} response - Response object from sendRequest
+ * @param {object} test - Test case with possible expectedStatus, expectStatus, expectBodyContains
+ * @returns {object} { success: boolean, error: string|null }
+ */
+function evaluateTestResult(response, test) {
+    const bodyText = typeof response.data === 'string'
+        ? response.data
+        : JSON.stringify(response.data);
+
+    // 1. Body assertion has highest priority
+    if (test.expectBodyContains) {
+        const contains = bodyText != null && bodyText.includes(test.expectBodyContains);
+        if (!contains) {
+            return {
+                success: false,
+                error: `Body assertion failed: expected to contain "${test.expectBodyContains}"`
+            };
+        }
+    }
+
+    // 2. Status code assertions
+    if (test.expectedStatus !== undefined && test.expectedStatus !== null) {
+        if (response.status !== test.expectedStatus) {
+            return {
+                success: false,
+                error: `Unexpected status code: expected ${test.expectedStatus} but got ${response.status}`
+            };
+        }
+        return { success: true, error: null };
+    }
+
+    if (test.expectStatus) {
+        if (!statusMatches(response.status, test.expectStatus)) {
+            return {
+                success: false,
+                error: `Unexpected status code: expected ${test.expectStatus} but got ${response.status}`
+            };
+        }
+        return { success: true, error: null };
+    }
+
+    // 3. Default logic
+    const success = isSuccessful(response);
+    return {
+        success,
+        error: success ? null : (response.error || `Request failed with status ${response.status}`)
+    };
+}
+
+/**
  * Get value from object using JSONPath-like notation
  * Supports dot notation: data.row_id, user.profile.name
  */
@@ -80,7 +155,10 @@ async function runTest(test, context = {}) {
         error: null,
         timestamp: new Date().toISOString(),
         extractedVars: {}, // Track extracted variables
-        requestBody: null // Compiled request body for reports (when .http block had a body)
+        requestBody: null, // Compiled request body for reports (when .http block had a body)
+        expectedStatus: test.expectedStatus,
+        expectStatus: test.expectStatus,
+        expectBodyContains: test.expectBodyContains
     };
 
     try {
@@ -110,11 +188,12 @@ async function runTest(test, context = {}) {
             }
         );
 
-        result.success = isSuccessful(response);
+        const evalResult = evaluateTestResult(response, test);
+        result.success = evalResult.success;
         result.status = response.status;
         result.statusText = response.statusText;
         result.response = response.data;
-        result.error = response.error;
+        result.error = evalResult.error || response.error;
 
         // EXTRACT VARIABLES from response
         if (test.extractors && test.extractors.length > 0 && response.data) {
@@ -149,8 +228,24 @@ function extractTestNumber(title) {
 }
 
 /**
+ * Extract test ID from test key (e.g., "### TC-001: description" -> "TC-001")
+ * @param {string} testKey - Test case key/title
+ * @returns {string|null} Extracted test ID or null if not found
+ */
+function extractTestId(testKey) {
+    // Match patterns like "### TC-001", "### TC-Setup-02", "### TEST123", etc.
+    // The pattern looks for ### followed by whitespace, then captures the identifier
+    // which consists of letters, numbers, hyphens, and underscores
+    const match = testKey.match(/^#+\s*([A-Z]+[A-Z0-9_-]+)/i);
+    if (match) {
+        return match[1];
+    }
+    return null;
+}
+
+/**
  * Check if a test key matches a filter pattern
- * Supports both substring matching and numeric range matching
+ * Supports test ID matching with word boundaries and numeric range matching
  * @param {string} testKey - Test case key/title
  * @param {string} filter - Filter pattern
  * @returns {boolean} True if the test matches the filter
@@ -159,16 +254,37 @@ function testMatchesFilter(testKey, filter) {
     const testLower = testKey.toLowerCase();
     const filterLower = filter.toLowerCase();
 
-    // Direct substring match
-    if (testLower.includes(filterLower)) {
-        return true;
+    // Extract test ID for precise matching (e.g., "TC-Setup-02")
+    const testId = extractTestId(testKey);
+    if (testId) {
+        const testIdLower = testId.toLowerCase();
+
+        // Case 1: Direct exact match - filter is a full test ID like "TC-Setup-02"
+        if (testIdLower === filterLower) {
+            return true;
+        }
+
+        // Case 2: Filter might be just the numeric part like "02"
+        // Only match if the test ID ends with the filter (but not as part of another number)
+        // This prevents "02" from matching "TC-01-02" or "TC-02-01"
+        // Example: "TC-Setup-02" matches filter "02" but "TC-02-01" does not
+        const numericMatch = filterLower.match(/^(\d+)$/);
+        if (numericMatch && testIdLower.endsWith('-' + filterLower)) {
+            return true;
+        }
+
+        // Case 3: Filter is a prefix like "TC-Setup"
+        // Only match if test ID starts with filter followed by a non-word character
+        if (testIdLower.startsWith(filterLower + '-')) {
+            return true;
+        }
     }
 
-    // Try numeric matching for patterns like TC-001, TC001, etc.
-    const testNum = extractTestNumber(testKey);
-    const filterNum = extractTestNumber(filter);
-
-    if (testNum !== null && filterNum !== null && testNum === filterNum) {
+    // Fallback: Try matching with word boundaries on the full test key
+    // This handles cases where test ID extraction fails
+    const escapedFilter = filterLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`\\b${escapedFilter}\\b`, 'i');
+    if (pattern.test(testLower)) {
         return true;
     }
 
@@ -270,7 +386,6 @@ async function runTests(tests, options = {}) {
     if (filter) {
         // Parse and expand filter expressions
         const filters = parseFilters(filter);
-
         testKeys = testKeys.filter(k => {
             // Match if ANY of the filters match the test key (OR logic)
             // If a filter pattern matches no tests, it's silently skipped
@@ -337,6 +452,14 @@ function formatTestResult(result) {
     lines.push(`**Method:** ${result.method}`);
     lines.push(`**URL:** ${result.url}`);
     lines.push(`**Status:** ${result.status} ${result.statusText}`);
+    if (result.expectedStatus !== undefined && result.expectedStatus !== null) {
+        lines.push(`**Expected Status:** ${result.expectedStatus}`);
+    } else if (result.expectStatus) {
+        lines.push(`**Expected Status:** ${result.expectStatus}`);
+    }
+    if (result.expectBodyContains) {
+        lines.push(`**Expected Body Contains:** "${result.expectBodyContains}"`);
+    }
     lines.push(`**Time:** ${result.timestamp}`);
     lines.push('');
 

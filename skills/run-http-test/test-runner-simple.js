@@ -85,6 +85,14 @@ function generateMarkdownReport(summary, reportPath) {
         lines.push(`**Method:** ${result.method}`);
         lines.push(`**URL:** ${result.url}`);
         lines.push(`**Status:** ${result.status} ${result.statusText}`);
+        if (result.expectedStatus !== undefined && result.expectedStatus !== null) {
+            lines.push(`**Expected Status:** ${result.expectedStatus}`);
+        } else if (result.expectStatus) {
+            lines.push(`**Expected Status:** ${result.expectStatus}`);
+        }
+        if (result.expectBodyContains) {
+            lines.push(`**Expected Body Contains:** "${result.expectBodyContains}"`);
+        }
         lines.push(`**Time:** ${result.timestamp}`);
         lines.push('');
 
@@ -292,7 +300,18 @@ async function main() {
                 extractInfo = ` [Extracted: ${extracts}]`;
             }
 
-            console.log(`${statusColor}[${index}]${resetColor} ${status} - ${result.title} (${result.status} ${result.statusText})${extractInfo}`);
+            // Show expected assertions in console output
+            let expectInfo = '';
+            if (result.expectedStatus !== undefined && result.expectedStatus !== null) {
+                expectInfo = ` [Expected: ${result.expectedStatus}]`;
+            } else if (result.expectStatus) {
+                expectInfo = ` [Expected: ${result.expectStatus}]`;
+            }
+            if (result.expectBodyContains) {
+                expectInfo += ` [Body should contain: "${result.expectBodyContains}"]`;
+            }
+
+            console.log(`${statusColor}[${index}]${resetColor} ${status} - ${result.title} (${result.status} ${result.statusText})${expectInfo}${extractInfo}`);
         }
     });
     const endTime = Date.now();
