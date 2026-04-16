@@ -16,6 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Default configuration (must be set before sourcing libraries)
 DEFAULT_MAX_RETRIES=5
+ABSOLUTE_MAX_RETRIES=20
 DEFAULT_PORT=8080
 DEFAULT_HOST="localhost"
 HEALTH_CHECK_TIMEOUT=60
@@ -226,12 +227,17 @@ show_summary() {
     echo "Test File: $TEST_FILE"
     echo "Filter: ${FILTER:-None}"
     echo "Total Iterations: $total_iterations"
+    echo "Max Retries: $MAX_RETRIES"
+    echo "Absolute Max Retries: $ABSOLUTE_MAX_RETRIES"
     echo ""
 
     if [ "$final_result" -eq 0 ]; then
         echo "✅ Result: ALL TESTS PASSED"
     else
         echo "❌ Result: TESTS FAILED"
+        if [ $total_iterations -ge $ABSOLUTE_MAX_RETRIES ]; then
+            echo "⚠️  Stopped at absolute maximum retry limit ($ABSOLUTE_MAX_RETRIES) to avoid infinite loop."
+        fi
         echo ""
         echo "View detailed report: $FIX_REPORT"
         echo "View log: $LOG_FILE"
@@ -268,50 +274,43 @@ main() {
     fi
 
     local iteration=0
-    local app_needs_restart=false
+    local full_fail_filtered_pass_count=0
 
-    while [ $iteration -lt $MAX_RETRIES ]; do
+    while [ $iteration -lt $MAX_RETRIES ] && [ $iteration -lt $ABSOLUTE_MAX_RETRIES ]; do
         iteration=$((iteration + 1))
         echo ""
         echo "────────────────────────────────────────────────────────────────"
         echo "  Iteration $iteration / $MAX_RETRIES"
         echo "────────────────────────────────────────────────────────────────"
 
-        # Run tests (temporarily disable set -e to allow test failures)
+        # Step 1: Run full test suite
+        echo ""
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Running FULL test suite..."
         set +e
-        (
-            set +e
-            run_http_test "$TEST_FILE" "$FILTER" "$OUTPUT_DIR"
-        )
+        run_http_test "$TEST_FILE" "${FILTER:-}" "$OUTPUT_DIR"
         local test_exit_code=$?
         set -e
 
-        echo "[DEBUG] Test exit code: $test_exit_code" >&2
+        echo "[DEBUG] Full suite exit code: $test_exit_code" >&2
 
         # Get report path
-        echo "[DEBUG] Getting report path..." >&2
         local report_path
         report_path=$(get_report_path "$TEST_FILE" "$OUTPUT_DIR")
-        echo "[DEBUG] Report path: $report_path" >&2
 
         # Check if report exists
-        echo "[DEBUG] Checking if report exists..." >&2
         if ! report_exists "$report_path"; then
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Test report not generated at $report_path" >&2
             exit 2
         fi
-        echo "[DEBUG] Report exists!" >&2
 
         # Parse report
-        echo "[DEBUG] Parsing report..." >&2
-        set +e  # Temporarily disable set -e for parse_report
+        set +e
         local result_json
         result_json=$(parse_report "$report_path" 2>&1)
         local parse_result=$?
         set -e
-        echo "[DEBUG] Parse result: $parse_result" >&2
 
-        # Check if JSON parsing succeeded (result_json should be valid JSON)
+        # Check if JSON parsing succeeded
         if ! echo "$result_json" | jq '.' >/dev/null 2>&1; then
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Failed to parse test report" >&2
             echo "[$(date '+%Y-%m-%d %H:%M:%S')] Result was: $result_json" >&2
@@ -334,14 +333,86 @@ main() {
         failed_count=$(echo "$result_json" | jq -r '.failed')
 
         echo ""
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ $failed_count test(s) failed"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ $failed_count test(s) failed in full suite"
 
-        # Generate fix summary
-        generate_fix_summary "$result_json" "$iteration" "$FIX_REPORT"
+        # Step 2: Identify first failed test
+        local first_failed_title
+        first_failed_title=$(echo "$result_json" | jq -r '.failures[0].title // empty')
+
+        if [ -z "$first_failed_title" ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Could not extract failed test title from report" >&2
+            exit 2
+        fi
+
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🎯 Targeting failed test: $first_failed_title"
+
+        # Step 3: Analyze dependencies for the failed test
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🔍 Analyzing dependencies..."
+        local dep_json
+        dep_json=$(node "$SCRIPT_DIR/lib/dependency-analyzer.js" "$TEST_FILE" "$first_failed_title" 2>&1)
+
+        if ! echo "$dep_json" | jq '.' >/dev/null 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Dependency analyzer failed" >&2
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Output: $dep_json" >&2
+            exit 2
+        fi
+
+        local dep_filter
+        dep_filter=$(echo "$dep_json" | jq -r '.filterString // empty')
+        local dep_titles
+        dep_titles=$(echo "$dep_json" | jq -r '.testTitles | join(", ") // empty')
+
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 📦 Minimal execution set: $dep_titles"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🔖 Filter: $dep_filter"
+
+        # Step 4: Run filtered tests (failed TC + dependencies)
+        echo ""
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] Running FILTERED test set..."
+        set +e
+        run_http_test "$TEST_FILE" "$dep_filter" "$OUTPUT_DIR"
+        local filtered_exit_code=$?
+        set -e
+
+        echo "[DEBUG] Filtered set exit code: $filtered_exit_code" >&2
+
+        local filtered_report
+        filtered_report=$(get_report_path "$TEST_FILE" "$OUTPUT_DIR")
+
+        if ! report_exists "$filtered_report"; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Filtered test report not generated" >&2
+            exit 2
+        fi
+
+        set +e
+        local filtered_json
+        filtered_json=$(parse_report "$filtered_report" 2>&1)
+        set -e
+
+        if ! echo "$filtered_json" | jq '.' >/dev/null 2>&1; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: Failed to parse filtered test report" >&2
+            exit 2
+        fi
+
+        local filtered_failed
+        filtered_failed=$(echo "$filtered_json" | jq -r '.failed // 0')
+
+        if [ "$filtered_failed" -eq 0 ]; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ✅ Filtered set passed! Re-running full suite in next iteration to verify..."
+            full_fail_filtered_pass_count=$((full_fail_filtered_pass_count + 1))
+            if [ $full_fail_filtered_pass_count -ge 2 ]; then
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ Filtered tests keep passing but full suite still fails. Test isolation issue detected. Stopping to avoid infinite loop."
+                show_summary 1 $iteration
+                exit 1
+            fi
+            continue
+        fi
+
+        echo ""
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ $filtered_failed test(s) still failing in filtered set"
 
         # Check if we've reached max retries
         if [ $iteration -ge $MAX_RETRIES ]; then
-            if ! ask_continue "$iteration" "$MAX_RETRIES" "$failed_count"; then
+            if ! ask_continue "$iteration" "$MAX_RETRIES" "$filtered_failed"; then
                 show_summary 1 $iteration
                 exit 1
             fi
@@ -349,9 +420,12 @@ main() {
             MAX_RETRIES=$((MAX_RETRIES + 1))
         fi
 
-        # Analyze failures and attempt fixes
+        # Step 5: Generate fix summary and attempt fixes
+        generate_fix_summary "$filtered_json" "$iteration" "$FIX_REPORT"
+
         echo ""
-        analyze_and_fix "$result_json" "$PROJECT_DIR" "$LOG_FILE"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] 🔧 Analyzing $filtered_failed failure(s)..."
+        analyze_and_fix "$filtered_json" "$PROJECT_DIR" "$LOG_FILE" "$TEST_FILE"
 
         # Get flags from analyze_and_fix
         local fixes_applied=${FIXES_APPLIED:-0}
@@ -359,7 +433,7 @@ main() {
 
         # Check if connection refused indicates app needs restart
         local has_conn_error
-        has_conn_error=$(echo "$result_json" | jq -r '.failures[] | select(.status == 0 or .status == -1) | .title' | wc -l | tr -d ' ')
+        has_conn_error=$(echo "$filtered_json" | jq -r '.failures[] | select(.status == 0 or .status == -1) | .title' | wc -l | tr -d ' ')
 
         if [ "$has_conn_error" -gt 0 ]; then
             app_needs_restart=true
@@ -387,6 +461,15 @@ main() {
                     health_wait=$((health_wait + 2))
                 done
             fi
+        fi
+
+        # If no fixes applied and no restart needed, we are stuck in an infinite loop
+        if [ "$fixes_applied" -eq 0 ] && [ "$app_needs_restart" != "true" ]; then
+            echo ""
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ No fixes could be applied for: $first_failed_title"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Stopping to avoid infinite loop."
+            show_summary 1 $iteration
+            exit 1
         fi
 
         # Wait before next iteration

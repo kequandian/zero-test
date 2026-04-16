@@ -11,6 +11,7 @@ analyze_and_fix() {
     local failures_json="$1"
     local project_dir="$2"
     local log_file="$3"
+    local test_file="${4:-}"
 
     if [ -z "$failures_json" ]; then
         echo "[$(date '+%Y-%m-%d %H:%M:%S')] No failures to analyze"
@@ -89,10 +90,10 @@ analyze_and_fix() {
                 handle_not_found "$title" "$method" "$url" "$project_dir" "$log_file"
                 ;;
             401|403)
-                handle_auth_error "$title" "$status" "$message" "$project_dir" "$log_file"
+                handle_auth_error "$title" "$status" "$message" "$project_dir" "$log_file" "$test_file"
                 ;;
             400)
-                handle_bad_request "$title" "$message" "$project_dir" "$log_file"
+                handle_bad_request "$title" "$message" "$project_dir" "$log_file" "$test_file"
                 ;;
             500|501|502|503)
                 handle_server_error "$title" "$message" "$response" "$project_dir" "$log_file"
@@ -171,6 +172,7 @@ handle_auth_error() {
     local message="$3"
     local project_dir="$4"
     local log_file="$5"
+    local test_file="${6:-}"
 
     echo "  🔒 Authentication/Authorization error ($status)"
 
@@ -182,6 +184,13 @@ handle_auth_error() {
         echo "  🔧 Action: Check user roles and permissions"
     fi
 
+    # Try to add auth header if missing
+    if [ -n "$test_file" ] && [ -f "$test_file" ]; then
+        if attempt_fix_auth_header "$test_file" "$log_file"; then
+            FIXES_APPLIED=$((FIXES_APPLIED + 1))
+        fi
+    fi
+
     echo "  Action: Check security configuration" >> "$log_file"
 }
 
@@ -191,6 +200,7 @@ handle_bad_request() {
     local message="$2"
     local project_dir="$3"
     local log_file="$4"
+    local test_file="${5:-}"
 
     echo "  ⚠️  Bad Request - validation or parameter error"
 
@@ -198,7 +208,7 @@ handle_bad_request() {
         echo "  💡 Issue: Type conversion error"
         echo "  🔍 Detecting parameter type mismatch..."
 
-        # Extract the problematic field
+        # Extract the problematic field (unexpanded variable)
         local field
         field=$(echo "$message" | sed -n 's/.*Failed to convert.*for input string "\([^"]*\)".*/\1/p' | head -1)
 
@@ -210,14 +220,25 @@ handle_bad_request() {
             echo "  📋 Problematic field: $field"
             echo "  💡 Suggestion: Check parameter type in @PathVariable or @RequestParam"
 
-            # Try to fix in .http file
-            if attempt_fix_parameter_type "$title" "$field" "$project_dir" "$log_file"; then
-                FIXES_APPLIED=$((FIXES_APPLIED + 1))
+            # Try to fix unexpanded variable in .http file
+            if [ -n "$test_file" ] && [ -f "$test_file" ]; then
+                if attempt_fix_unexpanded_variable "$test_file" "$field" "$log_file"; then
+                    FIXES_APPLIED=$((FIXES_APPLIED + 1))
+                fi
             fi
         fi
     elif echo "$message" | grep -qi "Valid"; then
         echo "  💡 Issue: Validation failed"
         echo "  🔧 Action: Check @Valid annotations and constraints"
+    fi
+
+    # Try to fix duplicate data errors by bumping suffix
+    if echo "$message" | grep -qi "已存在\|duplicate\|exists\|conflict"; then
+        if [ -n "$test_file" ] && [ -f "$test_file" ]; then
+            if attempt_fix_duplicate_suffix "$test_file" "$message" "$log_file"; then
+                FIXES_APPLIED=$((FIXES_APPLIED + 1))
+            fi
+        fi
     fi
 
     echo "  Message: $message" >> "$log_file"
@@ -485,6 +506,215 @@ attempt_fix_parameter_type() {
     return 1
 }
 
+# Attempt to fix unexpanded variable in .http file
+attempt_fix_unexpanded_variable() {
+    local http_file="$1"
+    local raw_var="$2"
+    local log_file="$3"
+
+    # Clean variable name
+    local var_name
+    var_name=$(echo "$raw_var" | sed 's/{{//g; s/}}//g')
+
+    if [ -z "$var_name" ]; then
+        return 1
+    fi
+
+    echo "  🔧 Attempting to fix unexpanded variable: $var_name"
+
+    if [ ! -f "$http_file" ]; then
+        echo "  ⚠️  .http file not found: $http_file"
+        return 1
+    fi
+
+    local fixed=1
+
+    # 1. Check if there's an @extract directive for this variable
+    local extract_line
+    extract_line=$(grep -nE "#\s*@extract\s+.*->\s+$var_name\s*$" "$http_file" 2>/dev/null | head -1)
+
+    if [ -n "$extract_line" ]; then
+        local line_num
+        line_num=$(echo "$extract_line" | cut -d: -f1)
+        local extract_directive
+        extract_directive=$(echo "$extract_line" | cut -d: -f2-)
+
+        echo "  📁 Found extraction directive at line $line_num: $extract_directive"
+
+        # Check for array index notation (e.g., data.records[0].id)
+        if echo "$extract_directive" | grep -qE '\[0\]|\[1\]|\[2\]'; then
+            echo "  ⚠️  Extraction uses array index notation (e.g., data.records[0].id)"
+            echo "  💡 Your run-http-test runner may not support array indexing in extraction paths."
+            echo "  💡 Suggestion: Use an endpoint that returns a single object, or update the runner."
+            echo "  Issue: Array index extraction not supported by runner: $extract_directive" >> "$log_file"
+            return 1
+        fi
+
+        # Check if missing 'data.' prefix when API returns ApiResult format
+        # Look at other successful extractions in the file to infer format
+        local has_data_prefix
+        has_data_prefix=$(grep -cE "#\s*@extract\s+data\." "$http_file" 2>/dev/null || echo 0)
+
+        if [ "$has_data_prefix" -gt 0 ]; then
+            local current_path
+            current_path=$(echo "$extract_directive" | sed -n 's/.*@extract\s\+\([^-]*\)\s\+->.*/\1/p' | sed 's/[[:space:]]*$//')
+
+            if [ -n "$current_path" ] && ! echo "$current_path" | grep -q "^data\."; then
+                echo "  🔧 Adding missing 'data.' prefix to extraction path"
+                local new_path="data.$current_path"
+                local new_directive=$(echo "$extract_directive" | sed "s/@extract[[:space:]]\+${current_path}/@extract ${new_path}/")
+
+                cp "$http_file" "${http_file}.bak"
+                sed -i.tmp "${line_num}s|.*|${new_directive}|" "$http_file"
+                rm -f "${http_file}.tmp"
+
+                if ! diff -q "$http_file" "${http_file}.bak" >/dev/null 2>&1; then
+                    echo "  ✅ Fixed extraction path: $current_path -> $new_path"
+                    echo "  Fixed extraction path at line $line_num: $new_directive" >> "$log_file"
+                    fixed=0
+                fi
+                rm -f "${http_file}.bak"
+            fi
+        fi
+    else
+        # 2. No extract directive found - variable may need a default definition
+        echo "  🔍 No @extract directive found for $var_name"
+
+        # Check if already defined at top level
+        if grep -qE "^@$var_name\s*=" "$http_file" 2>/dev/null; then
+            echo "  ⚠️  Variable @$var_name is already defined but still unexpanded"
+            echo "  💡 The value may be empty or the runner may not support this variable"
+            return 1
+        fi
+
+        # Add a placeholder definition at the top of the file
+        cp "$http_file" "${http_file}.bak"
+
+        # Find the first blank line after initial variable definitions, or insert at top
+        local insert_line
+        insert_line=$(awk '/^@/ { last=NR } END { print last+1 }' "$http_file" | head -1)
+        if [ -z "$insert_line" ] || [ "$insert_line" -lt 1 ]; then
+            insert_line=1
+        fi
+
+        awk -v line="$insert_line" -v var="$var_name" '
+            NR == line { print "@" var " = REPLACE_ME"; print "" }
+            { print }
+        ' "$http_file" > "${http_file}.tmp" && mv "${http_file}.tmp" "$http_file"
+        rm -f "${http_file}.tmp"
+
+        if ! diff -q "$http_file" "${http_file}.bak" >/dev/null 2>&1; then
+            echo "  ✅ Added placeholder definition: @$var_name = REPLACE_ME"
+            echo "  Added placeholder @$var_name at line $insert_line" >> "$log_file"
+            fixed=0
+        fi
+        rm -f "${http_file}.bak"
+    fi
+
+    return $fixed
+}
+
+# Attempt to fix duplicate data by bumping @suffix
+attempt_fix_duplicate_suffix() {
+    local http_file="$1"
+    local message="$2"
+    local log_file="$3"
+
+    if [ ! -f "$http_file" ]; then
+        return 1
+    fi
+
+    # Check if file uses @suffix
+    if ! grep -qE "^@suffix\s*=" "$http_file" 2>/dev/null; then
+        return 1
+    fi
+
+    echo "  🔧 Duplicate data detected. Attempting to bump @suffix..."
+
+    local old_suffix
+    old_suffix=$(grep -E "^@suffix\s*=" "$http_file" | head -1 | sed 's/^@suffix\s*=\s*//' | sed 's/[[:space:]]*$//')
+
+    if [ -z "$old_suffix" ]; then
+        return 1
+    fi
+
+    # Compute new suffix (increment numeric suffix, or use current date)
+    local new_suffix
+    if echo "$old_suffix" | grep -qE '^[0-9]{8}$'; then
+        # YYYYMMDD format - increment by 1 day
+        new_suffix=$((old_suffix + 1))
+        # Handle month boundary roughly (if day > 31, bump month)
+        local day
+        day=${new_suffix: -2}
+        if [ "$day" -gt 31 ]; then
+            new_suffix=$((new_suffix + 100 - 31))
+        fi
+    else
+        # Append a timestamp
+        new_suffix="${old_suffix}-$(date +%s)"
+    fi
+
+    cp "$http_file" "${http_file}.bak"
+
+    # Replace all occurrences of old_suffix with new_suffix in the file
+    sed -i.tmp "s/$old_suffix/$new_suffix/g" "$http_file"
+    rm -f "${http_file}.tmp"
+
+    if ! diff -q "$http_file" "${http_file}.bak" >/dev/null 2>&1; then
+        echo "  ✅ Bumped suffix from $old_suffix to $new_suffix throughout file"
+        echo "  Bumped @suffix: $old_suffix -> $new_suffix" >> "$log_file"
+        rm -f "${http_file}.bak"
+        return 0
+    fi
+
+    rm -f "${http_file}.bak"
+    return 1
+}
+
+# Attempt to fix missing auth header
+attempt_fix_auth_header() {
+    local http_file="$1"
+    local log_file="$2"
+
+    if [ ! -f "$http_file" ]; then
+        return 1
+    fi
+
+    # If the file already has Authorization headers, token is likely the issue
+    if grep -q "Authorization:" "$http_file" 2>/dev/null; then
+        return 1
+    fi
+
+    echo "  🔧 No Authorization headers found in .http file"
+    echo "  💡 Suggestion: Add 'Authorization: Bearer {{token}}' to protected requests"
+
+    # Check if @token is defined
+    if ! grep -qE "^@token\s*=" "$http_file" 2>/dev/null; then
+        cp "$http_file" "${http_file}.bak"
+        # Insert @token at the top
+        local insert_line
+        insert_line=$(awk '/^@/ { last=NR } END { print last+1 }' "$http_file" | head -1)
+        if [ -z "$insert_line" ] || [ "$insert_line" -lt 1 ]; then
+            insert_line=1
+        fi
+        awk -v line="$insert_line" '
+            NR == line { print "@token = Bearer your_token_here"; print "" }
+            { print }
+        ' "$http_file" > "${http_file}.tmp" && mv "${http_file}.tmp" "$http_file"
+        rm -f "${http_file}.tmp"
+
+        if ! diff -q "$http_file" "${http_file}.bak" >/dev/null 2>&1; then
+            echo "  ✅ Added @token placeholder"
+            echo "  Added @token placeholder" >> "$log_file"
+            rm -f "${http_file}.bak"
+            return 0
+        fi
+        rm -f "${http_file}.bak"
+    fi
+
+    return 1
+}
+
 # Attempt to fix NPE in Java file
 attempt_fix_npe() {
     local java_file="$1"
@@ -518,9 +748,9 @@ attempt_fix_npe() {
 
     if [ -f "${file_path}.bak" ]; then
         if ! diff -q "$file_path" "${file_path}.bak" >/dev/null 2>&1; then
-            echo "  ✅ Added TODO comment for NPE fix"
+            echo "  ⚠️  Added TODO comment for NPE fix (manual fix required)"
             rm -f "${file_path}.bak"
-            return 0
+            return 1
         fi
         rm -f "${file_path}.bak"
     fi
@@ -662,6 +892,9 @@ export -f fix_constraint_violation
 export -f fix_binding_exception
 export -f fix_illegal_argument
 export -f attempt_fix_parameter_type
+export -f attempt_fix_unexpanded_variable
+export -f attempt_fix_duplicate_suffix
+export -f attempt_fix_auth_header
 export -f attempt_fix_npe
 export -f attempt_fix_sql_syntax
 export -f attempt_add_table
