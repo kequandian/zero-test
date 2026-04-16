@@ -39,6 +39,38 @@ function statusMatches(status, pattern) {
 }
 
 /**
+ * True when @expect-status allows a client error (e.g. 400) so we may send
+ * placeholder 0 for missing ids (e.g. optional DELETE after empty page query).
+ * @param {string|undefined} expectStatus
+ * @returns {boolean}
+ */
+function expectStatusAllowsPlaceholderFallback(expectStatus) {
+    if (!expectStatus || typeof expectStatus !== 'string') return false;
+    return (
+        statusMatches(400, expectStatus) ||
+        statusMatches(404, expectStatus) ||
+        statusMatches(422, expectStatus) ||
+        statusMatches(409, expectStatus)
+    );
+}
+
+/**
+ * Replace {{var}} with 0 for each name in varNames (regex-safe var names).
+ * @param {string} template
+ * @param {string[]} varNames
+ * @returns {string}
+ */
+function replaceUnresolvedPlaceholdersWithZero(template, varNames) {
+    if (!template) return template;
+    let s = template;
+    for (const v of varNames) {
+        const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        s = s.replace(new RegExp(`\\{\\{\\s*${escaped}\\s*\\}\\}`, 'g'), '0');
+    }
+    return s;
+}
+
+/**
  * Evaluate test success based on expected directives.
  * Priority:
  * 1. If @expect-body-contains is present and body doesn't contain text -> FAIL
@@ -97,18 +129,21 @@ function evaluateTestResult(response, test) {
 /**
  * Get value from object using JSONPath-like notation
  * Supports dot notation: data.row_id, user.profile.name
+ * and bracket indices: data.records[0].id
  */
 function getValueByPath(obj, path) {
     if (!path) return undefined;
 
-    const keys = path.split('.');
+    const normalized = String(path).replace(/\[(\d+)\]/g, '.$1');
+    const keys = normalized.split('.').filter(Boolean);
     let current = obj;
 
     for (const key of keys) {
         if (current === null || current === undefined) {
             return undefined;
         }
-        current = current[key];
+        const k = /^\d+$/.test(key) ? parseInt(key, 10) : key;
+        current = current[k];
     }
 
     return current;
@@ -131,6 +166,41 @@ function substituteVariables(template, context) {
         // Keep original if variable not found
         return match;
     });
+}
+
+/**
+ * Repeat substitution so @ vars that expand to {{extractedId}} resolve after # @extract runs.
+ * @param {string} template
+ * @param {object} context
+ * @param {number} [maxPass]
+ * @returns {string}
+ */
+function substituteVariablesDeep(template, context, maxPass = 8) {
+    if (!template) return template;
+    let s = template;
+    for (let p = 0; p < maxPass; p++) {
+        const next = substituteVariables(s, context);
+        if (next === s) break;
+        s = next;
+    }
+    return s;
+}
+
+const UNRESOLVED_TEMPLATE_RE = /\{\{([^}]+)\}\}/g;
+
+/**
+ * @param {string|null|undefined} s
+ * @returns {string[]}
+ */
+function listUnresolvedTemplateVars(s) {
+    if (!s) return [];
+    const out = [];
+    let m;
+    UNRESOLVED_TEMPLATE_RE.lastIndex = 0;
+    while ((m = UNRESOLVED_TEMPLATE_RE.exec(s)) !== null) {
+        out.push(m[1].trim());
+    }
+    return out;
 }
 
 /**
@@ -162,13 +232,50 @@ async function runTest(test, context = {}) {
     };
 
     try {
-        // JIT COMPILATION: Substitute variables at runtime
-        const compiledUrl = substituteVariables(test.request, context);
-        const compiledBody = test.body ? substituteVariables(test.body, context) : undefined;
+        // JIT COMPILATION: Substitute variables at runtime (multi-pass for nested @ → {{extract}})
+        let compiledUrl = substituteVariablesDeep(test.request, context);
+        let compiledBody = test.body ? substituteVariablesDeep(test.body, context) : undefined;
 
         if (test.body) {
             result.requestBody =
                 compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : '';
+        }
+
+        let missingUrl = listUnresolvedTemplateVars(compiledUrl);
+        let missingBody = listUnresolvedTemplateVars(
+            compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : ''
+        );
+        let uniq = [...new Set([...missingUrl, ...missingBody])];
+
+        // No row from prior GET → # @extract skipped → {{id}} missing. If @expect-status allows
+        // 400/404, send DELETE .../0 so the API returns a client error instead of failing here.
+        if (
+            uniq.length > 0 &&
+            expectStatusAllowsPlaceholderFallback(test.expectStatus)
+        ) {
+            compiledUrl = replaceUnresolvedPlaceholdersWithZero(compiledUrl, uniq);
+            if (compiledBody !== undefined && compiledBody !== null) {
+                compiledBody = replaceUnresolvedPlaceholdersWithZero(String(compiledBody), uniq);
+            }
+            if (test.body) {
+                result.requestBody =
+                    compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : '';
+            }
+            result.placeholderFallbackUsed = true;
+            missingUrl = listUnresolvedTemplateVars(compiledUrl);
+            missingBody = listUnresolvedTemplateVars(
+                compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : ''
+            );
+            uniq = [...new Set([...missingUrl, ...missingBody])];
+        }
+
+        if (missingUrl.length > 0 || missingBody.length > 0) {
+            const u = uniq;
+            result.success = false;
+            result.status = 0;
+            result.statusText = 'Unresolved template variables';
+            result.error = `Unresolved {{variables}} in request: ${u.join(', ')}. Check earlier tests / # @extract and file-level @ vars (e.g. TC-001 must succeed; TC-000-pre* cleanup may be required).`;
+            return result;
         }
 
         // Handle token with lazy binding
@@ -278,13 +385,24 @@ function testMatchesFilter(testKey, filter) {
         if (testIdLower.startsWith(filterLower + '-')) {
             return true;
         }
+
+        // Case 4: Filter is a numeric test id like "TC-001" / "TC-033" — require exact id only.
+        // Prevents substring fallback from matching "TC-001" inside "TC-0010".
+        if (/^[a-z]+-\d+$/i.test(filterLower)) {
+            return testIdLower === filterLower;
+        }
     }
 
     // Fallback: Try matching with word boundaries on the full test key
     // This handles cases where test ID extraction fails
     const escapedFilter = filterLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`\\b${escapedFilter}\\b`, 'i');
+    const pattern = new RegExp(`(?:^|\\s)${escapedFilter}(?:$|\\s)`, 'i');
     if (pattern.test(testLower)) {
+        return true;
+    }
+
+    // Extra fallback: substring match (handles filters with trailing non-word chars like Chinese punctuation)
+    if (testLower.includes(filterLower)) {
         return true;
     }
 
@@ -353,6 +471,206 @@ function parseFilters(filter) {
     return expanded;
 }
 
+const PLACEHOLDER_VAR_RE = /\{\{([^}]+)\}\}/g;
+
+/**
+ * @param {string|null|undefined} s
+ * @returns {string[]}
+ */
+function extractPlaceholderVarNames(s) {
+    if (!s) return [];
+    const out = [];
+    let m;
+    PLACEHOLDER_VAR_RE.lastIndex = 0;
+    while ((m = PLACEHOLDER_VAR_RE.exec(s)) !== null) {
+        out.push(m[1].trim());
+    }
+    return out;
+}
+
+/**
+ * @param {object} test
+ * @returns {Set<string>}
+ */
+function collectVarsReferencedByTest(test) {
+    const refs = new Set();
+    for (const v of extractPlaceholderVarNames(test.request)) {
+        refs.add(v);
+    }
+    for (const v of extractPlaceholderVarNames(test.body)) {
+        refs.add(v);
+    }
+    if (test.tokenVar) {
+        refs.add(String(test.tokenVar).trim());
+    }
+    return refs;
+}
+
+/**
+ * Follow file-level `@` definitions: e.g. `@path = {{host}}{{base}}/x/{{id}}` or `@url = {{ownershipId1}}`
+ * so that `id` / `ownershipId1` are included when resolving TC dependencies.
+ *
+ * @param {object} initialVars
+ * @param {Iterable<string>|Set<string>} seeds - names from URL/body/token (may be @ aliases)
+ * @returns {Set<string>}
+ */
+function expandRefsThroughInitialValues(initialVars, seeds) {
+    const keys = new Set(Object.keys(initialVars || {}));
+    const out = new Set(seeds);
+    let changed = true;
+    while (changed) {
+        changed = false;
+        for (const name of [...out]) {
+            if (!keys.has(name)) continue;
+            const val = initialVars[name];
+            if (val === undefined || val === null) continue;
+            for (const inner of extractPlaceholderVarNames(String(val))) {
+                if (!out.has(inner)) {
+                    out.add(inner);
+                    changed = true;
+                }
+            }
+        }
+    }
+    return out;
+}
+
+/**
+ * @param {object} test
+ * @returns {boolean}
+ */
+function isRunnableTest(test) {
+    return test && (test.status === 'closed' || test.status === 'titled_closed');
+}
+
+/**
+ * Map each test key -> Set of variable names produced by # @extract on that test.
+ * @param {object} tests
+ * @param {string[]} testOrder
+ * @returns {Record<string, Set<string>>}
+ */
+function buildVarProducersByTest(tests, testOrder) {
+    /** @type {Record<string, Set<string>>} */
+    const map = {};
+    for (const key of testOrder) {
+        const t = tests[key];
+        if (!isRunnableTest(t) || !t.extractors || t.extractors.length === 0) {
+            continue;
+        }
+        if (!map[key]) map[key] = new Set();
+        for (const ex of t.extractors) {
+            if (ex.targetVar) {
+                map[key].add(ex.targetVar);
+            }
+        }
+    }
+    return map;
+}
+
+/**
+ * Find the nearest previous test (in file order) that extracts `varName`.
+ * @param {string[]} testOrder
+ * @param {Record<string, Set<string>>} producersByTest
+ * @param {number} consumerIndex
+ * @param {string} varName
+ * @returns {string|null}
+ */
+function findProducerTestForVar(testOrder, producersByTest, consumerIndex, varName) {
+    for (let i = consumerIndex - 1; i >= 0; i--) {
+        const key = testOrder[i];
+        const set = producersByTest[key];
+        if (set && set.has(varName)) {
+            return key;
+        }
+    }
+    return null;
+}
+
+/**
+ * When --filter is used, also include prior tests that define {{variables}} referenced
+ * by the selected cases (via file-level @ aliases into # @extract outputs, or direct
+ * {{refs}} in URL/body/token).
+ *
+ * @param {object} tests - Parsed test cases
+ * @param {object} initialVars - @ variables from the top of the .http file
+ * @param {string} filter - Raw filter string (comma / range, same as parseFilters)
+ * @param {{ warnMissing?: boolean }} [opts]
+ * @returns {string[]} Test keys to run, in original file order
+ */
+function expandFilterWithDependencies(tests, initialVars, filter, opts = {}) {
+    const { warnMissing = true } = opts;
+    const testOrder = Object.keys(tests).filter(k => k !== 'current');
+    const initialVarSet = new Set(Object.keys(initialVars || {}));
+    const filters = parseFilters(filter);
+    const directMatch = new Set(
+        testOrder.filter(k => filters.some(f => testMatchesFilter(k, f)))
+    );
+
+    const producersByTest = buildVarProducersByTest(tests, testOrder);
+
+    const required = new Set(directMatch);
+    const queue = [...directMatch];
+    const warned = new Set();
+
+    while (queue.length > 0) {
+        const key = queue.shift();
+        const consumerIndex = testOrder.indexOf(key);
+        if (consumerIndex < 0) continue;
+
+        const t = tests[key];
+        if (!isRunnableTest(t)) continue;
+
+        const expandedRefs = expandRefsThroughInitialValues(
+            initialVars,
+            collectVarsReferencedByTest(t)
+        );
+
+        for (const v of expandedRefs) {
+            // Name is declared with @ at top of file — value may still mention {{inner}} expanded above
+            if (initialVarSet.has(v)) continue;
+
+            const producer = findProducerTestForVar(testOrder, producersByTest, consumerIndex, v);
+            if (producer) {
+                if (!required.has(producer)) {
+                    required.add(producer);
+                    queue.push(producer);
+                }
+            } else if (warnMissing) {
+                const sig = `${key}::${v}`;
+                if (!warned.has(sig)) {
+                    warned.add(sig);
+                    console.warn(
+                        `[run-http-test] Test "${key.replace(/\s+/g, ' ').trim()}" needs {{${v}}} (including via @ alias) but no earlier runnable test defines it via # @extract.`
+                    );
+                }
+            }
+        }
+    }
+
+    // If TC-001 (main create for this file) is in the run set, also run TC-000-pre* cleanup
+    // tests that appear before it — otherwise duplicate code/subDir can make TC-001 fail and
+    // # @extract ownershipId1 never runs.
+    const idxTC001 = testOrder.findIndex(k => extractTestId(k) === 'TC-001');
+    if (idxTC001 >= 0) {
+        const runsTC001 = [...required].some(k => extractTestId(k) === 'TC-001');
+        if (runsTC001) {
+            for (let i = 0; i < idxTC001; i++) {
+                const k = testOrder[i];
+                const tid = extractTestId(k);
+                if (
+                    tid &&
+                    /^TC-000-pre/i.test(tid) &&
+                    isRunnableTest(tests[k])
+                ) {
+                    required.add(k);
+                }
+            }
+        }
+    }
+
+    return testOrder.filter(k => required.has(k));
+}
+
 /**
  * Run multiple test cases with shared variable context
  * @param {object} tests - Parsed test cases object
@@ -382,15 +700,9 @@ async function runTests(tests, options = {}) {
     // Get test keys (excluding 'current' if exists)
     let testKeys = Object.keys(tests).filter(k => k !== 'current');
 
-    // Apply filter if provided (supports comma-separated and range expressions)
+    // Apply filter if provided: run matching tests plus any prior tests needed for {{vars}}
     if (filter) {
-        // Parse and expand filter expressions
-        const filters = parseFilters(filter);
-        testKeys = testKeys.filter(k => {
-            // Match if ANY of the filters match the test key (OR logic)
-            // If a filter pattern matches no tests, it's silently skipped
-            return filters.some(f => testMatchesFilter(k, f));
-        });
+        testKeys = expandFilterWithDependencies(tests, initialVars, filter);
     }
 
     for (const key of testKeys) {
@@ -545,5 +857,13 @@ module.exports = {
     runTest,
     runTests,
     formatTestResult,
-    formatSummary
+    formatSummary,
+    parseFilters,
+    testMatchesFilter,
+    expandFilterWithDependencies,
+    expandRefsThroughInitialValues,
+    collectVarsReferencedByTest,
+    isRunnableTest,
+    extractTestId,
+    substituteVariablesDeep
 };

@@ -40,11 +40,20 @@ function formatRequestBodyForMarkdown(body) {
 /**
  * Generate markdown report (without PDF)
  */
-function generateMarkdownReport(summary, reportPath) {
+function generateMarkdownReport(summary, reportPath, filter = null) {
     const lines = [];
 
     lines.push('# Test Report');
     lines.push('');
+
+    // Add filter info if present
+    if (filter) {
+        lines.push(`**🔍 Filter:** ${filter}`);
+        lines.push('');
+        lines.push('*This report only shows test cases matching the filter.*');
+        lines.push('');
+    }
+
     lines.push(`**Date:** ${new Date().toISOString()}`);
     lines.push(`**Total Tests:** ${summary.total}`);
     lines.push(`**Passed:** ${summary.passed}`);
@@ -161,20 +170,33 @@ function parseArguments(args) {
         testFile: null,
         outputDir: null,
         reportName: null,
-        filter: null
+        filter: null,
+        /** @type {string[]} */
+        _filterParts: []
     };
 
     let i = 0;
     while (i < args.length) {
         // Handle --filter=value format (equals sign)
         if (args[i].startsWith('--filter=')) {
-            result.filter = args[i].substring(9); // Remove '--filter=' prefix
+            let piece = args[i].substring(9);
             i++;
+            result._filterParts.push(piece);
         }
-        // Handle --filter value format (space-separated)
+        // Handle --filter value; merge shell-split "TC-001, TC-033" (comma+space) into one filter string
         else if (args[i] === '--filter' && i + 1 < args.length) {
-            result.filter = args[i + 1];
+            let piece = args[i + 1];
             i += 2;
+            while (i < args.length && !args[i].startsWith('--')) {
+                const next = args[i];
+                if (/^(TC|TEST|tc|test)-[A-Za-z0-9_-]+$/i.test(next)) {
+                    piece = piece.replace(/,\s*$/, '') + ',' + next;
+                    i++;
+                } else {
+                    break;
+                }
+            }
+            result._filterParts.push(piece);
         } else if (!result.testFile) {
             result.testFile = args[i];
             i++;
@@ -186,6 +208,23 @@ function parseArguments(args) {
             i++;
         } else {
             i++;
+        }
+    }
+
+    if (result._filterParts.length > 0) {
+        result.filter = result._filterParts.join(',');
+    }
+    delete result._filterParts;
+
+    // zsh/bash: `--filter TC-001, TC-033` splits into value `TC-001,` and next arg `TC-033`.
+    // The second id is wrongly assigned to outputDir — merge back into filter.
+    if (result.outputDir && result.filter) {
+        const od = String(result.outputDir).trim();
+        const looksLikeTestId = /^(TC|TEST|tc|test)-[A-Za-z0-9_-]+$/.test(od);
+        const filterHasTrailingComma = /,\s*$/.test(result.filter);
+        if (looksLikeTestId && filterHasTrailingComma) {
+            result.filter = result.filter.replace(/,\s*$/, '') + ',' + od;
+            result.outputDir = null;
         }
     }
 
@@ -273,8 +312,24 @@ async function main() {
     const initialVars = parser.getInitialVars();
     console.log(`Initial variables: ${Object.keys(initialVars).join(', ') || 'none'}`);
 
-    const testCount = Object.keys(tests).filter(k => k !== 'current').length;
-    console.log(`Found ${testCount} test cases`);
+    const allTestCount = Object.keys(tests).filter(k => k !== 'current').length;
+
+    if (filter) {
+        const { parseFilters, testMatchesFilter, expandFilterWithDependencies } = require('./scripts/runner');
+        const filters = parseFilters(filter);
+        const directMatchCount = Object.keys(tests).filter(k =>
+            k !== 'current' && filters.some(f => testMatchesFilter(k, f))
+        ).length;
+        const expandedKeys = expandFilterWithDependencies(tests, initialVars, filter);
+        const extraDeps = expandedKeys.length - directMatchCount;
+        console.log(
+            `Found ${allTestCount} total test cases, ${directMatchCount} matching filter "${filter}"` +
+                (extraDeps > 0 ? `, ${extraDeps} additional case(s) pulled in for {{variable}} dependencies` : '') +
+                ` → ${expandedKeys.length} to run`
+        );
+    } else {
+        console.log(`Found ${allTestCount} test cases`);
+    }
     console.log('');
 
     // Run tests
@@ -334,7 +389,7 @@ async function main() {
     console.log('Generating markdown report...');
 
     try {
-        const markdownPath = generateMarkdownReport(summary, reportPath);
+        const markdownPath = generateMarkdownReport(summary, reportPath, filter);
         console.log(`Markdown report saved: ${markdownPath}`);
         console.log('');
 
