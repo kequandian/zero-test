@@ -42,7 +42,7 @@ node (技能目录)/test-runner-simple.js <test-file.http> [output-dir] [report-
 | `<test-file.http>` | `.http` 测试文件路径（相对或绝对路径） | 必填 | `tests/api-tests.http` |
 | `[output-dir]` | 报告输出目录（自动创建） | 可选 | `tests/output` |
 | `[report-name]` | 报告文件名（不含扩展名） | 可选 | `api-test-report` |
-| `--filter` | 仅运行标题包含指定过滤条件的测试用例（不区分大小写）<br/>• 逗号分隔：`TC-001,TC-005`<br/>• 范围表达式：`TC-001:TC-010` (展开为 001-010)<br/>• 混合使用：`TC-001:TC-005,TC-008`<br/>• OR 逻辑：匹配任一条件即运行 | 可选 | `TC-001`、`TC-001,TC-005`、`TC-001:TC-010`、`创建用户` |
+| `--filter` | 仅运行标题包含指定过滤条件的测试用例（不区分大小写）<br/>• 逗号分隔：`TC-001,TC-005`<br/>• 范围表达式：`TC-001:TC-010` (展开为 001-010)<br/>• 混合使用：`TC-001:TC-005,TC-008`<br/>• OR 逻辑：匹配任一条件即运行<br/>• **依赖展开**：匹配到的用例若 URL/Body 含 `{{var}}`，会自动把**文件中更早**且含 `# @extract ... -> var` 的用例一并加入运行；文件头 `@var = 0` / `dynamic` 等**占位值**不视为已满足，仍会拉取上述生产者用例（例如 `{{playlistId1}}` + `@playlistId1 = 0` → 会追加 TC-204） | 可选 | `TC-001`、`TC-001,TC-005`、`TC-001:TC-010`、`创建用户` |
 
 **默认值**：
 - `output-dir`: `.http` 文件所在目录下的 `./output/` 子目录

@@ -150,6 +150,37 @@ function getValueByPath(obj, path) {
 }
 
 /**
+ * Resolve extract path against both ApiResult-shaped and raw-DTO HTTP bodies.
+ * - If `# @extract data.tracks.0.id` but the server returns an unwrapped DTO (`tracks` at root), try `tracks.0.id`.
+ * - If `# @extract tracks.0.id` but the body is `{ code, data: { tracks: [...] } }`, try `data.tracks.0.id`.
+ *
+ * @param {object} obj - Parsed JSON response body
+ * @param {string} path - Path from # @extract
+ * @returns {unknown}
+ */
+function getValueByPathWithEnvelopeFallback(obj, path) {
+    if (!path || obj === null || obj === undefined) return undefined;
+
+    const p = String(path).trim();
+    let v = getValueByPath(obj, p);
+    if (v !== undefined) return v;
+
+    // Strip leading "data." when payload is raw (no envelope)
+    if (p.startsWith('data.')) {
+        v = getValueByPath(obj, p.slice(5));
+        if (v !== undefined) return v;
+    }
+
+    // Prepend "data." when payload is ApiResult / { code, data }
+    if (!p.startsWith('data.')) {
+        v = getValueByPath(obj, `data.${p}`);
+        if (v !== undefined) return v;
+    }
+
+    return undefined;
+}
+
+/**
  * Substitute variables in template string with context values
  * @param {string} template - String with {{variable}} placeholders
  * @param {object} context - Variable context object
@@ -187,6 +218,23 @@ function substituteVariablesDeep(template, context, maxPass = 8) {
 }
 
 const UNRESOLVED_TEMPLATE_RE = /\{\{([^}]+)\}\}/g;
+
+/**
+ * File-level `@id = 0` (or `dynamic`) is a placeholder until `# @extract` runs.
+ * When expanding --filter dependencies, these must NOT block pulling the producer test.
+ * @param {string} _varName
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isPlaceholderInitialValue(_varName, value) {
+    if (value === undefined || value === null) return true;
+    if (value === 0) return true;
+    const s = String(value).trim();
+    if (s === '' || s === '0') return true;
+    const sl = s.toLowerCase();
+    if (sl === 'dynamic' || sl === 'placeholder') return true;
+    return false;
+}
 
 /**
  * @param {string|null|undefined} s
@@ -305,7 +353,10 @@ async function runTest(test, context = {}) {
         // EXTRACT VARIABLES from response
         if (test.extractors && test.extractors.length > 0 && response.data) {
             for (const extractor of test.extractors) {
-                const value = getValueByPath(response.data, extractor.path);
+                const value = getValueByPathWithEnvelopeFallback(
+                    response.data,
+                    extractor.path
+                );
                 if (value !== undefined) {
                     context[extractor.targetVar] = value;
                     result.extractedVars[extractor.targetVar] = value;
@@ -626,8 +677,10 @@ function expandFilterWithDependencies(tests, initialVars, filter, opts = {}) {
         );
 
         for (const v of expandedRefs) {
-            // Name is declared with @ at top of file — value may still mention {{inner}} expanded above
-            if (initialVarSet.has(v)) continue;
+            // Name is declared with @ at top of file — satisfied only if not a placeholder (e.g. @playlistId1 = 0)
+            if (initialVarSet.has(v) && !isPlaceholderInitialValue(v, initialVars[v])) {
+                continue;
+            }
 
             const producer = findProducerTestForVar(testOrder, producersByTest, consumerIndex, v);
             if (producer) {
@@ -865,5 +918,8 @@ module.exports = {
     collectVarsReferencedByTest,
     isRunnableTest,
     extractTestId,
-    substituteVariablesDeep
+    substituteVariablesDeep,
+    isPlaceholderInitialValue,
+    getValueByPath,
+    getValueByPathWithEnvelopeFallback
 };

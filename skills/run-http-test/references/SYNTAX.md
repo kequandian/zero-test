@@ -149,8 +149,8 @@ Authorization: Bearer {{token}}
 
 ### Body Rules
 
-- Body must start with `{` on a new line after headers
-- Body ends with `}` followed by a blank line
+- Body must start with `{` or `[` (JSON object or array) on a new line after headers
+- Body ends when a blank line closes the request block (after the closing `}` or `]`)
 - JSON syntax must be valid
 
 ## Comments and Titles
@@ -250,6 +250,8 @@ The extractor uses dot notation for JSONPath:
 | `{"data": {"id": 123}}` | `data.id` | `123` |
 | `{"user": {"profile": {"name": "John"}}}` | `user.profile.name` | `"John"` |
 | `{"items": [{"id": 1}]}` | `items.0.id` | `1` |
+
+**ApiResult vs raw body:** many endpoints return `{ "code", "data": { ... } }`, while others return the DTO at the top level. If the path does not match, the runner automatically tries the alternate shape: paths starting with `data.` are also resolved without that prefix, and paths without `data.` are tried with a `data.` prefix. So `data.tracks.0.id` still works when the JSON is `{"tracks":[...]}` without a `data` wrapper.
 
 ### Complete Workflow Example
 

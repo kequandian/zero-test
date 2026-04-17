@@ -40,7 +40,7 @@ class HttpParser {
         } else if (line.startsWith("login ")) {
             this.parseLoginRequest(line);
             this.expectHeader();
-        } else if (line.startsWith("{")) {
+        } else if (line.startsWith("{") || line.startsWith("[")) {
             this.parseBodyBegin(line);
         } else if (line === '') {
             this.parseEmptyLine(line);
