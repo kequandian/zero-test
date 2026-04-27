@@ -23,6 +23,7 @@ try {
  * @param {string} options.token - Authorization token
  * @param {object} options.headers - Additional headers
  * @param {number} options.timeout - Request timeout in ms (default: 30000)
+ * @param {object} options.multipart - Multipart form data object with parts array
  * @returns {Promise<object>} Response object with status, data, headers
  */
 async function sendRequest(method, url, options = {}) {
@@ -30,14 +31,20 @@ async function sendRequest(method, url, options = {}) {
         body = null,
         token = null,
         headers = {},
-        timeout = 30000
+        timeout = 30000,
+        multipart = null
     } = options;
 
     // Prepare headers
     const requestHeaders = {
-        'Content-Type': 'application/json',
         ...headers
     };
+
+    // Only set default Content-Type for non-multipart requests
+    // For multipart, axios/FormData will set it with the correct boundary
+    if (!multipart) {
+        requestHeaders['Content-Type'] = requestHeaders['Content-Type'] || 'application/json';
+    }
 
     if (token) {
         // Don't add 'Bearer ' prefix if token already starts with it
@@ -59,8 +66,43 @@ async function sendRequest(method, url, options = {}) {
         validateStatus: () => true // Accept all status codes
     };
 
-    // Add body for POST/PUT/PATCH
-    if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT' || method.toUpperCase() === 'PATCH')) {
+    // Handle multipart form data
+    if (multipart && multipart.parts && multipart.parts.length > 0) {
+        const FormData = require('form-data');
+        const form = new FormData();
+
+        for (const part of multipart.parts) {
+            if (part.file) {
+                // File part - read file and append
+                const fs = require('fs');
+                try {
+                    const fileBuffer = fs.readFileSync(part.file);
+                    const options = {
+                        filename: part.filename || require('path').basename(part.file),
+                        contentType: part.contentType || 'application/octet-stream'
+                    };
+                    form.append(part.name, fileBuffer, options);
+                } catch (err) {
+                    return {
+                        success: false,
+                        status: 0,
+                        statusText: 'File Read Error',
+                        data: null,
+                        error: `Failed to read file: ${part.file} - ${err.message}`
+                    };
+                }
+            } else if (part.value !== null && part.value !== undefined) {
+                // Regular value part
+                form.append(part.name, part.value);
+            }
+        }
+
+        config.data = form;
+        // Let form-data set the Content-Type header with boundary
+        delete requestHeaders['Content-Type'];
+    }
+    // Add body for POST/PUT/PATCH (non-multipart)
+    else if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT' || method.toUpperCase() === 'PATCH')) {
         if (typeof body === 'string') {
             try {
                 config.data = JSON.parse(body);

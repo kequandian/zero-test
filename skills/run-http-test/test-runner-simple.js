@@ -367,6 +367,25 @@ async function main() {
             }
 
             console.log(`${statusColor}[${index}]${resetColor} ${status} - ${result.title} (${result.status} ${result.statusText})${expectInfo}${extractInfo}`);
+
+            // Show error message for failed tests
+            if (!result.success) {
+                const errorColor = '\x1b[31m';
+                let errorMsg = '';
+                if (result.error) {
+                    errorMsg = result.error;
+                } else if (result.response) {
+                    // Try to extract error message from API response
+                    if (typeof result.response === 'object' && result.response.message) {
+                        errorMsg = result.response.message;
+                    } else if (typeof result.response === 'string') {
+                        errorMsg = result.response;
+                    }
+                }
+                if (errorMsg) {
+                    console.log(`    ${errorColor}Error: ${errorMsg}${resetColor}`);
+                }
+            }
         }
     });
     const endTime = Date.now();

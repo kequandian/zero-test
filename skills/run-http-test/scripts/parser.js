@@ -40,7 +40,7 @@ class HttpParser {
         } else if (line.startsWith("login ")) {
             this.parseLoginRequest(line);
             this.expectHeader();
-        } else if (line.startsWith("{") || line.startsWith("[")) {
+        } else if (line.startsWith("{") || line.startsWith("[") || this.isMultipartBoundary(line) || line.startsWith("--")) {
             this.parseBodyBegin(line);
         } else if (line === '') {
             this.parseEmptyLine(line);
@@ -324,6 +324,22 @@ class HttpParser {
         this.collectBodyLine(line);
     }
 
+    // Check if line is a multipart boundary
+    isMultipartBoundary(line) {
+        const CURRENT_TEST = this.TESTS['current'] || {};
+        if (CURRENT_TEST['contentType'] && CURRENT_TEST['contentType'].includes('multipart/form-data')) {
+            const boundaryMatch = CURRENT_TEST['contentType'].match(/boundary=([^;\s]+)/i);
+            if (boundaryMatch) {
+                const boundary = boundaryMatch[1].trim();
+                // Check for --BoundaryName or --BoundaryName--
+                return line === '--' + boundary || line === '--' + boundary + '--';
+            }
+        }
+        // General check: any line starting with -- could be a multipart boundary
+        // We'll validate it later in parseMultipartLine
+        return line.startsWith('--');
+    }
+
     // Parse HTTP header
     parseHttpHeader(line) {
         const CURRENT_TEST = this.TESTS['current'] || {};
@@ -334,6 +350,18 @@ class HttpParser {
                 const VAR = varMatch[1];
                 // Store the raw variable name (not the value)
                 this.collectRequestTokenVar(VAR);
+            }
+        } else if (line.toLowerCase().startsWith("content-type")) {
+            // Store content-type header for multipart detection
+            this.collectContentType(line);
+        }
+    }
+
+    collectContentType(line) {
+        if (this.TESTS['current']) {
+            const parts = line.split(':', 2);
+            if (parts.length === 2) {
+                this.TESTS['current']['contentType'] = parts[1].trim();
             }
         }
     }
@@ -346,11 +374,128 @@ class HttpParser {
 
     collectBodyLine(json_line) {
         if (this.TESTS['current']) {
-            if (!this.TESTS['current']['body']) {
-                this.TESTS['current']['body'] = '';
+            const CURRENT_TEST = this.TESTS['current'];
+
+            // Check if this is multipart/form-data
+            if (CURRENT_TEST['contentType'] && CURRENT_TEST['contentType'].includes('multipart/form-data')) {
+                // Parse multipart body
+                this.parseMultipartLine(json_line);
+            } else {
+                // Original JSON body handling
+                if (!CURRENT_TEST['body']) {
+                    CURRENT_TEST['body'] = '';
+                }
+                // LAZY BINDING: Keep {{variable}} syntax for runtime substitution
+                CURRENT_TEST['body'] += json_line;
             }
-            // LAZY BINDING: Keep {{variable}} syntax for runtime substitution
-            this.TESTS['current']['body'] += json_line;
+        }
+    }
+
+    /**
+     * Parse multipart form data lines
+     * Supports:
+     * - Boundary markers: --BoundaryName
+     * - Content-Disposition headers
+     * - File inclusion: < /path/to/file
+     */
+    parseMultipartLine(line) {
+        const CURRENT_TEST = this.TESTS['current'];
+        if (!CURRENT_TEST) return;
+
+        // Initialize multipart state if not exists
+        if (!CURRENT_TEST['multipart']) {
+            CURRENT_TEST['multipart'] = {
+                boundary: null,
+                parts: [],
+                currentPart: null,
+                inFileContent: false
+            };
+        }
+
+        const mp = CURRENT_TEST['multipart'];
+
+        // Extract boundary from content-type if not yet extracted
+        if (!mp.boundary && CURRENT_TEST['contentType']) {
+            const boundaryMatch = CURRENT_TEST['contentType'].match(/boundary=([^;]+)/i);
+            if (boundaryMatch) {
+                mp.boundary = boundaryMatch[1].trim();
+            }
+        }
+
+        // Check for boundary start
+        if (line.startsWith('--') && mp.boundary) {
+            const boundaryLine = '--' + mp.boundary;
+            const closingBoundary = boundaryLine + '--';
+
+            // Closing boundary - end of multipart
+            if (line === closingBoundary) {
+                if (mp.currentPart) {
+                    mp.parts.push(mp.currentPart);
+                    mp.currentPart = null;
+                }
+                mp.inFileContent = false;
+                return;
+            }
+
+            // Start boundary - new part
+            if (line === boundaryLine) {
+                if (mp.currentPart) {
+                    mp.parts.push(mp.currentPart);
+                }
+                mp.currentPart = {
+                    name: null,
+                    filename: null,
+                    contentType: null,
+                    file: null,
+                    value: null
+                };
+                mp.inFileContent = false;
+                return;
+            }
+        }
+
+        // If we're in file content mode and not a boundary line, skip (file will be read at runtime)
+        if (mp.inFileContent) {
+            return;
+        }
+
+        // Parse Content-Disposition header
+        if (line.toLowerCase().startsWith('content-disposition:')) {
+            const nameMatch = line.match(/name="([^"]+)"/);
+            const filenameMatch = line.match(/filename="([^"]+)"/);
+            if (nameMatch && mp.currentPart) {
+                mp.currentPart.name = nameMatch[1];
+            }
+            if (filenameMatch && mp.currentPart) {
+                mp.currentPart.filename = filenameMatch[1];
+            }
+            return;
+        }
+
+        // Parse Content-Type header for parts
+        if (line.toLowerCase().startsWith('content-type:') && mp.currentPart) {
+            const parts = line.split(':', 2);
+            if (parts.length === 2) {
+                mp.currentPart.contentType = parts[1].trim();
+            }
+            return;
+        }
+
+        // Parse file inclusion syntax: < /path/to/file
+        if (line.startsWith('<') && mp.currentPart) {
+            const filePath = line.substring(1).trim();
+            mp.currentPart.file = filePath;
+            mp.inFileContent = true;
+            return;
+        }
+
+        // Regular value line (for non-file fields)
+        if (mp.currentPart && line && !line.startsWith('--')) {
+            if (mp.currentPart.value === null) {
+                mp.currentPart.value = line;
+            } else {
+                mp.currentPart.value += '\n' + line;
+            }
         }
     }
 
@@ -371,6 +516,11 @@ class HttpParser {
     // Parse empty line
     parseEmptyLine(line) {
         const status = this.currentTestStatus();
+
+        // Check if we're in multipart mode - empty lines are part of the multipart structure
+        const CURRENT_TEST = this.TESTS['current'] || {};
+        const isInMultipart = CURRENT_TEST['contentType'] && CURRENT_TEST['contentType'].includes('multipart/form-data');
+
         if (status === 'closed') {
             if (this.TESTS['current']) {
                 this.TESTS['current']['status'] = 'closed_ignore';
@@ -385,7 +535,10 @@ class HttpParser {
             } else if (status === 'body_expecting') {
                 this.requestBody();
             } else if (status === 'body_requesting') {
-                this.closeCurrentTest();
+                // Don't close test if we're in multipart mode - empty lines are part of multipart structure
+                if (!isInMultipart) {
+                    this.closeCurrentTest();
+                }
             }
         } else if (this.isCurrentTestDelete()) {
             this.closeCurrentTest();

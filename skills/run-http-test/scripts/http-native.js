@@ -7,6 +7,67 @@
 const https = require('https');
 const http = require('http');
 const { URL } = require('url');
+const fs = require('fs');
+const crypto = require('crypto');
+
+/**
+ * Generate a random boundary for multipart/form-data
+ * @returns {string}
+ */
+function generateBoundary() {
+    return '----FormBoundary' + crypto.randomBytes(16).toString('hex');
+}
+
+/**
+ * Create multipart form data body
+ * @param {Array} parts - Array of part objects with name, filename, file, value, contentType
+ * @param {string} boundary - Multipart boundary string
+ * @returns {Buffer} The encoded multipart body
+ */
+function createMultipartBody(parts, boundary) {
+    const chunks = [];
+
+    for (const part of parts) {
+        // Add boundary
+        chunks.push(Buffer.from(`--${boundary}\r\n`));
+
+        // Add Content-Disposition header
+        let disposition = `Content-Disposition: form-data; name="${part.name}"`;
+        if (part.filename) {
+            disposition += `; filename="${part.filename}"`;
+        }
+        chunks.push(Buffer.from(`${disposition}\r\n`));
+
+        // Add Content-Type header if present
+        if (part.contentType) {
+            chunks.push(Buffer.from(`Content-Type: ${part.contentType}\r\n`));
+        }
+
+        // Empty line before content
+        chunks.push(Buffer.from(`\r\n`));
+
+        // Add content
+        if (part.file) {
+            // Read and add file content
+            try {
+                const fileBuffer = fs.readFileSync(part.file);
+                chunks.push(fileBuffer);
+            } catch (err) {
+                throw new Error(`Failed to read file: ${part.file} - ${err.message}`);
+            }
+        } else if (part.value !== null && part.value !== undefined) {
+            chunks.push(Buffer.from(String(part.value)));
+        }
+
+        // End with CRLF
+        chunks.push(Buffer.from(`\r\n`));
+    }
+
+    // Add closing boundary
+    chunks.push(Buffer.from(`--${boundary}--\r\n`));
+
+    return Buffer.concat(chunks);
+}
 
 /**
  * Send HTTP request using native Node.js modules
@@ -17,6 +78,7 @@ const { URL } = require('url');
  * @param {string} options.token - Authorization token
  * @param {object} options.headers - Additional headers
  * @param {number} options.timeout - Request timeout in ms (default: 30000)
+ * @param {object} options.multipart - Multipart form data object with parts array
  * @returns {Promise<object>} Response object with status, data, headers
  */
 async function sendRequest(method, url, options = {}) {
@@ -24,7 +86,8 @@ async function sendRequest(method, url, options = {}) {
         body = null,
         token = null,
         headers = {},
-        timeout = 30000
+        timeout = 30000,
+        multipart = null
     } = options;
 
     return new Promise((resolve, reject) => {
@@ -44,10 +107,14 @@ async function sendRequest(method, url, options = {}) {
 
         // Prepare headers
         const requestHeaders = {
-            'Content-Type': 'application/json',
             'User-Agent': 'zero-test/1.0',
             ...headers
         };
+
+        // Only set default Content-Type for non-multipart requests
+        if (!multipart) {
+            requestHeaders['Content-Type'] = requestHeaders['Content-Type'] || 'application/json';
+        }
 
         if (token && !requestHeaders['Authorization']) {
             requestHeaders['Authorization'] = `Bearer ${token}`;
@@ -55,7 +122,25 @@ async function sendRequest(method, url, options = {}) {
 
         // Prepare body
         let bodyData = null;
-        if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT' || method.toUpperCase() === 'PATCH')) {
+
+        // Handle multipart form data
+        if (multipart && multipart.parts && multipart.parts.length > 0) {
+            const boundary = multipart.boundary || generateBoundary();
+            try {
+                bodyData = createMultipartBody(multipart.parts, boundary);
+                requestHeaders['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
+            } catch (err) {
+                return resolve({
+                    success: false,
+                    status: 0,
+                    statusText: 'File Read Error',
+                    data: null,
+                    error: err.message
+                });
+            }
+        }
+        // Handle regular body for POST/PUT/PATCH
+        else if (body && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT' || method.toUpperCase() === 'PATCH')) {
             if (typeof body === 'string') {
                 try {
                     bodyData = JSON.stringify(JSON.parse(body));

@@ -120,9 +120,29 @@ function evaluateTestResult(response, test) {
 
     // 3. Default logic
     const success = isSuccessful(response);
+    if (success) {
+        return { success: true, error: null };
+    }
+
+    // Build detailed error message from API response
+    let errorMsg = response.error || `Request failed with status ${response.status}`;
+
+    // Try to extract error message from API response body
+    if (response.data && typeof response.data === 'object') {
+        if (response.data.message) {
+            errorMsg = response.data.message;
+        } else if (response.data.error) {
+            errorMsg = response.data.error;
+        } else if (response.data.msg) {
+            errorMsg = response.data.msg;
+        }
+    } else if (response.data && typeof response.data === 'string') {
+        errorMsg = response.data;
+    }
+
     return {
-        success,
-        error: success ? null : (response.error || `Request failed with status ${response.status}`)
+        success: false,
+        error: errorMsg
     };
 }
 
@@ -283,10 +303,32 @@ async function runTest(test, context = {}) {
         // JIT COMPILATION: Substitute variables at runtime (multi-pass for nested @ → {{extract}})
         let compiledUrl = substituteVariablesDeep(test.request, context);
         let compiledBody = test.body ? substituteVariablesDeep(test.body, context) : undefined;
+        let compiledMultipart = null;
 
         if (test.body) {
             result.requestBody =
                 compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : '';
+        }
+
+        // Handle multipart form data
+        if (test.multipart && test.multipart.parts && test.multipart.parts.length > 0) {
+            compiledMultipart = {
+                boundary: test.multipart.boundary,
+                parts: test.multipart.parts.map(part => {
+                    const compiledPart = { ...part };
+                    // Substitute variables in file paths
+                    if (compiledPart.file) {
+                        compiledPart.file = substituteVariablesDeep(compiledPart.file, context);
+                    }
+                    // Substitute variables in values
+                    if (compiledPart.value !== null && compiledPart.value !== undefined) {
+                        compiledPart.value = substituteVariablesDeep(String(compiledPart.value), context);
+                    }
+                    return compiledPart;
+                })
+            };
+            // Store multipart info for reporting
+            result.requestBody = `[multipart/form-data with ${compiledMultipart.parts.length} part(s)]`;
         }
 
         let missingUrl = listUnresolvedTemplateVars(compiledUrl);
@@ -294,6 +336,17 @@ async function runTest(test, context = {}) {
             compiledBody !== undefined && compiledBody !== null ? String(compiledBody) : ''
         );
         let uniq = [...new Set([...missingUrl, ...missingBody])];
+
+        // Check for unresolved variables in multipart file paths
+        if (compiledMultipart) {
+            for (const part of compiledMultipart.parts) {
+                if (part.file) {
+                    const missingFile = listUnresolvedTemplateVars(part.file);
+                    uniq.push(...missingFile);
+                }
+            }
+            uniq = [...new Set(uniq)];
+        }
 
         // No row from prior GET → # @extract skipped → {{id}} missing. If @expect-status allows
         // 400/404, send DELETE .../0 so the API returns a client error instead of failing here.
@@ -339,7 +392,8 @@ async function runTest(test, context = {}) {
             compiledUrl,
             {
                 body: compiledBody,
-                token: token
+                token: token,
+                multipart: compiledMultipart
             }
         );
 
@@ -446,14 +500,18 @@ function testMatchesFilter(testKey, filter) {
 
     // Fallback: Try matching with word boundaries on the full test key
     // This handles cases where test ID extraction fails
+    // Use \b word boundaries to ensure "Upload file 1" doesn't match "Upload file 10"
     const escapedFilter = filterLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`(?:^|\\s)${escapedFilter}(?:$|\\s)`, 'i');
-    if (pattern.test(testLower)) {
+    const wordBoundaryPattern = new RegExp(`\\b${escapedFilter}\\b`, 'i');
+    if (wordBoundaryPattern.test(testLower)) {
         return true;
     }
 
-    // Extra fallback: substring match (handles filters with trailing non-word chars like Chinese punctuation)
-    if (testLower.includes(filterLower)) {
+    // Extra fallback: substring match ONLY if filter doesn't contain digits
+    // This prevents "Upload file 1" from matching "Upload file 10"
+    // But allows filters like "创建用户" to match Chinese titles
+    const hasDigit = /\d/.test(filterLower);
+    if (!hasDigit && testLower.includes(filterLower)) {
         return true;
     }
 
@@ -716,6 +774,70 @@ function expandFilterWithDependencies(tests, initialVars, filter, opts = {}) {
                     isRunnableTest(tests[k])
                 ) {
                     required.add(k);
+                }
+            }
+        }
+    }
+
+    // NEW: Also include subsequent steps that consume variables produced by selected tests
+    // For example, if "Step 1: Upload file 1" is selected, also run "Step 2: Process file 1"
+    // because Step 2 consumes variables extracted by Step 1
+    const directMatchKeys = [...directMatch];
+    for (const producerKey of directMatchKeys) {
+        const producerIndex = testOrder.indexOf(producerKey);
+        if (producerIndex < 0) continue;
+
+        const producerTest = tests[producerKey];
+        if (!isRunnableTest(producerTest) || !producerTest.extractors) continue;
+
+        // Get variables produced by this test
+        const producedVars = new Set();
+        for (const ex of producerTest.extractors) {
+            if (ex.targetVar) {
+                producedVars.add(ex.targetVar);
+            }
+        }
+
+        // Look for subsequent tests that reference these variables
+        for (let i = producerIndex + 1; i < testOrder.length; i++) {
+            const consumerKey = testOrder[i];
+            const consumerTest = tests[consumerKey];
+
+            // Stop at the next "Step 1" or different logical group
+            // Check if the next test starts a new group (e.g., "File 2" or different number)
+            if (consumerTest && consumerTest.key) {
+                const producerNum = producerKey.match(/(\d+)$/);
+                const consumerNum = consumerKey.match(/(\d+)$/);
+                // If both have numbers and they differ significantly, we might be in a new group
+                // But allow "Step 1" -> "Step 2" -> "Step 3" sequences
+                const producerStep = producerKey.match(/Step (\d+)/);
+                const consumerStep = consumerKey.match(/Step (\d+)/);
+
+                if (producerStep && consumerStep) {
+                    // Different file number (not step number) - stop
+                    const producerFileNum = producerKey.match(/(?:file|File) (\d+)/);
+                    const consumerFileNum = consumerKey.match(/(?:file|File) (\d+)/);
+                    if (producerFileNum && consumerFileNum &&
+                        producerFileNum[1] !== consumerFileNum[1]) {
+                        break; // Different file, stop processing
+                    }
+                }
+            }
+
+            if (!isRunnableTest(consumerTest)) continue;
+
+            // Check if this consumer test references any of the produced variables
+            const consumerRefs = expandRefsThroughInitialValues(
+                initialVars,
+                collectVarsReferencedByTest(consumerTest)
+            );
+
+            const referencesProducedVars = [...producedVars].some(v => consumerRefs.has(v));
+            if (referencesProducedVars) {
+                if (!required.has(consumerKey)) {
+                    required.add(consumerKey);
+                    // Recursively add dependencies of this consumer
+                    queue.push(consumerKey);
                 }
             }
         }
