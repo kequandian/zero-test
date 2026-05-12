@@ -183,6 +183,10 @@ class HttpParser {
     }
 
     parseTestTitle(line) {
+        if (!line.startsWith('###')) {
+            return;
+        }
+
         const key = line;
 
         // Close last current test

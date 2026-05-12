@@ -214,6 +214,11 @@ class HttpParser {
     }
 
     parseTestTitle(line) {
+        // Only create tests for lines starting with ###
+        if (!line.startsWith('###')) {
+            return;
+        }
+
         const key = line;
 
         // Directive comments (e.g. # @expected 400) should not become test titles.
