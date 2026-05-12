@@ -21,7 +21,7 @@ const path = require('path');
 
 // Import skill modules
 const HttpParser = require('./scripts/parser');
-const { runTests } = require('./scripts/runner');
+const { runTests, statusMatches } = require('./scripts/runner');
 
 /**
  * Pretty-print request body for markdown (JSON if parseable, else raw)
@@ -383,7 +383,20 @@ async function main() {
                     }
                 }
                 if (errorMsg) {
-                    console.log(`    ${errorColor}Error: ${errorMsg}${resetColor}`);
+                    // Show different message for expected errors that failed
+                    if ((result.expectedStatus !== undefined && result.expectedStatus !== null && result.status !== result.expectedStatus) ||
+                        (result.expectStatus && !statusMatches(result.status, result.expectStatus))) {
+                        console.log(`    ${errorColor}❌ Status mismatch: ${errorMsg}${resetColor}`);
+                    } else {
+                        console.log(`    ${errorColor}❌ ${errorMsg}${resetColor}`);
+                    }
+                }
+            } else {
+                // Show success message for expected errors
+                if (result.status >= 400 && result.status < 500 &&
+                    (result.expectedStatus !== undefined && result.expectedStatus !== null || result.expectStatus)) {
+                    const successColor = '\x1b[32m';
+                    console.log(`    ${successColor}✅ Expected error response (status: ${result.status})${resetColor}`);
                 }
             }
         }

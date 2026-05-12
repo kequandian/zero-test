@@ -99,26 +99,30 @@ function evaluateTestResult(response, test) {
 
     // 2. Status code assertions
     if (test.expectedStatus !== undefined && test.expectedStatus !== null) {
-        if (response.status !== test.expectedStatus) {
+        // If an expected status is explicitly set, ANY matching status is a SUCCESS
+        if (response.status === test.expectedStatus) {
+            return { success: true, error: null };
+        } else {
             return {
                 success: false,
                 error: `Unexpected status code: expected ${test.expectedStatus} but got ${response.status}`
             };
         }
-        return { success: true, error: null };
     }
 
     if (test.expectStatus) {
-        if (!statusMatches(response.status, test.expectStatus)) {
+        // If @expect-status is set, ANY matching status is a SUCCESS
+        if (statusMatches(response.status, test.expectStatus)) {
+            return { success: true, error: null };
+        } else {
             return {
                 success: false,
                 error: `Unexpected status code: expected ${test.expectStatus} but got ${response.status}`
             };
         }
-        return { success: true, error: null };
     }
 
-    // 3. Default logic
+    // 3. Default logic - only 2xx responses are successful
     const success = isSuccessful(response);
     if (success) {
         return { success: true, error: null };

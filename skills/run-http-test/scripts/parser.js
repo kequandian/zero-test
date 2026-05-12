@@ -171,11 +171,11 @@ class HttpParser {
     }
 
     /**
-     * Parse expected status directive: # @expected <status>
-     * Example: # @expected 400
+     * Parse expected status directive: # @expected <status> or # @expect <status>
+     * Example: # @expected 400 or # @expect 400
      */
     parseExpectedStatus(line) {
-        const match = line.match(/^#\s*@expected\s+(\d+)$/);
+        const match = line.match(/^#\s@(?:expected|expect)\s+(\d+)$/);
         if (match) {
             const status = parseInt(match[1].trim(), 10);
             if (this.TESTS['current']) {
