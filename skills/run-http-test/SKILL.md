@@ -256,7 +256,14 @@ Markdown report saved: tests/output/api-test-report.md
 |-----|------|
 | PASS | HTTP 状态码 2xx |
 | FAIL | HTTP 状态码非 2xx，或连接失败 |
-| SKIP | 用例解析为空（无 HTTP 方法行） |
+| SKIP | 用例解析为空（无 HTTP 方法行），或**因传输层早停而未再执行**的后续用例（见下） |
+
+### 传输层失败早停
+
+当某一用例结果为 **Status 0** 且 **Connection Error**（Node 原生 HTTP 客户端）或 **No Response**（axios 未收到响应体，常见于 `ECONNREFUSED` / 网络不可达）时，视为**目标服务不可达**：**立即终止**整个运行，不再发送后续请求（与 `force` 是否继续跑业务失败无关）。
+
+- 控制台会输出：`[run-http-test] Stopping after transport failure (...)` 及未再执行的用例条数。
+- 汇总行：**Total** = 本 run 中**已实际执行**的用例数；**Skipped** = 解析阶段跳过的块数 + 因早停而**未再执行**的可运行用例数。
 
 ## 依赖
 
@@ -275,42 +282,132 @@ npm install axios
 ├── SKILL.md                      # 本文档
 ├── test-runner-simple.js         # 主测试运行器
 ├── package.json                  # npm 配置
+├── config/
+│   └── timestamp.config.js       # 时间戳配置
 ├── scripts/
 │   ├── parser.js                 # .http 文件解析器
 │   ├── http.js                   # HTTP 客户端 (axios)
 │   ├── http-native.js            # HTTP 客户端 (native)
-│   └── runner.js                 # 测试执行引擎
+│   ├── runner.js                 # 测试执行引擎
+│   └── timestamp-utils.js        # 时间戳工具函数
 ├── assets/
 │   └── markdown.css              # Markdown 样式
 └── references/
     └── SYNTAX.md                 # .http 语法参考
 ```
 
-## 常见问题
+## Timestamp 配置
 
-**Q: 如何处理需要认证的 API？**
+Zero-Test 支持自定义时间戳格式和显示选项，通过 `config/timestamp.config.js` 配置文件进行设置。
 
-A: 在 `.http` 文件顶部定义 token 变量：
-```http
-@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+### 配置选项
+
+```javascript
+module.exports = {
+    // 时间戳配置
+    timestamp: {
+        // 时间戳格式 ('iso', 'locale', 'custom')
+        format: 'iso',
+
+        // 自定义格式配置 (当 format='custom' 时使用)
+        customFormat: {
+            locale: 'zh-CN',  // 语言环境
+            options: {        // toLocaleString 选项
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            }
+        },
+
+        // 是否显示时区信息
+        showTimezone: true,
+
+        // ISO 格式是否包含毫秒
+        includeMilliseconds: false
+    },
+
+    // 报告配置
+    report: {
+        // 报告头部是否包含时间戳
+        includeTimestamp: true,
+
+        // 每个测试用例是否显示时间戳
+        includeTestTimestamps: true
+    }
+};
 ```
 
-**Q: 如何调试失败的测试？**
+### 时间戳格式选项
 
-A: 查看 Markdown 报告中的详细请求/响应信息，包括：
-- 完整请求 URL
-- 请求头
-- 请求体
-- 响应状态码
-- 响应体
+| 格式 | 描述 | 示例 |
+|-----|------|------|
+| `'iso'` | ISO 8601 格式 | `2024-01-15T10:30:45.123Z` |
+| `'locale'` | 本地化格式 | `2024/1/15 10:30:45` (中文) |
+| `'custom'` | 自定义格式 | 根据 customFormat 配置 |
 
-**Q: 支持哪些 HTTP 方法？**
+### 使用示例
 
-A: GET、POST、PUT、PATCH、DELETE（大小写不敏感）
+**中文本地化格式：**
+```javascript
+timestamp: {
+    format: 'locale',
+    customFormat: {
+        locale: 'zh-CN',
+        options: {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }
+    }
+}
+// 输出: 2024-01-15 10:30:45
+```
 
-**Q: 为何失败请求 URL 里出现 `/resources/dynamic`？**
+**美式格式：**
+```javascript
+timestamp: {
+    format: 'locale',
+    customFormat: {
+        locale: 'en-US',
+        options: {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit'
+        }
+    }
+}
+// 输出: Jan 15, 2024, 10:30:45 AM
+```
 
-A: 预声明变量（如 `@x = dynamic`）未被成功的 **`# @extract`** 覆盖时，字面量会原样拼进 URL。常见原因是前置 **POST 失败**（例如父资源已删导致外键无效）。请调整用例顺序：先保证父资源存在，再创建子资源并完成 extract。
+**自定义模式：**
+```javascript
+timestamp: {
+    format: 'custom',
+    customFormat: {
+        pattern: 'yyyy-MM-dd HH:mm:ss'
+    }
+}
+// 输出: 2024-01-15 10:30:45
+```
+
+### 禁用时间戳显示
+
+```javascript
+report: {
+    includeTimestamp: false,        // 不显示报告生成时间
+    includeTestTimestamps: false    // 不显示每个测试的时间戳
+}
+```
 
 ## 相关文档
 

@@ -22,6 +22,7 @@ const path = require('path');
 // Import skill modules
 const HttpParser = require('./scripts/parser');
 const { runTests, statusMatches } = require('./scripts/runner');
+const { formatTimestamp, getCurrentTimestamp } = require('./scripts/timestamp-utils');
 
 /**
  * Pretty-print request body for markdown (JSON if parseable, else raw)
@@ -40,7 +41,7 @@ function formatRequestBodyForMarkdown(body) {
 /**
  * Generate markdown report (without PDF)
  */
-function generateMarkdownReport(summary, reportPath, filter = null) {
+function generateMarkdownReport(summary, reportPath, filter = null, timestampConfig = {}) {
     const lines = [];
 
     lines.push('# Test Report');
@@ -54,7 +55,12 @@ function generateMarkdownReport(summary, reportPath, filter = null) {
         lines.push('');
     }
 
-    lines.push(`**Date:** ${new Date().toISOString()}`);
+    // Add timestamp if configured
+    if (timestampConfig.report?.includeTimestamp !== false) {
+        const reportTimestamp = getCurrentTimestamp(timestampConfig.timestamp);
+        lines.push(`**Date:** ${reportTimestamp}`);
+    }
+
     lines.push(`**Total Tests:** ${summary.total}`);
     lines.push(`**Passed:** ${summary.passed}`);
     lines.push(`**Failed:** ${summary.failed}`);
@@ -102,7 +108,13 @@ function generateMarkdownReport(summary, reportPath, filter = null) {
         if (result.expectBodyContains) {
             lines.push(`**Expected Body Contains:** "${result.expectBodyContains}"`);
         }
-        lines.push(`**Time:** ${result.timestamp}`);
+
+        // Show timestamp if configured
+        if (timestampConfig.report?.includeTestTimestamps !== false) {
+            const testTimestamp = formatTimestamp(result.timestamp, timestampConfig.timestamp);
+            lines.push(`**Time:** ${testTimestamp}`);
+        }
+
         lines.push('');
 
         const reqBodyMd = formatRequestBodyForMarkdown(result.requestBody);
@@ -235,6 +247,15 @@ function parseArguments(args) {
  * Main execution function
  */
 async function main() {
+    // Load configuration
+    let timestampConfig = {};
+    try {
+        timestampConfig = require('./config/timestamp.config');
+    } catch (error) {
+        // Use default config if file doesn't exist
+        console.warn('Warning: timestamp.config.js not found, using default timestamp format');
+    }
+
     // Parse command line arguments
     const args = process.argv.slice(2);
 
@@ -421,7 +442,7 @@ async function main() {
     console.log('Generating markdown report...');
 
     try {
-        const markdownPath = generateMarkdownReport(summary, reportPath, filter);
+        const markdownPath = generateMarkdownReport(summary, reportPath, filter, timestampConfig);
         console.log(`Markdown report saved: ${markdownPath}`);
         console.log('');
 

@@ -399,5 +399,5 @@ When several entities share a parent key (e.g. `batch_id`, `notice_id`, `questio
 3. **Define variables at the top** - Keep configuration in one place
 4. **Add comments** - Explain what each test verifies
 5. **Follow the blank line rule** - Separate test cases with blank lines
-6. **Use force mode for suites** - Run entire test suite even if some tests fail
+6. **Use force mode for suites** - Run entire test suite even if some HTTP/API assertions fail (non-2xx). **Exception:** transport failures (HTTP status `0` with `Connection Error` or `No Response`, e.g. `ECONNREFUSED`) **always stop** the runner immediately; remaining cases are not executed.
 7. **Respect parent/child order** - See [Multi-entity dependencies and foreign keys](#multi-entity-dependencies-and-foreign-keys) above

@@ -794,9 +794,11 @@ function findProducerTestForVar(testOrder, producersByTest, consumerIndex, varNa
 }
 
 /**
- * When --filter is used, also include prior tests that define {{variables}} referenced
- * by the selected cases (via file-level @ aliases into # @extract outputs, or direct
- * {{refs}} in URL/body/token).
+ * When --filter is used, run matching tests plus any **upstream** cases whose `# @extract`
+ * outputs are required by those tests (via `{{var}}` in URL/body/token or `@` aliases in
+ * file-level vars). Built-in macros like `{{$timestamp}}` are not dependencies.
+ * Downstream tests that only consume variables produced by a matched test are **not** added;
+ * list them explicitly in the filter (comma/range) or run the full file without `--filter`.
  *
  * @param {object} tests - Parsed test cases
  * @param {object} initialVars - @ variables from the top of the .http file
@@ -833,6 +835,10 @@ function expandFilterWithDependencies(tests, initialVars, filter, opts = {}) {
         );
 
         for (const v of expandedRefs) {
+            // Built-in macros ({{$timestamp}}, {{$uuid}}, …) are resolved at send time — not # @extract deps
+            if (resolveBuiltInMacro(v) !== undefined) {
+                continue;
+            }
             // Name is declared with @ at top of file — satisfied only if not a placeholder (e.g. @playlistId1 = 0)
             if (initialVarSet.has(v) && !isPlaceholderInitialValue(v, initialVars[v])) {
                 continue;
@@ -877,78 +883,50 @@ function expandFilterWithDependencies(tests, initialVars, filter, opts = {}) {
         }
     }
 
-    // NEW: Also include subsequent steps that consume variables produced by selected tests
-    // For example, if "Step 1: Upload file 1" is selected, also run "Step 2: Process file 1"
-    // because Step 2 consumes variables extracted by Step 1
-    const directMatchKeys = [...directMatch];
-    for (const producerKey of directMatchKeys) {
-        const producerIndex = testOrder.indexOf(producerKey);
-        if (producerIndex < 0) continue;
-
-        const producerTest = tests[producerKey];
-        if (!isRunnableTest(producerTest) || !producerTest.extractors) continue;
-
-        // Get variables produced by this test
-        const producedVars = new Set();
-        for (const ex of producerTest.extractors) {
-            if (ex.targetVar) {
-                producedVars.add(ex.targetVar);
-            }
-        }
-
-        // Look for subsequent tests that reference these variables
-        for (let i = producerIndex + 1; i < testOrder.length; i++) {
-            const consumerKey = testOrder[i];
-            const consumerTest = tests[consumerKey];
-
-            // Stop at the next "Step 1" or different logical group
-            // Check if the next test starts a new group (e.g., "File 2" or different number)
-            if (consumerTest && consumerTest.key) {
-                const producerNum = producerKey.match(/(\d+)$/);
-                const consumerNum = consumerKey.match(/(\d+)$/);
-                // If both have numbers and they differ significantly, we might be in a new group
-                // But allow "Step 1" -> "Step 2" -> "Step 3" sequences
-                const producerStep = producerKey.match(/Step (\d+)/);
-                const consumerStep = consumerKey.match(/Step (\d+)/);
-
-                if (producerStep && consumerStep) {
-                    // Different file number (not step number) - stop
-                    const producerFileNum = producerKey.match(/(?:file|File) (\d+)/);
-                    const consumerFileNum = consumerKey.match(/(?:file|File) (\d+)/);
-                    if (producerFileNum && consumerFileNum &&
-                        producerFileNum[1] !== consumerFileNum[1]) {
-                        break; // Different file, stop processing
-                    }
-                }
-            }
-
-            if (!isRunnableTest(consumerTest)) continue;
-
-            // Check if this consumer test references any of the produced variables
-            const consumerRefs = expandRefsThroughInitialValues(
-                initialVars,
-                collectVarsReferencedByTest(consumerTest)
-            );
-
-            const referencesProducedVars = [...producedVars].some(v => consumerRefs.has(v));
-            if (referencesProducedVars) {
-                if (!required.has(consumerKey)) {
-                    required.add(consumerKey);
-                    // Recursively add dependencies of this consumer
-                    queue.push(consumerKey);
-                }
-            }
-        }
-    }
+    // Intentionally do NOT auto-include downstream tests that merely *consume* variables
+    // produced by a filtered test (e.g. TC-001 → testBuildingId). `--filter` means "run
+    // matches plus upstream # @extract prerequisites only"; to run a chain, include each
+    // case in the filter (comma / range) or run without --filter.
 
     return testOrder.filter(k => required.has(k));
+}
+
+/**
+ * TCP reachability failures — further cases would fail the same way; abort the suite.
+ * Native client: `statusText` is `Connection Error`. Axios (no response): `No Response`.
+ * @param {object} result - Return value of {@link runTest}
+ * @returns {boolean}
+ */
+function isFatalTransportFailure(result) {
+    if (!result || result.status !== 0) return false;
+    const t = String(result.statusText || '').trim();
+    return t === 'Connection Error' || t === 'No Response';
+}
+
+/**
+ * Runnable tests from index `startIdx` onward (same rules as {@link runTests}).
+ * @param {string[]} testKeys
+ * @param {object} tests
+ * @param {number} startIdx
+ * @returns {number}
+ */
+function countRunnableTestsFromIndex(testKeys, tests, startIdx) {
+    let n = 0;
+    for (let j = startIdx; j < testKeys.length; j++) {
+        const t = tests[testKeys[j]];
+        if (!t) continue;
+        if (t.status === 'terminated') continue;
+        if (t.status !== 'closed' && t.status !== 'titled_closed') continue;
+        n++;
+    }
+    return n;
 }
 
 /**
  * Run multiple test cases with shared variable context
  * @param {object} tests - Parsed test cases object
  * @param {object} options - Execution options
- * @param {boolean} options.force - Continue on errors
+ * @param {boolean} options.force - Continue on HTTP/API errors (non-transport). Transport failures (status 0 Connection Error / No Response) always stop the run.
  * @param {function} options.onTestComplete - Callback after each test
  * @param {object} options.initialVars - Initial variables from parser
  * @param {string} options.filter - Run only tests whose title contains this substring (supports comma-separated and range expressions)
@@ -965,7 +943,8 @@ async function runTests(tests, options = {}) {
     const results = [];
     let passed = 0;
     let failed = 0;
-    let skipped = 0;
+    let parseSkipped = 0;
+    let transportSuppressed = 0;
 
     // Initialize runtime context with initial variables
     const context = { ...initialVars };
@@ -978,18 +957,19 @@ async function runTests(tests, options = {}) {
         testKeys = expandFilterWithDependencies(tests, initialVars, filter);
     }
 
-    for (const key of testKeys) {
+    for (let ki = 0; ki < testKeys.length; ki++) {
+        const key = testKeys[ki];
         const test = tests[key];
 
         // Skip tests with 'terminated' status
         if (test.status === 'terminated') {
-            skipped++;
+            parseSkipped++;
             continue;
         }
 
         // Only run tests that are properly closed
         if (test.status !== 'closed' && test.status !== 'titled_closed') {
-            skipped++;
+            parseSkipped++;
             continue;
         }
 
@@ -1008,6 +988,28 @@ async function runTests(tests, options = {}) {
             await onTestComplete(result, results.length);
         }
 
+        // Transport-layer failure — stop even when force is true
+        if (isFatalTransportFailure(result)) {
+            transportSuppressed = countRunnableTestsFromIndex(testKeys, tests, ki + 1);
+            for (let j = ki + 1; j < testKeys.length; j++) {
+                const t = tests[testKeys[j]];
+                if (!t) continue;
+                if (t.status === 'terminated' || (t.status !== 'closed' && t.status !== 'titled_closed')) {
+                    parseSkipped++;
+                }
+            }
+            const detail = result.error ? `: ${result.error}` : '';
+            console.warn(
+                `[run-http-test] Stopping after transport failure (${result.statusText})${detail}`
+            );
+            if (transportSuppressed > 0) {
+                console.warn(
+                    `[run-http-test] ${transportSuppressed} subsequent runnable test(s) not executed.`
+                );
+            }
+            break;
+        }
+
         // Stop on first error if not forcing
         if (!force && !result.success) {
             break;
@@ -1015,10 +1017,10 @@ async function runTests(tests, options = {}) {
     }
 
     return {
-        total: testKeys.length - skipped,
+        total: results.length,
         passed,
         failed,
-        skipped,
+        skipped: parseSkipped + transportSuppressed,
         results
     };
 }
