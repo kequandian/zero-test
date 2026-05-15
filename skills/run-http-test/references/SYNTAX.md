@@ -29,6 +29,7 @@ Define variables at the top of your .http file using `@` prefix:
 - Variable names are case-sensitive
 - Values can be URLs, tokens, or any text
 - Use variables in requests with `{{variableName}}` syntax
+- Supports IDE native runtime macros such as `{{$timestamp}}`
 
 ### Variable Substitution
 

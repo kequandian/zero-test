@@ -205,6 +205,45 @@ function getValueByPathWithEnvelopeFallback(obj, path) {
 }
 
 /**
+ * Resolve built-in macros such as {{$timestamp}}.
+ * @param {string} varName - Captured variable name inside {{ }}
+ * @returns {string|undefined}
+ */
+function resolveBuiltInMacro(varName) {
+    if (!varName || !varName.startsWith('$')) {
+        return undefined;
+    }
+
+    switch (varName) {
+        case '$timestamp':
+            return String(Date.now());
+        case '$datetime':
+            return new Date().toISOString();
+        case '$date': {
+            const iso = new Date().toISOString();
+            return iso.slice(0, 10);
+        }
+        case '$uuid':
+        case '$guid':
+            return crypto.randomUUID ? crypto.randomUUID() : generateUuid();
+        default:
+            return undefined;
+    }
+}
+
+/**
+ * Generate a UUID v4 string when `crypto.randomUUID` is unavailable.
+ * @returns {string}
+ */
+function generateUuid() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
+/**
  * Substitute variables in template string with context values
  * @param {string} template - String with {{variable}} placeholders
  * @param {object} context - Variable context object
@@ -218,6 +257,12 @@ function substituteVariables(template, context) {
         if (context[trimmedVarName] !== undefined) {
             return context[trimmedVarName];
         }
+
+        const builtIn = resolveBuiltInMacro(trimmedVarName);
+        if (builtIn !== undefined) {
+            return builtIn;
+        }
+
         // Keep original if variable not found
         return match;
     });
