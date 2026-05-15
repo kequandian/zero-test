@@ -289,6 +289,18 @@ function substituteVariablesDeep(template, context, maxPass = 8) {
 const UNRESOLVED_TEMPLATE_RE = /\{\{([^}]+)\}\}/g;
 
 /**
+ * Ensure the runtime context has a set for failed extractor variables.
+ * @param {object} context
+ * @returns {Set<string>}
+ */
+function getFailedExtractorVars(context) {
+    if (!context.__failedExtractVars) {
+        context.__failedExtractVars = new Set();
+    }
+    return context.__failedExtractVars;
+}
+
+/**
  * File-level `@id = 0` (or `dynamic`) is a placeholder until `# @extract` runs.
  * When expanding --filter dependencies, these must NOT block pulling the producer test.
  * @param {string} _varName
@@ -349,6 +361,8 @@ async function runTest(test, context = {}) {
     };
 
     try {
+        const failedExtractorVars = getFailedExtractorVars(context);
+
         // JIT COMPILATION: Substitute variables at runtime (multi-pass for nested @ → {{extract}})
         let compiledUrl = substituteVariablesDeep(test.request, context);
         let compiledBody = test.body ? substituteVariablesDeep(test.body, context) : undefined;
@@ -395,6 +409,16 @@ async function runTest(test, context = {}) {
                 }
             }
             uniq = [...new Set(uniq)];
+        }
+
+        // If an earlier test expected to extract these vars failed, stop early and report the dependency failure.
+        const failedVars = uniq.filter(v => failedExtractorVars.has(v));
+        if (failedVars.length > 0) {
+            result.success = false;
+            result.status = 0;
+            result.statusText = 'Missing dependency variables';
+            result.error = `Cannot execute request because upstream extraction failed for variable(s): ${failedVars.join(', ')}. Check earlier producer tests for # @extract failures.`;
+            return result;
         }
 
         // No row from prior GET → # @extract skipped → {{id}} missing. If @expect-status allows
@@ -454,16 +478,41 @@ async function runTest(test, context = {}) {
         result.error = evalResult.error || response.error;
 
         // EXTRACT VARIABLES from response
-        if (test.extractors && test.extractors.length > 0 && response.data) {
-            for (const extractor of test.extractors) {
-                const value = getValueByPathWithEnvelopeFallback(
-                    response.data,
-                    extractor.path
-                );
-                if (value !== undefined) {
-                    context[extractor.targetVar] = value;
-                    result.extractedVars[extractor.targetVar] = value;
+        if (test.extractors && test.extractors.length > 0) {
+            const missingExtracts = [];
+            const failedExtractorVars = getFailedExtractorVars(context);
+
+            if (response.data) {
+                for (const extractor of test.extractors) {
+                    const value = getValueByPathWithEnvelopeFallback(
+                        response.data,
+                        extractor.path
+                    );
+                    if (value !== undefined) {
+                        context[extractor.targetVar] = value;
+                        result.extractedVars[extractor.targetVar] = value;
+                        failedExtractorVars.delete(extractor.targetVar);
+                    } else {
+                        missingExtracts.push(extractor);
+                        failedExtractorVars.add(extractor.targetVar);
+                    }
                 }
+            } else {
+                for (const extractor of test.extractors) {
+                    missingExtracts.push(extractor);
+                    failedExtractorVars.add(extractor.targetVar);
+                }
+            }
+
+            if (missingExtracts.length > 0) {
+                const messages = missingExtracts.map(ex => `\`${ex.targetVar}\` from path \`${ex.path}\``);
+                const message = `Extraction failed for ${messages.join(', ')}.`;
+                if (result.error) {
+                    result.error = `${result.error}; ${message}`;
+                } else {
+                    result.error = message;
+                }
+                result.success = false;
             }
         }
 
